@@ -142,6 +142,49 @@ module.exports = function(app, passport){
       failureRedirect : '/'
   }));
 
+  //==========================================
+  //Unlink Routes
+  //==========================================
+  //for social accounts just remove token
+  //for local account remote email and password
+
+  //local unlink
+  app.get('/unlink/local', function(req, res){
+    var user = req.user;
+    user.local.email = undefined;
+    user.local.password = undefined;
+    user.save(function(err){
+      res.redirect('/profile');
+    });
+  });
+
+  //facebook unlink
+  app.get('/unlink/facebook', function(req, res){
+    var user = req.user;
+    user.facebook.token = undefined;
+    user.save(function(err){
+      res.redirect('/profile');
+    });
+  });
+
+  //twitter unlink
+  app.get('/unlink/twitter', function(req, res){
+    var user = req.user;
+    user.twitter.token = undefined;
+    user.save(function(err){
+      res.redirect('/profile');
+    });
+  });
+
+  //google unlink
+  app.get('/unlink/google', function(req, res){
+    var user = req.user;
+    user.google.token = undefined;
+    user.save(function(err){
+      res.redirect('/profile');
+    });
+  });
+
   //Logout
   app.get('/logout', function(req, res){
     req.logout();

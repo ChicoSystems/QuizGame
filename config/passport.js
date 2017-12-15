@@ -94,10 +94,10 @@ module.exports = function(passport) {
   function(req, token, refreshToken, profile, done){
     //async
     process.nextTick(function(){
-
+      console.log("facebook process.nextTick");
       //check if the user is already logged in
       if(!req.user){
-
+        console.log("facebook !req.user");
         //find the user in the db based on their facebook id
         User.findOne({'facebook.id' : profile.id }, function(err, user){
           //if there is an error, stop everything an return it
@@ -107,12 +107,32 @@ module.exports = function(passport) {
 
           //if the user is found, then log them in
           if(user){
-            return done(null, user); //user found, return that user
+            console.log("facebook (user)");
+    
+            //If there is a user id already but no token, the user was linked, then unlinked
+            //ad our token and profile information
+            if(!user.facebook.token){
+              console.log("facebook !user.facebook.token");
+              user.facebook.token = token;
+              user.facebook.name = profile.name.givenName + ' ' + profile.name.familyName;
+              if(profile.emails != null)
+                user.facebook.email = profile.emails[0].value;
+              if(profile.photos != null)
+                user.facebook.photo = profile.photos[0].value;
+
+              //save user back to db
+              user.save(function(err){
+                if(err)
+                  throw err;
+                return done(null, user);
+              });
+              console.log("user found return user");
+            }
+            return done(null, user); //user found, return user
           }else{
             //if there is no user found with that facebook id, create one
             var newUser = new User();
             
-            console.log("photo: " + profile.photos[0].value);
             //set all the facebook info in our user model
             newUser.facebook.id = profile.id; //set users facebook id
             newUser.facebook.token = token; //token provided by facebook
@@ -177,6 +197,22 @@ module.exports = function(passport) {
 
           //if user is found, log them in
           if(user){
+            //if there is a user id already but no token, then user has been linked and unlinked
+            //add our token and profile info
+            if(!user.twitter.token){
+              user.twitter.token = token;
+              user.twitter.username = profile.username;
+              user.twitter.displayName = profile.displayName;
+              if(profile.photos != null)
+                user.twitter.photo = profile.photos[0].value;
+
+              user.save(function(err){
+                if(err)
+                  throw err;
+                return done(null, user);
+              });
+            }
+
             return done(null, user); //user found
           }else{
             //if there is no user, create one
@@ -239,6 +275,24 @@ module.exports = function(passport) {
             return done(err);
 
           if(user){
+            //if there is a uer id already but no token, user was linked & unlinked
+            //add our token and profile info
+            if(!user.google.token){
+              user.google.token = token;
+              user.google.name = profile.displayName;
+              if(profile.emails != null)
+                user.google.email = profile.emails[0].value;
+              if(profile.photos != null)
+                user.google.photo = profile.photos[0].value;
+
+              //save user info
+              user.save(function(err){
+                if(err)
+                  throw err;
+                return done(null, user);
+              });
+            }      
+  
             //a user is found, log them in
             return done(null, user);
           }else{
