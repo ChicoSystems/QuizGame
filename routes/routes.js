@@ -21,6 +21,13 @@ module.exports = function(app, passport){
     );
   });
 
+  //process the signup form
+  app.post('/signup', passport.authenticate('local-signup', {
+    successRedirect : '/profile', //redirect to secure profile section
+    failureRedirect : '/signup',  //redirect to signup page with error
+    failureFlash    : true        //allow flash messages
+  }));
+
   //Profile Section
   // We want user logged in to visit
   // use route middleware to verify this (isLoggedIn function)
