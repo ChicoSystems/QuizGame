@@ -75,6 +75,73 @@ module.exports = function(app, passport){
       failureRedirect : '/'    
   }));
 
+  //=============
+  //Google Routes
+  //=============
+
+  //route for google auth and login
+  app.get('/auth/google', passport.authenticate('google', {
+    scope : ['profile', 'email']
+  }));
+
+  //handle the callback after google has auth'd the user
+  app.get('/auth/google/callback',
+    passport.authenticate('google', {
+      successRedirect : '/profile',
+      failureRedirect : '/'
+    }
+  ));
+
+  //===========================
+  //Authorize (Already Logged In / Connecting Other Social Account
+  //===========================
+
+  //local connect
+  app.get('/connect/local', function(req, res){
+    res.render('connect-local.ejs', {message: req.flash('loginMessage')});
+  });
+
+  app.post('/connect/local', passport.authenticate('local-signup', {
+    successRedirect : '/profile',
+    failureRedirect : '/connect/local',
+    failureFlash : true
+  }));
+
+  //facebook connect
+  //send to facebook to do the auth
+  app.get('/connect/facebook', passport.authorize('facebook', {
+    scope: ['public_profile', 'email']
+  }));
+
+  //handle the callback after facebook has auth'd the user
+  app.get('/connect/facebook/callback',
+    passport.authorize('facebook', {
+      successRedirect : '/profile',
+      failureRedirect : '/'
+  }));
+
+  //twitter connect
+  //send to twitter to do the auth
+  app.get('/connect/twitter', passport.authorize('twitter', {scope: 'email'}));
+
+  //handle the callback after twitter auth'd the user
+  app.get('/connect/twitter/callback',
+    passport.authorize('twitter', {
+      successRedirect : '/profile',
+      failureRedirect : '/'
+  }));
+
+  //google connect
+  //send to google to do the auth
+  app.get('/connect/google', passport.authorize('google', {scope :['profile', 'email']}));
+
+  //callback after google auth'd user
+  app.get('/connect/google/callback',
+    passport.authorize('google', {
+      successRedirect : '/profile',
+      failureRedirect : '/'
+  }));
+
   //Logout
   app.get('/logout', function(req, res){
     req.logout();
