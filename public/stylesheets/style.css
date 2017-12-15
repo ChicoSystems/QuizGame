@@ -1,8 +1,37 @@
 body {
-  padding: 50px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
 a {
   color: #00B7FF;
+}
+
+#quizheadername {
+  font: 30px "Impact", Charcoal, sans-serif;
+  color: #442626;
+}
+
+#quizgamescore{
+  font-size:50px;
+  text-align: center;
+}
+
+#quizgamequestion{
+  font-size: 28px;
+  text-align: center;
+  margin: 0 auto;
+  float:none;
+  padding-top: 30px;
+}
+
+#quizgameanswers{
+  float:none;
+  margin: 0 auto;
+  padding-top:30px;
+}
+
+.btn-responsive {
+    white-space: normal !important;
+    word-wrap: break-word;
+    font-size:28px;
 }

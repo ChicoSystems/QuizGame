@@ -5,6 +5,18 @@ module.exports = function(app, passport){
     res.render('index.ejs');
   });
 
+  //==============================================
+  //Game Routes
+  //==============================================
+  app.get('/designtest', function(req, res){
+    res.render('designTest.ejs', {title : "Quiz Game"});
+  });
+
+
+  //==============================================
+  //Social Login Routes
+  //=============================================
+  
   //Login Page
   app.get('/login', function(req, res){
     //render the page, and pass in flash data, if it exists
