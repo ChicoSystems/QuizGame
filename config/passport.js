@@ -83,7 +83,8 @@ module.exports = function(passport) {
     //pull in our app id and secret from auth.js file
     clientID : configAuth.facebookAuth.clientID,
     clientSecret : configAuth.facebookAuth.clientSecret,
-    callbackURL : configAuth.facebookAuth.callbackURL
+    callbackURL : configAuth.facebookAuth.callbackURL,
+    profileFields : ['id', 'email', 'name', 'photos']
   },
   
   //facebook will send back the token and profile
@@ -103,13 +104,17 @@ module.exports = function(passport) {
         }else{
           //if there is no user found with that facebook id, create one
           var newUser = new User();
-          console.log("profile.emails.value " + profile.email); 
+          
+          console.log("photo: " + profile.photos[0].value);
           //set all the facebook info in our user model
           newUser.facebook.id = profile.id; //set users facebook id
           newUser.facebook.token = token; //token provided by facebook
           newUser.facebook.name = profile.name.givenName + ' ' + profile.name.familyName;
           if(profile.emails !=null)
             newUser.facebook.email = profile.emails[0].value || null; //Use first email returned
+
+          if(profile.photos != null)
+            newUser.facebook.photo = profile.photos[0].value;
       
           //save user to the db
           newUser.save(function(err){
