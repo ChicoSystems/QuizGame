@@ -11,6 +11,7 @@ var users = require('./routes/users');
 var app = express();
 
 var mongoose = require('mongoose');
+var random = require('mongoose-simple-random');
 var passport = require('passport');
 var flash    = require('connect-flash');
 var morgan   = require('morgan');

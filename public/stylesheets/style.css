@@ -30,8 +30,14 @@ a {
   padding-top:30px;
 }
 
+#quizgamecategory{
+  color:green;
+}
+
 .btn-responsive {
     white-space: normal !important;
     word-wrap: break-word;
     font-size:28px;
 }
+
+

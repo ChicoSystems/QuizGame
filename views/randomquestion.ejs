@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <% include partials/head %>
+</head>
+<body>
+<header>
+  <% include partials/header %>
+  <script>var answerIndex = <%= answerIndex %></script>
+  <script src="/javascripts/randomquestion.js"></script>
+</header>
+
+  <div class="container" id="quizgamescore">
+    Score 125
+  </div>
+
+  <div class="container col-sm-8 col-sm-offset-1" id="quizgamequestion">
+    <p id="quizgamecategory">
+      <%= category %>
+    </p>
+    <p>
+      <%= question %>
+    </p>
+  </div>
+
+  <div class="container col-md-8" id="quizgameanswers">
+    <div class="btn-group btn-group-justified">
+      <% var i = 0 %>
+      <% for(i = i; i < 4; i++){ %>
+        <a href="#" onclick="answerClicked('<%= i %>')" id="<%= i %>" class="btn btn-primary btn-responsive"><%= answers[i].label %></a>
+      <% } %> 
+    </div> 
+    <div class="btn-group btn-group-justified">
+      <% for(i = i; i < 8; i++){ %>
+        <a href="#" onclick="answerClicked('<%= i %>')" id="<%= i %>" class="btn btn-primary btn-responsive"><%= answers[i].label %></a>
+      <% } %> 
+    </div> 
+    <div class="btn-group btn-group-justified">
+      <% for(i = i; i < 12; i++){ %>
+        <a href="#" onclick="answerClicked('<%= i %>')" id="<%= i %>" class="btn btn-primary btn-responsive"><%= answers[i].label %></a>
+      <% } %> 
+    </div>
+  </div>
+
+  <footer>
+    <% include partials/footer %>
+  </footer>
+
+</body>
+</html>

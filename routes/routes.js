@@ -1,4 +1,9 @@
 // routes/routes.js
+
+// load up the quizQestions model
+var QuizQuestion            = require('../models/quizQuestions');
+
+
 module.exports = function(app, passport){
   //Home Page
   app.get('/', function(req, res){
@@ -14,6 +19,42 @@ module.exports = function(app, passport){
 
   app.get('/designtest2', function(req, res){
     res.render('designTest2.ejs', {title : "Quiz Game"});
+  });
+
+  app.get('/randomquestion', function(req, res){
+    // Get the count of all quizquestions
+    QuizQuestion.count().exec(function (err, count) {
+
+    // Get a random entry
+    var random = Math.floor(Math.random() * count)
+
+    // Again query all users but only fetch one offset by our random #
+    QuizQuestion.findOne().skip(random).exec(
+      function (err, result) {
+        if(!err){
+          var filter = {label: {$ne: result.label}, category: {$eq: result.category}};
+          var fields = {label: 1}; //only pull up the answers
+          QuizQuestion.findRandom( {}, fields, {limit: 11}, function(error, answers){
+             //console.log("error: " + error);
+             //console.log("wronganswers: " + wrongAnswers);
+            //insert the correct answer in a random position in the answers array
+            var answerIndex = Math.floor(Math.random() * 12);
+            answers.splice(answerIndex, 0, {label: result.label});
+               res.render('randomquestion.ejs',{
+                title  : "Quiz Game",
+                category : result.category,
+                question : result.raw,
+                answer   : result.label,
+                answers : answers,
+                answerIndex : answerIndex
+              });
+          
+          });
+          
+
+        } 
+      })
+    })
   });
 
   //==============================================
