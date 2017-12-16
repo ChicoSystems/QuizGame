@@ -34,6 +34,10 @@ a {
   color:green;
 }
 
+#score{
+  display: inline;
+}
+
 .btn-responsive {
     white-space: normal !important;
     word-wrap: break-word;

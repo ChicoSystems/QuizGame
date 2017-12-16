@@ -3,6 +3,11 @@
 <head>
   <% include partials/head %>
   <script>var answerIndex = <%= answerIndex %></script>
+  <% if(locals.user){ %>
+    <script>var loggedIn = true;</script>
+  <% } else{%>
+    <script>var loggedIn = false;</script>
+  <% } %>
   <script src="/javascripts/randomquestion.js"></script>
 </head>
 <body>
@@ -10,9 +15,10 @@
   <% include partials/header %>
 </header>
 
+
   <div class="container" id="quizgamescore">
     <% if(locals.user){%>
-    Score 125
+     Score <div id="score"><%= locals.session.score %></div>
     <% }else{ %>
     <a href="/login">Login To Keep Score</a>
     <% } %>

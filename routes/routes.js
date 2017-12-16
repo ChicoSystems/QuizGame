@@ -40,11 +40,11 @@ module.exports = function(app, passport){
         QuizQuestion.findRandom( filter, fields, {limit: 11}, function(error, answers){
         // QuizQuestion.findRandom( filter, fields, {limit: 11}).distinct('label').exec(function(error, answers){
             if(error)throw error;
-             //console.log("error: " + error);
-             //console.log("wronganswers: " + wrongAnswers);
-            //insert the correct answer in a random position in the answers array
             
-
+            if(req.user)
+               req.session.score = req.user.gameinfo.score;
+            console.log("Answer: " + result.label); 
+        
             var answerIndex = Math.floor(Math.random() * 12);
             answers.splice(answerIndex, 0, {label: result.label});
                res.render('index.ejs',{
@@ -54,7 +54,8 @@ module.exports = function(app, passport){
                 answer   : result.label,
                 answers : answers,
                 answerIndex : answerIndex,
-                user : req.user
+                user : req.user,
+                session : req.session
               });
           
           });
@@ -63,6 +64,32 @@ module.exports = function(app, passport){
         } 
       })
     })
+  });
+
+  //user clicked on a wrong answer
+  app.get('/wronganswer', function(req, res, done){
+    //we decrease the score in the session and
+    //update that score to the db
+    req.session.score = req.session.score - 1;
+    req.user.gameinfo.score = req.session.score;
+    req.user.save();
+    res.send({
+      message: "ok",
+      score  : req.session.score
+    });
+  });
+
+  //user clicked on a right answer
+  app.get('/rightanswer', function(req, res, done){
+    //we decrease the score in the session and
+    //update that score to the db
+    req.session.score = req.session.score + 5;
+    req.user.gameinfo.score = req.session.score;
+    req.user.save();
+    res.send({
+      message: "ok",
+      score  : req.session.score
+    });
   });
 
   //==============================================

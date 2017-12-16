@@ -32,7 +32,7 @@ var userSchema = mongoose.Schema({
         photo        : String
     },
     gameinfo        : {
-      score         : Number
+      score         : {type: Number, default: 0}
     }
 
 });
