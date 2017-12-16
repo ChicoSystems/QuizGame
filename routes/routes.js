@@ -6,10 +6,10 @@ var QuizQuestion            = require('../models/quizQuestions');
 
 module.exports = function(app, passport){
   //Home Page
-  app.get('/', function(req, res){
+/*  app.get('/', function(req, res){
     res.render('index.ejs');
   });
-
+*/
   //==============================================
   //Game Routes
   //==============================================
@@ -21,7 +21,8 @@ module.exports = function(app, passport){
     res.render('designTest2.ejs', {title : "Quiz Game"});
   });
 
-  app.get('/randomquestion', function(req, res){
+  app.get('/', function(req, res){
+    console.log(req.user);
     // Get the count of all quizquestions
     QuizQuestion.count().exec(function (err, count) {
 
@@ -40,13 +41,14 @@ module.exports = function(app, passport){
             //insert the correct answer in a random position in the answers array
             var answerIndex = Math.floor(Math.random() * 12);
             answers.splice(answerIndex, 0, {label: result.label});
-               res.render('randomquestion.ejs',{
+               res.render('index.ejs',{
                 title  : "Quiz Game",
                 category : result.category,
                 question : result.raw,
                 answer   : result.label,
                 answers : answers,
-                answerIndex : answerIndex
+                answerIndex : answerIndex,
+                user : req.user
               });
           
           });
@@ -64,9 +66,10 @@ module.exports = function(app, passport){
   //Login Page
   app.get('/login', function(req, res){
     //render the page, and pass in flash data, if it exists
-    res.render('login.ejs', 
-               {message: req.flash('loginMessage')}
-    );
+    res.render('login.ejs', {
+      message: req.flash('loginMessage'),
+      title: "Quiz Game Login"
+    });
   });
 
   //process the login form
@@ -79,9 +82,10 @@ module.exports = function(app, passport){
   //Signup Page
   app.get('/signup', function(req, res){
     res.render(
-      'signup.ejs',
-      { message: req.flash('signupMessage')}
-    );
+      'signup.ejs',{
+        message: req.flash('signupMessage'),
+        title: "Quiz Game Signup"
+    });
   });
 
   //process the signup form
@@ -96,8 +100,10 @@ module.exports = function(app, passport){
   // use route middleware to verify this (isLoggedIn function)
   app.get('/profile', isLoggedIn, function(req, res){
     res.render(
-      'profile.ejs',
-      { user: req.user} //get the user out of session and pass to template
+      'profile.ejs',{ 
+        user: req.user,
+        title: "Quiz Game - Profile"
+    } //get the user out of session and pass to template
     );
   });
 
