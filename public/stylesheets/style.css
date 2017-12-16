@@ -1,8 +1,82 @@
 body {
-  padding: 50px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
 a {
   color: #00B7FF;
+}
+
+#quizheadername {
+  font: 30px "Impact", Charcoal, sans-serif;
+  color: #442626;
+}
+
+#quizgamescore{
+  font-size:50px;
+  text-align: center;
+}
+
+#quizgamequestion{
+  font-size: 28px;
+  text-align: center;
+  margin: 0 auto;
+  float:none;
+  padding-top: 30px;
+}
+
+#quizgameanswers{
+  float:none;
+  margin: 0 auto;
+  padding-top:30px;
+}
+
+#quizgamecategory{
+  color:green;
+}
+
+.btn-responsive {
+    white-space: normal !important;
+    word-wrap: break-word;
+    font-size:28px;
+}
+
+.divider {
+  position: relative;
+  border-bottom: 3px solid #f0f0f0;
+  margin-bottom: 30px;
+  margin-top: 30px; 
+}
+
+.divider:before {
+  position: absolute;
+  content: '';
+  width: 30px;
+  height: 30px;
+  border: 3px solid #f0f0f0;
+  left: 50%;
+  margin-left: -15px;
+  top: 50%;
+  background: #fff;
+  margin-top: -15px;
+  -webkit-transform: rotate(45deg);
+  -moz-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg); 
+}
+
+.divider:after {
+  position: absolute;
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 3px solid #2ca5b9;
+  left: 50%;
+  margin-left: -10px;
+  top: 50%;
+  background: #2ca5b9;
+  margin-top: -10px;
+  -webkit-transform: rotate(45deg);
+  -moz-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg); 
 }

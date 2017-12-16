@@ -1,0 +1,61 @@
+ <%
+    var name = 'Unknown';
+    var photo = "images/signedout.png";
+  if(locals.user){
+    if(locals.user.facebook.name != null){
+      name = locals.user.facebook.name;
+      photo = locals.user.facebook.photo;
+    }else if(locals.user.twitter.username != null){
+      name = locals.user.twitter.username;
+      photo = locals.user.twitter.photo;
+    }else if(locals.user.google.name != null){
+      name = locals.user.google.name;
+      photo = locals.user.google.photo;
+    }else if(locals.user.local.email != null){
+      name = locals.user.local.email;
+      photo = "images/signedout.png";
+    }
+  }
+ %>
+
+  <div class="container">
+    <nav class="navbar">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a id="quizheadername" href="/">Quiz Game</a>
+        </div>
+        <% if(locals.user){ %>
+        <ul class="nav navbar-nav navbar-right">
+          <li class="dropdown">
+            <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                  <img src="<%= photo %>"></img>
+                <span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                  <li><a>Signed in as <b><%= name %></b></a></li>
+                  <li class="divider"></li>
+                  <li><a href="/">Game</a></li>
+                  <li><a href="/scoreboard">ScoreBoard</a></li>
+                  <li><a href="/profile">Your Profile</a></li>
+                  <li class="divider"></li>
+                  <li><a href="/logout">Sign Out</a></li>
+                </ul>
+            </a>
+          </li>
+        </ul>
+        <% }else{ %>
+        <ul class="nav navbar-nav navbar-right">
+          <li class="dropdown">
+            <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                  <img src="<%= photo %>"></img>
+                <span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                  <li><a href="/login">Login</a></li>
+                </ul>
+            </a>
+          </li>
+        </ul>
+        <% } %>
+      </div>
+    </nav>
+  </div>
+
