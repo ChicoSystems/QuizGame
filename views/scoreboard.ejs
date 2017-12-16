@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head>
+  <% include partials/head %>
+  <style>
+        body        { word-wrap:break-word; }
+  </style>
+</head>
+<body>
+<header>
+  <% include partials/header %>
+</header>
+
+<div class="container">
+
+    <div class="page-header text-center">
+        <h1><span class="fa fa-diamond"></span> Scoreboard</h1>
+    </div>
+
+  <table class="table table-hover">
+  <thead>
+    <tr>
+      <th>Place</th>
+      <th>Username</th>
+      <th>Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">1</th>
+      <td>Mark</td> 
+      <td>544</td>
+    </tr>
+    <tr class="bg-success">
+      <th scope="row">2</th>
+      <td>Jacob</td>
+      <td>32</td>
+    </tr>
+    <tr>
+      <th scope="row">3</th>
+      <td>Larry the Bird</td>
+      <td>-14</td>
+    </tr>
+  </tbody>
+</table>
+
+
+</div>
+
+<footer>
+    <% include partials/footer %>
+  </footer>
+
+</body>
+</html>

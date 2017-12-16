@@ -38,20 +38,35 @@ a {
   display: inline;
 }
 
+#dropdownMenuButton{
+  border:none;
+  background:none;
+  color:blue;
+}
+
+#dropdownMenuButton:focus{
+  outline: 0;
+}
+
+.col-centered{
+    float: none;
+    margin: 0 auto;
+}
+
 .btn-responsive {
     white-space: normal !important;
     word-wrap: break-word;
     font-size:28px;
 }
 
-.divider {
+.mydivider {
   position: relative;
   border-bottom: 3px solid #f0f0f0;
   margin-bottom: 30px;
   margin-top: 30px; 
 }
 
-.divider:before {
+.mydivider:before {
   position: absolute;
   content: '';
   width: 30px;
@@ -68,7 +83,7 @@ a {
   transform: rotate(45deg); 
 }
 
-.divider:after {
+.mydivider:after {
   position: absolute;
   content: '';
   width: 20px;

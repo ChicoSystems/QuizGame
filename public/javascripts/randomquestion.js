@@ -13,7 +13,9 @@ function answerClicked(indexClicked){
   if(indexClicked == answerIndex){
     $('#'+indexClicked).removeClass("btn-primary");
     $('#'+indexClicked).addClass("btn-success"); 
-    $('#'+indexClicked).attr("disabled", "disabled");
+    //$('#'+indexClicked).attr("disabled", "disabled");
+    $('#'+indexClicked).addClass("disabled"); 
+    
   
     //disable all buttons
     for(var i = 0; i < 12; i++){
@@ -39,8 +41,9 @@ function answerClicked(indexClicked){
   }else{
     $('#'+indexClicked).removeClass("btn-primary");
     $('#'+indexClicked).addClass("btn-danger");
-    $('#'+indexClicked).attr("disabled", "disabled");
-    
+    //$('#'+indexClicked).attr("disabled", "disabled");
+    $('#'+indexClicked).addClass("disabled");
+      
     //update score display
     var scoreString = $("#score").text();
     var score = parseFloat(scoreString)-1;
@@ -48,7 +51,8 @@ function answerClicked(indexClicked){
 
     //only make call to server if logged in
     if(loggedIn){
-      $.get("/wronganswer", function(data, status){});
+      $.get("/wronganswer", function(data, status){
+      });
     }
   }
 

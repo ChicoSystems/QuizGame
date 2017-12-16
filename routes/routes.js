@@ -92,6 +92,12 @@ module.exports = function(app, passport){
     });
   });
 
+  app.get('/scoreboard', function(req, res, done){
+    res.render('scoreboard.ejs',{
+      title: "Quiz Game Scoreboard"
+    });
+  });
+
   //==============================================
   //Social Login Routes
   //=============================================
