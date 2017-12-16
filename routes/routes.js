@@ -1,21 +1,80 @@
 // routes/routes.js
+
+// load up the quizQestions model
+var QuizQuestion            = require('../models/quizQuestions');
+
+
 module.exports = function(app, passport){
   //Home Page
-  app.get('/', function(req, res){
+/*  app.get('/', function(req, res){
     res.render('index.ejs');
   });
+*/
+  //==============================================
+  //Game Routes
+  //==============================================
+  app.get('/designtest', function(req, res){
+    res.render('designTest.ejs', {title : "Quiz Game"});
+  });
 
+  app.get('/designtest2', function(req, res){
+    res.render('designTest2.ejs', {title : "Quiz Game"});
+  });
+
+  app.get('/', function(req, res){
+    console.log(req.user);
+    // Get the count of all quizquestions
+    QuizQuestion.count().exec(function (err, count) {
+
+    // Get a random entry
+    var random = Math.floor(Math.random() * count)
+
+    // Again query all users but only fetch one offset by our random #
+    QuizQuestion.findOne().skip(random).exec(
+      function (err, result) {
+        if(!err){
+          var filter = {label: {$ne: result.label}, category: {$eq: result.category}};
+          var fields = {label: 1}; //only pull up the answers
+          QuizQuestion.findRandom( {}, fields, {limit: 11}, function(error, answers){
+             //console.log("error: " + error);
+             //console.log("wronganswers: " + wrongAnswers);
+            //insert the correct answer in a random position in the answers array
+            var answerIndex = Math.floor(Math.random() * 12);
+            answers.splice(answerIndex, 0, {label: result.label});
+               res.render('index.ejs',{
+                title  : "Quiz Game",
+                category : result.category,
+                question : result.raw,
+                answer   : result.label,
+                answers : answers,
+                answerIndex : answerIndex,
+                user : req.user
+              });
+          
+          });
+          
+
+        } 
+      })
+    })
+  });
+
+  //==============================================
+  //Social Login Routes
+  //=============================================
+  
   //Login Page
   app.get('/login', function(req, res){
     //render the page, and pass in flash data, if it exists
-    res.render('login.ejs', 
-               {message: req.flash('loginMessage')}
-    );
+    res.render('login.ejs', {
+      message: req.flash('loginMessage'),
+      title: "Quiz Game Login"
+    });
   });
 
   //process the login form
   app.post('/login', passport.authenticate('local-login',{
-    successRedirect : '/profile',
+    successRedirect : '/',
     failureRedirect : '/login',
     failureFlash     : true
   }));
@@ -23,14 +82,15 @@ module.exports = function(app, passport){
   //Signup Page
   app.get('/signup', function(req, res){
     res.render(
-      'signup.ejs',
-      { message: req.flash('signupMessage')}
-    );
+      'signup.ejs',{
+        message: req.flash('signupMessage'),
+        title: "Quiz Game Signup"
+    });
   });
 
   //process the signup form
   app.post('/signup', passport.authenticate('local-signup', {
-    successRedirect : '/profile', //redirect to secure profile section
+    successRedirect : '/', //redirect to secure profile section
     failureRedirect : '/signup',  //redirect to signup page with error
     failureFlash    : true        //allow flash messages
   }));
@@ -40,8 +100,10 @@ module.exports = function(app, passport){
   // use route middleware to verify this (isLoggedIn function)
   app.get('/profile', isLoggedIn, function(req, res){
     res.render(
-      'profile.ejs',
-      { user: req.user} //get the user out of session and pass to template
+      'profile.ejs',{ 
+        user: req.user,
+        title: "Quiz Game - Profile"
+    } //get the user out of session and pass to template
     );
   });
 
@@ -57,8 +119,8 @@ module.exports = function(app, passport){
   //handle the callback after facebook has authenticated the user
   app.get('/auth/facebook/callback',
     passport.authenticate('facebook', {
-      successRedirect : '/profile',
-      failureRedirect : '/'
+      successRedirect : '/',
+      failureRedirect : '/login'
   }));
 
   //==============
@@ -71,8 +133,8 @@ module.exports = function(app, passport){
   //handle the callback after twitter has auth'd the user
   app.get('/auth/twitter/callback',
     passport.authenticate('twitter', {
-      successRedirect : '/profile',
-      failureRedirect : '/'    
+      successRedirect : '/',
+      failureRedirect : '/login'    
   }));
 
   //=============
@@ -87,8 +149,8 @@ module.exports = function(app, passport){
   //handle the callback after google has auth'd the user
   app.get('/auth/google/callback',
     passport.authenticate('google', {
-      successRedirect : '/profile',
-      failureRedirect : '/'
+      successRedirect : '/',
+      failureRedirect : '/login'
     }
   ));
 
