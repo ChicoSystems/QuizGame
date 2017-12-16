@@ -33,12 +33,18 @@ module.exports = function(app, passport){
     QuizQuestion.findOne().skip(random).exec(
       function (err, result) {
         if(!err){
-          var filter = {label: {$ne: result.label}, category: {$eq: result.category}};
+          var filter = {label: {$ne: result.label}, category: result.category};
+          //var filter = {label: {$ne: result.label}};
+          //var filter = {category : result.category};
           var fields = {label: 1}; //only pull up the answers
-          QuizQuestion.findRandom( {}, fields, {limit: 11}, function(error, answers){
+        QuizQuestion.findRandom( filter, fields, {limit: 11}, function(error, answers){
+        // QuizQuestion.findRandom( filter, fields, {limit: 11}).distinct('label').exec(function(error, answers){
+            if(error)throw error;
              //console.log("error: " + error);
              //console.log("wronganswers: " + wrongAnswers);
             //insert the correct answer in a random position in the answers array
+            
+
             var answerIndex = Math.floor(Math.random() * 12);
             answers.splice(answerIndex, 0, {label: result.label});
                res.render('index.ejs',{
