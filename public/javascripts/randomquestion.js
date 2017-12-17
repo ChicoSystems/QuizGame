@@ -1,7 +1,14 @@
 $(function(){
   console.log("answerIndex: " + answerIndex);
   console.log("loggedIn: " + loggedIn);
+  console.log("answersLength: " + answersLength);
+ 
+  //if answers.length < 12, refresh page, as an error will happen otherwise
+  if(answersLength < 12){
+     loadNewQuestion();
+  }
 });
+
 
 function loadNewQuestion(){
   window.location.href = "/";
@@ -11,7 +18,7 @@ function loadNewQuestion(){
 function answerClicked(indexClicked){
   //alert("clicked answer: " + indexClicked);
   if(indexClicked == answerIndex){
-    $('#'+indexClicked).removeClass("btn-primary");
+    $('#'+indexClicked).removeClass("btn-outline-primary");
     $('#'+indexClicked).addClass("btn-success"); 
     //$('#'+indexClicked).attr("disabled", "disabled");
     $('#'+indexClicked).addClass("disabled"); 
@@ -39,7 +46,7 @@ function answerClicked(indexClicked){
     
  
   }else{
-    $('#'+indexClicked).removeClass("btn-primary");
+    $('#'+indexClicked).removeClass("btn-outline-primary");
     $('#'+indexClicked).addClass("btn-danger");
     //$('#'+indexClicked).attr("disabled", "disabled");
     $('#'+indexClicked).addClass("disabled");

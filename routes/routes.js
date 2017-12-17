@@ -3,18 +3,15 @@
 // load up the quizQestions model
 var QuizQuestion            = require('../models/quizQuestions');
 var Users                   = require('../models/user');
+var JQuestion               = require('../models/jQuestions');
 
 
 module.exports = function(app, passport){
-  //Home Page
-/*  app.get('/', function(req, res){
-    res.render('index.ejs');
-  });
-*/
   //==============================================
   //Game Routes
   //==============================================
   app.get('/designtest', function(req, res){
+    functionTest();
     res.render('designTest.ejs', {title : "Quiz Game"});
   });
 
@@ -22,49 +19,19 @@ module.exports = function(app, passport){
     res.render('designTest2.ejs', {title : "Quiz Game"});
   });
 
+  app.get('/jquestion', function (req, res){
+    renderJQuestion(req, res);
+  });
+
+  //The main page, renders jquestion or quizquestion half time
   app.get('/', function(req, res){
-    console.log(req.user);
-    // Get the count of all quizquestions
-    QuizQuestion.count().exec(function (err, count) {
+    var random = getRandomIntInclusive(0, 1);
 
-    // Get a random entry
-    var random = Math.floor(Math.random() * count)
-
-    // Again query all users but only fetch one offset by our random #
-    QuizQuestion.findOne().skip(random).exec(
-      function (err, result) {
-        if(!err){
-          var filter = {label: {$ne: result.label}, category: result.category};
-          //var filter = {label: {$ne: result.label}};
-          //var filter = {category : result.category};
-          var fields = {label: 1}; //only pull up the answers
-        QuizQuestion.findRandom( filter, fields, {limit: 11}, function(error, answers){
-        // QuizQuestion.findRandom( filter, fields, {limit: 11}).distinct('label').exec(function(error, answers){
-            if(error)throw error;
-            
-            if(req.user)
-               req.session.score = req.user.gameinfo.score;
-            console.log("Answer: " + result.label); 
-        
-            var answerIndex = Math.floor(Math.random() * 12);
-            answers.splice(answerIndex, 0, {label: result.label});
-               res.render('index.ejs',{
-                title  : "Quiz Game",
-                category : result.category,
-                question : result.raw,
-                answer   : result.label,
-                answers : answers,
-                answerIndex : answerIndex,
-                user : req.user,
-                session : req.session
-              });
-          
-          });
-          
-
-        } 
-      })
-    })
+    if(random == 0){
+      renderJQuestion(req, res);
+    }else{
+      renderQuizQuestion(req, res);
+    }
   });
 
   //user clicked on a wrong answer
@@ -324,3 +291,109 @@ module.exports = function(app, passport){
     }
   }
 };
+
+//===============================================
+// Functions used by routes
+//==============================================
+
+function renderQuizQuestion(req, res){
+   // Get the count of all quizquestions
+    QuizQuestion.count().exec(function (err, count) {
+
+    // Get a random entry
+    var random = Math.floor(Math.random() * count)
+
+    // Again query all users but only fetch one offset by our random #
+    QuizQuestion.findOne().skip(random).exec(
+      function (err, result) {
+        if(!err){
+          var filter = {label: {$ne: result.label}, category: result.category};
+          var fields = {label: 1}; //only pull up the answers
+        QuizQuestion.findRandom( filter, fields, {limit: 11}, function(error, answers){
+            if(error)throw error;
+            
+            if(req.user)
+               req.session.score = req.user.gameinfo.score;
+            console.log("Result: " + result);
+
+            //replace any occurance of the string "???" in db, with "
+            result.raw = result.raw.replace(new RegExp("???".replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), "\'");
+        
+            var answerIndex = Math.floor(Math.random() * 12);
+            answers.splice(answerIndex, 0, {label: result.label});
+
+            var questionType = "quizQuestion";
+               res.render('index.ejs',{
+                title  : "Quiz Game",
+                category : result.category,
+                question : result.raw,
+                answer   : result.label,
+                answers : answers,
+                answerIndex : answerIndex,
+                user : req.user,
+                session : req.session,
+                questionType: questionType
+              });
+          });
+        } 
+      })
+    })
+
+}
+
+//Renders a question from the jquestion collection
+function renderJQuestion(req, res){
+  //first we get a random question from the JQuestions    
+    var filter = {subDiscipline: {$exists: true}};
+    var fields = {}; //only pull up the answers
+    JQuestion.findRandom( filter, fields, {limit: 1}, function(err, result){
+      if(err) throw err;
+      //get 11 more answers from the same discipline as the result, where the answer isn't the same
+      var filter = {answer: {$ne: result[0].answer}, subDiscipline: result[0].subDiscipline};
+      //var filter = {discipline: "Science"};
+      //var fields = {}; //we only want to query for random answers
+      var fields = {answer: 1}; //only pull up the answers
+      JQuestion.findRandom(filter, fields, {limit: 11}, function(error, answers){
+        if(error) throw error;
+
+        //if signed in, save score into session
+        if(req.user) req.session.score = req.user.gameinfo.score;
+
+        //splice the correct answer into the list of answers
+        var answerIndex = Math.floor(Math.random() * 12);
+        answers.splice(answerIndex, 0, {answer: result[0].answer});
+
+        //modify answers array, so answer is stored as "label" instead of answer
+        //this is for compatibility with the quizQuestion type
+        var modifiedAnswers = new Array();
+        for(var i = 0; i < answers.length; i++){
+          answers[i]["label"] = answers[i]["answer"];
+        }
+ 
+        console.log(result);
+     
+        var questionType = "jQuestion";
+        res.render('index.ejs', {
+          title: "Quiz Game",
+          category: result[0].category,
+          question: result[0].question,
+          answer  : result[0].answer,
+          answers : answers,
+          answerIndex: answerIndex,
+          user: req.user,
+          session: req.session,
+          questionType: questionType
+        });
+      });
+    });
+}
+
+function functionTest(){
+  console.log("functionTEST CALLED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+}
+
+function getRandomIntInclusive(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min; //The maximum is inclusive and the minimum is inclusive 
+}

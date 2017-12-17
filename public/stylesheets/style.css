@@ -60,7 +60,7 @@ a {
 .btn-responsive {
     white-space: normal !important;
     word-wrap: break-word;
-    font-size:28px;
+    font-size:32px !important;
 }
 
 .mydivider {
@@ -102,4 +102,8 @@ a {
   -moz-transform: rotate(45deg);
   -ms-transform: rotate(45deg);
   transform: rotate(45deg); 
+}
+
+.btn-block{
+  padding: 10% 0;
 }
