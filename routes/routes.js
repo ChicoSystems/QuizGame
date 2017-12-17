@@ -317,7 +317,7 @@ function renderQuizQuestion(req, res){
             console.log("Result: " + result);
 
             //replace any occurance of the string "???" in db, with "
-            result.raw = result.raw.replace(new RegExp("???".replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), "\"");
+            result.raw = result.raw.replace(new RegExp("???".replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), "\'");
         
             var answerIndex = Math.floor(Math.random() * 12);
             answers.splice(answerIndex, 0, {label: result.label});
