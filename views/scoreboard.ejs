@@ -32,21 +32,39 @@
     <%
       var username = "";
       var photo = "/images/signedout.png";
+      var isme = false;
       if(results[i].facebook.name != null){
         username = results[i].facebook.name;
         photo = results[i].facebook.photo;
+        if(locals.user && locals.user.facebook.name == username 
+           && locals.user.gameinfo.score == results[i].gameinfo.score)
+          isme = true;
       }else if(results[i].twitter.username != null){
         username = results[i].twitter.username;
         photo = results[i].twitter.photo;
+        if(locals.user && locals.user.twitter.username == username 
+           && locals.user.gameinfo.score == results[i].gameinfo.score)
+          isme = true;
       }else if(results[i].google.name != null){
         username = results[i].google.name;
         photo = results[i].google.photo;
+        if(locals.user && locals.user.google.name == username 
+           && locals.user.gameinfo.score == results[i].gameinfo.score)
+          isme = true;
       }else if(results[i].local.email != null){
         username = results[i].local.email;
         photo = "/images/signedout.png";
+        if(locals.user && locals.user.local.email == username 
+           && locals.user.gameinfo.score == results[i].gameinfo.score)
+          isme = true;
       }
+      
+      var ismeclass = "";
+      if(isme)
+        var ismeclass = "table-success";
+        
     %>
-      <tr>
+      <tr class="<%= ismeclass %>">
         <th scope="row"><%=i+1%></th>
         <td><%= username %></td> 
         <td><img src="<%= photo %>" height="30px" width="30px"></img></td> 
