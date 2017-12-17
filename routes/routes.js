@@ -105,6 +105,20 @@ module.exports = function(app, passport){
     });
   });
 
+  //resets the score of the signed in user
+  app.get('/resetscore', function(req, res, done){
+    if(req.user){
+      req.session.score = 0;
+      req.user.gameinfo.score = 0;
+      
+      req.user.save();
+      res.send({
+        message: "Score Reset",
+        score  : req.session.score
+      });
+    }
+  });
+
   //==============================================
   //Social Login Routes
   //=============================================

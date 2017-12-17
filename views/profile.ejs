@@ -2,6 +2,7 @@
 <html>
 <head>
   <% include partials/head %>
+  <script src="/javascripts/profile.js"></script>
   <style>
         body        { word-wrap:break-word; }
   </style>
@@ -13,12 +14,52 @@
 
 <div class="container">
 
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="myModalLabel">WARNING</h4>
+      </div>
+      <div class="modal-body">
+        <b> This will reset your score to 0, You WILL lose all progress!</b>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="resetClicked()" data-dismiss="modal">Reset Score</button>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+</div>
+
+<div class="container">
+
     <div class="page-header text-center">
         <h1><span class="fa fa-anchor"></span> Profile Page</h1>
     </div>
-
   <div class="mydivider"></div>
+
+  <div class="jumbotron">
+    <h2><span class="fa fa-cog"></span> Settings </h2>
+    <div class="row">
+      <div class="card col-sm-6">
+        <div class="card-block">
+          <h3 class="card-title"><span class="fa fa-rotate-left"></span> Reset Score</h3>
+          <!-- Button trigger modal -->
+          <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#myModal">
+            Reset Score
+          </button>
+          <div class="alert alert-danger displayNone" id="resetmessage"></div> 
+        </div>
+      </div>
+    </div>
+  </div>
+
 <div class="jumbotron">
+  <h2><span class="fa fa-sign-in"></span> Login Info </h2>
 
     <div class="row">
 
