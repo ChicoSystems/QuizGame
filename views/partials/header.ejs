@@ -27,7 +27,7 @@
         <% if(locals.user){ %>
           <div class="dropdown">
             <button class="dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <img src="<%= photo %>"><span class="caret"></span></img>
+              <img src="<%= photo %>" height="60px" width="60px"><span class="caret"></span></img>
             </button>
             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
               <a class="dropdown-item">Signed in as <b> <%= name %></b></a>
@@ -44,7 +44,7 @@
         <% }else{ %>
           <div class="dropdown">
             <button class="dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <img src="/images/signedout.png"><span class="caret"></span></img>
+              <img src="/images/signedout.png" height="60px" width="60px"><span class="caret"></span></img>
             </button>
             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
               <a class="dropdown-item" href="/login">Login</a>

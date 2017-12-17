@@ -21,26 +21,39 @@
   <thead>
     <tr>
       <th>Place</th>
+      <th>Avatar</th>
       <th>Username</th>
       <th>Score</th>
     </tr>
   </thead>
   <tbody>
-    <tr>
-      <th scope="row">1</th>
-      <td>Mark</td> 
-      <td>544</td>
-    </tr>
-    <tr class="bg-success">
-      <th scope="row">2</th>
-      <td>Jacob</td>
-      <td>32</td>
-    </tr>
-    <tr>
-      <th scope="row">3</th>
-      <td>Larry the Bird</td>
-      <td>-14</td>
-    </tr>
+
+    <% for(var i =0; i < results.length; i++){ %>
+    <%
+      var username = "";
+      var photo = "/images/signedout.png";
+      if(results[i].facebook.name != null){
+        username = results[i].facebook.name;
+        photo = results[i].facebook.photo;
+      }else if(results[i].twitter.username != null){
+        username = results[i].twitter.username;
+        photo = results[i].twitter.photo;
+      }else if(results[i].google.name != null){
+        username = results[i].google.name;
+        photo = results[i].google.photo;
+      }else if(results[i].local.email != null){
+        username = results[i].local.email;
+        photo = "/images/signedout.png";
+      }
+    %>
+      <tr>
+        <th scope="row"><%=i+1%></th>
+        <td><%= username %></td> 
+        <td><img src="<%= photo %>" height="30px" width="30px"></img></td> 
+        <td><%= results[i].gameinfo.score %></td> 
+      </tr>
+    <% } %>
+  
   </tbody>
 </table>
 

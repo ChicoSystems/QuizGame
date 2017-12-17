@@ -2,6 +2,7 @@
 
 // load up the quizQestions model
 var QuizQuestion            = require('../models/quizQuestions');
+var Users                   = require('../models/user');
 
 
 module.exports = function(app, passport){
@@ -93,8 +94,13 @@ module.exports = function(app, passport){
   });
 
   app.get('/scoreboard', function(req, res, done){
-    res.render('scoreboard.ejs',{
-      title: "Quiz Game Scoreboard"
+    Users.find({}, {}, ).sort('-gameinfo.score').exec(function(err, results){
+      if(err) throw err;
+
+      res.render('scoreboard.ejs',{
+        title: "Quiz Game Scoreboard",
+        results: results
+      });
     });
   });
 
