@@ -99,7 +99,8 @@ module.exports = function(app, passport){
 
       res.render('scoreboard.ejs',{
         title: "Quiz Game Scoreboard",
-        results: results
+        results: results,
+        user: req.user
       });
     });
   });
