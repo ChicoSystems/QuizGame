@@ -1,7 +1,14 @@
 $(function(){
   console.log("answerIndex: " + answerIndex);
   console.log("loggedIn: " + loggedIn);
+  console.log("answersLength: " + answersLength);
+ 
+  //if answers.length < 12, refresh page, as an error will happen otherwise
+  if(answersLength < 12){
+     loadNewQuestion();
+  }
 });
+
 
 function loadNewQuestion(){
   window.location.href = "/";

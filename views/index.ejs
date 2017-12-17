@@ -8,6 +8,11 @@
   <% } else{%>
     <script>var loggedIn = false;</script>
   <% } %>
+  <script>
+    //pass answers.length from ejs to javascript, which will refresh page if there is not 12 answers
+    var answersLength = <%= answers.length %>
+  </script>
+
   <script src="/javascripts/randomquestion.js"></script>
 </head>
 <body>
@@ -33,6 +38,8 @@
     </p>
   </div>
 
+<% if(answers.length == 12){ %>
+
   <div class="container col-md-12" id="quizgameanswers">
     <div class="btn-group-lg btn-group-justified row">
       <% var i = 0 %>
@@ -51,6 +58,8 @@
       <% } %> 
     </div>
   </div>
+
+<% }//end answers.length %>
 
   <footer>
     <% include partials/footer %>

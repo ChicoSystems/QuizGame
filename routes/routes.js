@@ -46,7 +46,7 @@ module.exports = function(app, passport){
           answers[i]["label"] = answers[i]["answer"];
         }
  
-        console.log("answers: " + answers);
+        console.log(result);
      
         var questionType = "jQuestion";
         res.render('index.ejs', {
