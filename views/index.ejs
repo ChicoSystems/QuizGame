@@ -3,6 +3,11 @@
 <head>
   <% include partials/head %>
   <script>var answerIndex = <%= answerIndex %></script>
+  <% if(locals.user){ %>
+    <script>var loggedIn = true;</script>
+  <% } else{%>
+    <script>var loggedIn = false;</script>
+  <% } %>
   <script src="/javascripts/randomquestion.js"></script>
 </head>
 <body>
@@ -10,9 +15,10 @@
   <% include partials/header %>
 </header>
 
+
   <div class="container" id="quizgamescore">
     <% if(locals.user){%>
-    Score 125
+     Score <div id="score"><%= locals.session.score %></div>
     <% }else{ %>
     <a href="/login">Login To Keep Score</a>
     <% } %>
@@ -27,21 +33,21 @@
     </p>
   </div>
 
-  <div class="container col-md-8" id="quizgameanswers">
-    <div class="btn-group btn-group-justified">
+  <div class="container col-md-12" id="quizgameanswers">
+    <div class="btn-group-lg btn-group-justified row">
       <% var i = 0 %>
       <% for(i = i; i < 4; i++){ %>
-        <a href="#" onclick="answerClicked('<%= i %>')" id="<%= i %>" class="btn btn-primary btn-responsive"><%= answers[i].label %></a>
+        <a href="#" onclick="answerClicked('<%= i %>')" id="<%= i %>" class="btn btn-primary col-md-3 btn-responsive"><%= answers[i].label %></a>
       <% } %> 
     </div> 
-    <div class="btn-group btn-group-justified">
+    <div class="btn-group-lg btn-group-justified row">
       <% for(i = i; i < 8; i++){ %>
-        <a href="#" onclick="answerClicked('<%= i %>')" id="<%= i %>" class="btn btn-primary btn-responsive"><%= answers[i].label %></a>
+        <a href="#" onclick="answerClicked('<%= i %>')" id="<%= i %>" class="btn btn-primary col-md-3 btn-responsive"><%= answers[i].label %></a>
       <% } %> 
     </div> 
-    <div class="btn-group btn-group-justified">
+    <div class="btn-group-lg btn-group-justified row">
       <% for(i = i; i < 12; i++){ %>
-        <a href="#" onclick="answerClicked('<%= i %>')" id="<%= i %>" class="btn btn-primary btn-responsive"><%= answers[i].label %></a>
+        <a href="#" onclick="answerClicked('<%= i %>')" id="<%= i %>" class="btn btn-primary col-md-3 btn-responsive"><%= answers[i].label %></a>
       <% } %> 
     </div>
   </div>

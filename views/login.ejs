@@ -7,11 +7,11 @@
 <header>
   <% include partials/header %>
 </header>
-<div class="container">
 
-<div class="col-sm-6 col-sm-offset-3">
+<div class="col-md-6 col-centered">
 
     <h1><span class="fa fa-sign-in"></span> Local Login</h1>
+    <div class="jumbotron">
 
     <!-- show any messages that come back with authentication -->
     <% if (message.length > 0) { %>
@@ -31,9 +31,9 @@
 
         <button type="submit" class="btn btn-primary btn-lg">Login</button>
     </form>
+    </div>
 
-
-    <div class="divider"></div>
+    <div class="mydivider"></div>
 
 
     <h1><span class="fa fa-sign-in"></span> Social Login</h1>
@@ -50,7 +50,6 @@
 
 </div>
 
-</div>
 
   <footer>
     <% include partials/footer %>

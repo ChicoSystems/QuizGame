@@ -25,35 +25,34 @@
           <a id="quizheadername" href="/">Quiz Game</a>
         </div>
         <% if(locals.user){ %>
-        <ul class="nav navbar-nav navbar-right">
-          <li class="dropdown">
-            <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                  <img src="<%= photo %>"></img>
-                <span class="caret"></span></a>
-                <ul class="dropdown-menu">
-                  <li><a>Signed in as <b><%= name %></b></a></li>
-                  <li class="divider"></li>
-                  <li><a href="/">Game</a></li>
-                  <li><a href="/scoreboard">ScoreBoard</a></li>
-                  <li><a href="/profile">Your Profile</a></li>
-                  <li class="divider"></li>
-                  <li><a href="/logout">Sign Out</a></li>
-                </ul>
-            </a>
-          </li>
-        </ul>
+          <div class="dropdown">
+            <button class="dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <img src="<%= photo %>" height="60px" width="60px"><span class="caret"></span></img>
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+              <a class="dropdown-item">Signed in as <b> <%= name %></b></a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="/">Game</a>
+              <a class="dropdown-item" href="/scoreboard">Scoreboard</a>
+              <a class="dropdown-item" href="/profile">Your Profile</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="/logout">Logout</a>
+              
+            </ul>
+          </div>
+
         <% }else{ %>
-        <ul class="nav navbar-nav navbar-right">
-          <li class="dropdown">
-            <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                  <img src="<%= photo %>"></img>
-                <span class="caret"></span></a>
-                <ul class="dropdown-menu">
-                  <li><a href="/login">Login</a></li>
-                </ul>
-            </a>
-          </li>
-        </ul>
+          <div class="dropdown">
+            <button class="dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <img src="/images/signedout.png" height="60px" width="60px"><span class="caret"></span></img>
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+              <a class="dropdown-item" href="/login">Login</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="/scoreboard">Scoreboard</a>
+            </ul>   
+          </div>
+
         <% } %>
       </div>
     </nav>

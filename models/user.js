@@ -30,6 +30,9 @@ var userSchema = mongoose.Schema({
         email        : String,
         name         : String,
         photo        : String
+    },
+    gameinfo        : {
+      score         : {type: Number, default: 0}
     }
 
 });

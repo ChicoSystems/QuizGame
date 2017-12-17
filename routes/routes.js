@@ -2,6 +2,7 @@
 
 // load up the quizQestions model
 var QuizQuestion            = require('../models/quizQuestions');
+var Users                   = require('../models/user');
 
 
 module.exports = function(app, passport){
@@ -33,12 +34,18 @@ module.exports = function(app, passport){
     QuizQuestion.findOne().skip(random).exec(
       function (err, result) {
         if(!err){
-          var filter = {label: {$ne: result.label}, category: {$eq: result.category}};
+          var filter = {label: {$ne: result.label}, category: result.category};
+          //var filter = {label: {$ne: result.label}};
+          //var filter = {category : result.category};
           var fields = {label: 1}; //only pull up the answers
-          QuizQuestion.findRandom( {}, fields, {limit: 11}, function(error, answers){
-             //console.log("error: " + error);
-             //console.log("wronganswers: " + wrongAnswers);
-            //insert the correct answer in a random position in the answers array
+        QuizQuestion.findRandom( filter, fields, {limit: 11}, function(error, answers){
+        // QuizQuestion.findRandom( filter, fields, {limit: 11}).distinct('label').exec(function(error, answers){
+            if(error)throw error;
+            
+            if(req.user)
+               req.session.score = req.user.gameinfo.score;
+            console.log("Answer: " + result.label); 
+        
             var answerIndex = Math.floor(Math.random() * 12);
             answers.splice(answerIndex, 0, {label: result.label});
                res.render('index.ejs',{
@@ -48,7 +55,8 @@ module.exports = function(app, passport){
                 answer   : result.label,
                 answers : answers,
                 answerIndex : answerIndex,
-                user : req.user
+                user : req.user,
+                session : req.session
               });
           
           });
@@ -57,6 +65,58 @@ module.exports = function(app, passport){
         } 
       })
     })
+  });
+
+  //user clicked on a wrong answer
+  app.get('/wronganswer', function(req, res, done){
+    //we decrease the score in the session and
+    //update that score to the db
+    req.session.score = req.session.score - 1;
+    req.user.gameinfo.score = req.session.score;
+    req.user.save();
+    res.send({
+      message: "ok",
+      score  : req.session.score
+    });
+  });
+
+  //user clicked on a right answer
+  app.get('/rightanswer', function(req, res, done){
+    //we decrease the score in the session and
+    //update that score to the db
+    req.session.score = req.session.score + 5;
+    req.user.gameinfo.score = req.session.score;
+    req.user.save();
+    res.send({
+      message: "ok",
+      score  : req.session.score
+    });
+  });
+
+  app.get('/scoreboard', function(req, res, done){
+    Users.find({}, {}, ).sort('-gameinfo.score').exec(function(err, results){
+      if(err) throw err;
+
+      res.render('scoreboard.ejs',{
+        title: "Quiz Game Scoreboard",
+        results: results,
+        user: req.user
+      });
+    });
+  });
+
+  //resets the score of the signed in user
+  app.get('/resetscore', function(req, res, done){
+    if(req.user){
+      req.session.score = 0;
+      req.user.gameinfo.score = 0;
+      
+      req.user.save();
+      res.send({
+        message: "Score Reset",
+        score  : req.session.score
+      });
+    }
   });
 
   //==============================================
