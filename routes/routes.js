@@ -3,14 +3,10 @@
 // load up the quizQestions model
 var QuizQuestion            = require('../models/quizQuestions');
 var Users                   = require('../models/user');
+var JQuestion               = require('../models/jQuestions');
 
 
 module.exports = function(app, passport){
-  //Home Page
-/*  app.get('/', function(req, res){
-    res.render('index.ejs');
-  });
-*/
   //==============================================
   //Game Routes
   //==============================================
@@ -20,6 +16,54 @@ module.exports = function(app, passport){
 
   app.get('/designtest2', function(req, res){
     res.render('designTest2.ejs', {title : "Quiz Game"});
+  });
+
+  app.get('/jquestion', function (req, res){
+    //first we get a random question from the JQuestions    
+    var filter = {subDiscipline: {$exists: true}};
+    var fields = {}; //only pull up the answers
+    JQuestion.findRandom( filter, fields, {limit: 1}, function(err, result){
+      if(err) throw err;
+      //get 11 more answers from the same discipline as the result, where the answer isn't the same
+      var filter = {answer: {$ne: result[0].answer}, subDiscipline: result[0].subDiscipline};
+      //var filter = {discipline: "Science"};
+      //var fields = {}; //we only want to query for random answers
+      var fields = {answer: 1}; //only pull up the answers
+      JQuestion.findRandom(filter, fields, {limit: 11}, function(error, answers){
+        if(error) throw error;
+
+        //if signed in, save score into session
+        if(req.user) req.session.score = req.user.gameinfo.score;
+
+        //splice the correct answer into the list of answers
+        var answerIndex = Math.floor(Math.random() * 12);
+        answers.splice(answerIndex, 0, {answer: result[0].answer});
+
+        //modify answers array, so answer is stored as "label" instead of answer
+        //this is for compatibility with the quizQuestion type
+        var modifiedAnswers = new Array();
+        for(var i = 0; i < answers.length; i++){
+          answers[i]["label"] = answers[i]["answer"];
+        }
+ 
+        console.log("answers: " + answers);
+     
+        var questionType = "jQuestion";
+        res.render('index.ejs', {
+          title: "Quiz Game",
+          category: result[0].category,
+          question: result[0].question,
+          answer  : result[0].answer,
+          answers : answers,
+          answerIndex: answerIndex,
+          user: req.user,
+          session: req.session,
+          questionType: questionType
+        });
+
+//        res.send({result: result, discipline: result.discipline, answers: answers });
+      });
+    });
   });
 
   app.get('/', function(req, res){
@@ -35,11 +79,8 @@ module.exports = function(app, passport){
       function (err, result) {
         if(!err){
           var filter = {label: {$ne: result.label}, category: result.category};
-          //var filter = {label: {$ne: result.label}};
-          //var filter = {category : result.category};
           var fields = {label: 1}; //only pull up the answers
         QuizQuestion.findRandom( filter, fields, {limit: 11}, function(error, answers){
-        // QuizQuestion.findRandom( filter, fields, {limit: 11}).distinct('label').exec(function(error, answers){
             if(error)throw error;
             
             if(req.user)
@@ -48,6 +89,8 @@ module.exports = function(app, passport){
         
             var answerIndex = Math.floor(Math.random() * 12);
             answers.splice(answerIndex, 0, {label: result.label});
+
+            var questionType = "quizQuestion";
                res.render('index.ejs',{
                 title  : "Quiz Game",
                 category : result.category,
@@ -56,12 +99,10 @@ module.exports = function(app, passport){
                 answers : answers,
                 answerIndex : answerIndex,
                 user : req.user,
-                session : req.session
+                session : req.session,
+                questionType: questionType
               });
-          
           });
-          
-
         } 
       })
     })
