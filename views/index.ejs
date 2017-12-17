@@ -29,7 +29,7 @@
     <% } %>
   </div>
 
-  <div class="container col-sm-8 col-sm-offset-1" id="quizgamequestion">
+  <div class="container col-sm-10 col-sm-offset-1" id="quizgamequestion">
     <p id="quizgamecategory">
       <%= category %>
     </p>
@@ -44,17 +44,17 @@
     <div class="btn-group-lg btn-group-justified row">
       <% var i = 0 %>
       <% for(i = i; i < 4; i++){ %>
-        <a href="#" onclick="answerClicked('<%= i %>')" id="<%= i %>" class="btn btn-primary col-md-3 btn-responsive"><%= answers[i].label %></a>
+        <a href="#" onclick="answerClicked('<%= i %>')" id="<%= i %>" class="btn btn-outline-primary col-md-3 btn-responsive"><%= answers[i].label %></a>
       <% } %> 
     </div> 
     <div class="btn-group-lg btn-group-justified row">
       <% for(i = i; i < 8; i++){ %>
-        <a href="#" onclick="answerClicked('<%= i %>')" id="<%= i %>" class="btn btn-primary col-md-3 btn-responsive"><%= answers[i].label %></a>
+        <a href="#" onclick="answerClicked('<%= i %>')" id="<%= i %>" class="btn btn-outline-primary col-md-3 btn-responsive"><%= answers[i].label %></a>
       <% } %> 
     </div> 
     <div class="btn-group-lg btn-group-justified row">
       <% for(i = i; i < 12; i++){ %>
-        <a href="#" onclick="answerClicked('<%= i %>')" id="<%= i %>" class="btn btn-primary col-md-3 btn-responsive"><%= answers[i].label %></a>
+        <a href="#" onclick="answerClicked('<%= i %>')" id="<%= i %>" class="btn btn-outline-primary col-md-3 btn-responsive"><%= answers[i].label %></a>
       <% } %> 
     </div>
   </div>
