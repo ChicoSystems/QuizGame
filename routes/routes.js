@@ -4,6 +4,7 @@
 var QuizQuestion            = require('../models/quizQuestions');
 var Users                   = require('../models/user');
 var JQuestion               = require('../models/jQuestions');
+var ObjectId                = require('mongoose').Types.ObjectId;
 
 
 module.exports = function(app, passport){
@@ -88,6 +89,96 @@ module.exports = function(app, passport){
         score  : req.session.score
       });
     }
+  });
+
+  //=============================================
+  // Admin Routes
+  //============================================
+  
+  //admin page
+  app.get('/admin', function(req, res){
+    //check if user is an admin
+    if(req.user && req.user.permissions.admin){
+      res.render('admin.ejs', {
+        title: "Quiz Game Admin",
+        user: req.user
+      });
+    }else{
+      res.redirect('/login');
+    }
+  });
+
+  //gets a quiz question of given id, sends it to frontend
+  app.get('/quizquestion/:id', function(req, res){
+    QuizQuestion.find({id: req.params.id}, function(err, result){
+      if(err){
+        res.send({status: "error", message: err});
+      }else if(result == ""){
+        res.send({status: "error", message: "Question :"+req.params.id+" does not exist!"});
+      }else{
+        //console.log("question: " + result);
+        res.send({status: "success", message: "Success getting question: " + req.params.id, question: result});
+      }
+    });
+    
+  });
+
+
+  app.get('/jquestiondisplay/:id', function(req, res){
+    console.log("id: " + req.params.id);
+    if(req.params.id == "" || !ObjectId.isValid(req.params.id)){
+         res.send({status: "error", message: "Question: "+req.params.id+" does not exist!"});
+      return 0;
+    }
+    var query = { _id: new ObjectId(req.params.id) };
+    JQuestion.find(query, function(err, result){
+      if(err){
+         res.send({status: "error", message: err});
+      }else if(result == ""){
+         res.send({status: "error", message: "Question: "+req.params.id+" does not exist!"});
+      }else{ 
+        res.send({status: "success", message: "Success getting question: " + req.params.id, question: result});
+      } 
+    });
+  });
+
+
+  app.post('/quizquestionedit', function(req, res){
+    if(req.user && req.user.permissions.admin && req.user.permissions.editQuestions){
+      //update the db
+      var query = {id: req.body.id};
+      QuizQuestion.findOne(query, function(err, doc){
+        doc.category = req.body.category;
+        doc.raw = req.body.raw;
+        doc.label = req.body.label;
+        doc.save();
+        res.send({status: "success", message: "Question was Edited"});
+      });
+    }else{
+      //user does not have permission
+      res.send({status: "error", message: "User does not have permissions to edit questions!"});
+    }
+
+  });
+
+  app.post('/jquestionedit', function(req, res){
+    console.log("id: " + req.body.id);
+    if(req.user && req.user.permissions.admin && req.user.permissions.editQuestions){
+      //update the db
+      var query = { _id: new ObjectId(req.body.id) };
+      JQuestion.findOne(query, function(err, doc){
+      console.log("doc " + doc);
+        doc.category = req.body.category;
+        doc.question = req.body.question;
+        doc.answer = req.body.answer;
+        doc.save();
+        res.send({status: "success", message: "Question was Edited"});
+      });
+    }else{
+      //user does not have permission
+      res.send({status: "error", message: "User does not have permissions to edit questions!"});
+    }
+
   });
 
   //==============================================
