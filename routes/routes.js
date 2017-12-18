@@ -16,7 +16,7 @@ module.exports = function(app, passport){
   });
 
   app.get('/privacy', function(req, res){
-    res.render('designTest.ejs', {title : "Quiz Game"});
+    res.render('privacy.ejs', {title : "Quiz Game - Privacy"});
   });
 
   app.get('/designtest2', function(req, res){
