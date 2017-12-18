@@ -15,6 +15,10 @@ module.exports = function(app, passport){
     res.render('designTest.ejs', {title : "Quiz Game"});
   });
 
+  app.get('/privacy', function(req, res){
+    res.render('designTest.ejs', {title : "Quiz Game"});
+  });
+
   app.get('/designtest2', function(req, res){
     res.render('designTest2.ejs', {title : "Quiz Game"});
   });
