@@ -8,6 +8,7 @@ var bcrypt   = require('bcrypt-nodejs');
 // define the schema for our user model
 var quizQuestionsSchema = mongoose.Schema({
 
+    id               : Number, //the number id
     label            : String, //The answer to the question
     category         : String, //The category of the question
     raw              : String  //The Question itself
