@@ -35,6 +35,7 @@ var userSchema = mongoose.Schema({
       score         : {type: Number, default: 0}
     },
     permissions     : {
+      admin         : {type: Boolean, default: false},
       editQuestions : {type: Boolean, default: false}
     }
 

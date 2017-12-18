@@ -35,6 +35,9 @@
               <a class="dropdown-item" href="/">Game</a>
               <a class="dropdown-item" href="/scoreboard">Scoreboard</a>
               <a class="dropdown-item" href="/profile">Your Profile</a>
+            <% if(locals.user.permissions.admin){ %>
+              <a class="dropdown-item" href="/admin">Admin</a>
+            <% } %>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="/logout">Logout</a>
               

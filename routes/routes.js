@@ -90,6 +90,20 @@ module.exports = function(app, passport){
     }
   });
 
+  //=============================================
+  // Admin Routes
+  //============================================
+  
+  //admin page
+  app.get('/admin', function(req, res){
+    //check if user is an admin
+    if(req.user && req.user.permissions.admin){
+      res.send("user is an admin");
+    }else{
+      res.send("user NOT admin");
+    }
+  });
+
   //==============================================
   //Social Login Routes
   //=============================================
