@@ -18,7 +18,7 @@
 <div class="container">
 
 
-<!-- Modal -->
+<!-- Quiz Question Modal -->
 <div class="modal fade" id="editQuizQuestionModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -26,11 +26,30 @@
         <h4 class="modal-title" id="myModalLabel">WARNING</h4>
       </div>
       <div class="modal-body">
-        <b> This will EDIT the selected question, IT IS UNREVERSABLE!!</b>
+        <b> This will EDIT the selected quiz question, IT IS UNREVERSABLE!!</b>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-danger" onclick="editQuizQuestionClicked()" data-dismiss="modal">Perform Edit</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Quiz Question Modal -->
+<div class="modal fade" id="editJQuestionModal" tabindex="-1" role="dialog" aria-labelledby="myJModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="myJModalLabel">WARNING</h4>
+      </div>
+      <div class="modal-body">
+        <b> This will EDIT the selected j question, IT IS UNREVERSABLE!!</b>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="editJQuestionClicked()" data-dismiss="modal">Perform Edit</button>
       </div>
     </div>
   </div>
@@ -73,6 +92,35 @@
           </form>
           
           <div class="alert alert-danger displayNone" id="quizQuestionMessage"></div> 
+        </div>
+      </div>
+    </div>
+    <br>
+    <!-- jquestion section -->
+    <div class="row">
+      <div class="card col-lg-12">
+        <div class="card-block">
+          <h3 class="card-title"><span class="fa fa-edit"></span> J Collection</h3>
+          <form class="form-inline col-lg-12" id="jQuestionForm" style="">
+            <label class="mr-sm-2" for="jIdInput">Question ID</label>
+            <input class="form-control col-lg-4" id="jIdInput" type="text"></input>
+            <button type="button" class="btn btn-primary" onclick="displayJQuestionClicked()">
+              Display Question
+            </button>
+          </form>
+          <form class="col-lg-12" id="jQuestionEditForm">
+            <label class="mr-sm-2" for="jQuestionCategory">Category</label>
+            <input class="form-control col-sm-4" id="jQuestionCategory" type="text"></input>
+            <label class="mr-sm-2" for="jQuestionAnswer">Answer</label>
+            <input class="form-control col-sm-4" id="jQuestionAnswer" type="text"></input>
+            <label class="mr-sm-2" for="jQuestionQuestion">Question</label>
+            <textarea class="form-control col-lg-12" id="jQuestionQuestion" type="text" value=""></textarea>
+            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#editJQuestionModal">
+              Submit Edit
+            </button>
+          </form>
+
+          <div class="alert alert-danger displayNone" id="jQuestionMessage"></div>
         </div>
       </div>
     </div>
