@@ -48,6 +48,17 @@ a {
   outline: 0;
 }
 
+#quizQuestionQuestion {
+  /* margin:0px 0px; this is redundant anyways since its specified below*/
+  padding-top:10px;
+  padding-bottom:25px; /* increased! */
+  /* height:16px; */
+  /* line-height:16px; */
+  width:100%; /* changed from 96 to 100% */
+  display:block;
+  /* margin:0px auto; not needed since i have width 100% now */
+}
+
 .displayNone{
   display:none;
 }

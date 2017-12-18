@@ -98,10 +98,51 @@ module.exports = function(app, passport){
   app.get('/admin', function(req, res){
     //check if user is an admin
     if(req.user && req.user.permissions.admin){
-      res.send("user is an admin");
+      res.render('admin.ejs', {
+        title: "Quiz Game Admin",
+        user: req.user
+      });
     }else{
-      res.send("user NOT admin");
+      res.redirect('/login');
     }
+  });
+
+  //gets a quiz question of given id, sends it to frontend
+  app.get('/quizquestion/:id', function(req, res){
+    QuizQuestion.find({id: req.params.id}, function(err, result){
+      if(err){
+        res.send({status: "error", message: err});
+      }else if(result == ""){
+        res.send({status: "error", message: "Question :"+req.params.id+" does not exist!"});
+      }else{
+        //console.log("question: " + result);
+        res.send({status: "success", message: "success getting question: " + req.params.id, question: result});
+      }
+    });
+    
+  });
+
+  app.post('/quizquestionedit', function(req, res){
+    if(req.user && req.user.permissions.admin && req.user.permissions.editQuestions){
+      console.log("id: " + req.body.id);
+      console.log("category: " + req.body.category);
+      console.log("raw: " + req.body.raw);
+      console.log("label: " + req.body.label);
+    
+      //update the db
+      var query = {id: req.body.id};
+      QuizQuestion.findOne(query, function(err, doc){
+        doc.category = req.body.category;
+        doc.raw = req.body.raw;
+        doc.label = req.body.label;
+        doc.save();
+        res.send({status: "success", message: "Question was Edited"});
+      });
+    }else{
+      //user does not have permission
+      res.send({status: "error", message: "User does not have permissions to edit questions!"});
+    }
+
   });
 
   //==============================================

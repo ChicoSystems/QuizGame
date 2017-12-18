@@ -1,0 +1,91 @@
+<!doctype html>
+<% if(user.permissions.admin){ %>
+
+<html>
+<head>
+  <% include partials/head %>
+  <script src="/javascripts/admin.js"></script>
+  <style>
+        body        { word-wrap:break-word; }
+  </style>
+</head>
+<body>
+<header>
+  <% include partials/header %>
+</header>
+
+<% if(user.permissions.editQuestions) { %>
+<div class="container">
+
+
+<!-- Modal -->
+<div class="modal fade" id="editQuizQuestionModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="myModalLabel">WARNING</h4>
+      </div>
+      <div class="modal-body">
+        <b> This will EDIT the selected question, IT IS UNREVERSABLE!!</b>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="editQuizQuestionClicked()" data-dismiss="modal">Perform Edit</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<% } %>
+
+
+<div class="container">
+
+    <div class="page-header text-center">
+        <h1><span class="fa fa-cogs"></span> Admin</h1>
+    </div>
+  <div class="mydivider"></div>
+
+  <% if(user.permissions.editQuestions) { %>
+  <div class="jumbotron">
+    <h2><span class="fa fa-question"></span> Question Edit</h2>
+    <div class="row">
+      <div class="card col-lg-12">
+        <div class="card-block">
+          <h3 class="card-title"><span class="fa fa-edit"></span> Quiz Collection</h3>
+          <form class="form-inline col-lg-12" id="quizQuestionForm" style="">
+            <label class="mr-sm-2" for="idInput">Question ID</label>
+            <input class="form-control col-sm-1" id="idInput" type="number"></input>
+            <button type="button" class="btn btn-primary" onclick="displayQuizQuestionClicked()">
+              Display Question
+            </button>
+          </form>
+          <form class="col-lg-12" id="quizQuestionEditForm">
+            <label class="mr-sm-2" for="quizQuestionCategory">Category</label>
+            <input class="form-control col-sm-4" id="quizQuestionCategory" type="text"></input>
+            <label class="mr-sm-2" for="quizQuestionAnswer">Answer</label>
+            <input class="form-control col-sm-4" id="quizQuestionAnswer" type="text"></input>
+            <label class="mr-sm-2" for="quizQuestionQuestion">Question</label>
+            <textarea class="form-control col-lg-12" id="quizQuestionQuestion" type="text" value=""></textarea>
+            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#editQuizQuestionModal">
+              Submit Edit
+            </button>
+          </form>
+          
+          <div class="alert alert-danger displayNone" id="quizQuestionMessage"></div> 
+        </div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+
+</div>
+
+<footer>
+    <% include partials/footer %>
+  </footer>
+
+</body>
+</html>
+
+<% } %>
