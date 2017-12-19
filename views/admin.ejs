@@ -124,6 +124,43 @@
         </div>
       </div>
     </div>
+
+    <% } %>
+    <% if(user.permissions.viewReports) { %>
+
+    <!-- question reports section -->
+    <br>
+    <div class="row">
+      <div class="card col-lg-12">
+        <div class="card-block">
+          <h3 class="card-title"><span class="fa fa-pencil"></span> Question Reports</h3>
+          
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Question Type</th>
+                <th>Problem</th>
+                <th>Question ID</th>
+                <th></th>
+              </tr>
+            </thead>
+  
+            <tbody>
+            <% for(var i = 0; i < reports.length; i++){ %>
+              <tr id="row<%= i %>">
+                <td><%= reports[i].questionType %></td>
+                <td><%= reports[i].problem %></td>
+                <td id="questionIdToRemove"><%= reports[i].id %></td>
+                <td><button class="btn btn-sm btn-primary" onclick="editQuestionClicked('<%= reports[i].questionType %>', '<%= reports[i].id%>')">Edit Question</button></td>
+                <td><button class="btn btn-sm btn-danger" onclick="removeReportClicked('<%= i %>')">Remove Report</button></td>
+              </tr>
+            <% } %>
+            </tbody>
+          </table>
+          <div class="alert alert-danger displayNone" id="reportsMessage"></div>
+        </div>
+      </div>
+    </div>
   </div>
   <% } %>
 

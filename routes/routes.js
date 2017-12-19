@@ -95,6 +95,22 @@ module.exports = function(app, passport){
     }
   });
 
+  app.get('/removereport/:id', function(req, res){
+    if(req.user && req.user.permissions.admin && req.user.permissions.viewReports){
+
+      ReportProblem.remove({ id: req.params.id }, function(err) {
+        if (!err) {
+          res.send({status: "success", message: "Report " + req.params.id + " removed!"});
+        }else {
+          res.send({status: "error", message: "Err: " + err});
+        }
+      });
+
+    }else{
+      res.send({status: "error", message: "User Does Not Have Permissions To Remove Report"});
+    }
+  });
+
   //reports a problem with a question to the admin
   app.post('/reportproblems', function(req, res){
     var id = req.body.id;
@@ -119,9 +135,14 @@ module.exports = function(app, passport){
   app.get('/admin', function(req, res){
     //check if user is an admin
     if(req.user && req.user.permissions.admin){
-      res.render('admin.ejs', {
-        title: "Quiz Game Admin",
-        user: req.user
+      ReportProblem.find({}, {}, function(err, results){
+        console.log(results);
+
+        res.render('admin.ejs', {
+          title: "Quiz Game Admin",
+          user: req.user,
+          reports: results
+        });
       });
     }else{
       res.redirect('/login');
@@ -484,6 +505,7 @@ function renderJQuestion(req, res){
 
         //splice the correct answer into the list of answers
         var answerIndex = Math.floor(Math.random() * 12);
+        if(answers == null)return 0;
         answers.splice(answerIndex, 0, {answer: result[0].answer});
 
         //modify answers array, so answer is stored as "label" instead of answer

@@ -7,6 +7,34 @@ $(function(){
 
 });
 
+function removeReportClicked(indexClicked){
+  var questionIdToRemove = $("#row"+indexClicked).find("#questionIdToRemove").text();
+  $.get("/removereport/"+questionIdToRemove, function(data, status){
+    if(data.status == "error"){
+      $("#reportsMessage").text(data.message);
+      $("#reportsMessage").removeClass("alert-success");
+      $("#reportsMessage").removeClass("displayNone");
+      $("#reportsMessage").addClass("alert-danger");
+    }else{
+      $("#row"+indexClicked).remove();
+      $("#reportsMessage").text(data.message);
+      $("#reportsMessage").removeClass("alert-danger");
+      $("#reportsMessage").removeClass("displayNone");
+      $("#reportsMessage").addClass("alert-success");
+    }
+  });
+}
+
+//admin clicked the edit question button
+function editQuestionClicked(type, id){
+  if(type == "quizQuestion"){
+    $("#qIdInput").val(id);
+    displayQuizQuestionClicked();
+  }else if(type == "jQuestion"){
+    $("#jIdInput").val(id);
+    displayJQuestionClicked();
+  }
+}
 
 function displayJQuestionClicked(){
   var id = $("#jIdInput").val();
