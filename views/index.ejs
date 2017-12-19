@@ -20,6 +20,26 @@
   <% include partials/header %>
 </header>
 
+<div class="container">
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="myModalLabel">WARNING</h4>
+      </div>
+      <div class="modal-body">
+        <b> This should be a radio button!</b>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="reportProblemClicked()" data-dismiss="modal">Send Report</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
 
   <div class="container" id="quizgamescore">
     <% if(locals.user){%>
@@ -32,6 +52,8 @@
   <div class="container col-sm-10 col-sm-offset-1" id="quizgamequestion">
     <p id="quizgamecategory">
       <%= category %>
+      <br>
+      <a class="reportProblem" data-toggle="modal" data-target="#myModal" href="">Report Problem With Question</a>
     </p>
     <p>
       <%= question %>

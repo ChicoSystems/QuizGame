@@ -4,6 +4,7 @@
 var QuizQuestion            = require('../models/quizQuestions');
 var Users                   = require('../models/user');
 var JQuestion               = require('../models/jQuestions');
+var ReportProblem           = require('../models/reportProblems');
 var ObjectId                = require('mongoose').Types.ObjectId;
 
 
@@ -92,6 +93,20 @@ module.exports = function(app, passport){
         score  : req.session.score
       });
     }
+  });
+
+  //reports a problem with a question to the admin
+  app.post('/reportproblems/', function(req, res){
+    var id = req.body.id;
+    var problem = req.body.problem;
+    var questionType = req.body.questionType;
+    var newProblem = new ReportProblems();
+    newProblem.id = id;
+    newProblem.problem = problem;
+    newProblem.questionType = questionType;
+  
+    //save the new problem
+    newProblem.save();
   });
 
   //=============================================

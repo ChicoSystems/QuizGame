@@ -59,6 +59,13 @@ a {
   /* margin:0px auto; not needed since i have width 100% now */
 }
 
+.reportProblem{
+  font-size: small;
+  color: #00B7FF;
+  position: relative;
+  top: -25px;
+}
+
 .displayNone{
   display:none;
 }
