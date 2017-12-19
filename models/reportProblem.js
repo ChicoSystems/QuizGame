@@ -14,8 +14,6 @@ var reportProblemsSchema = mongoose.Schema({
   collection: 'reportProblems'
 });
 
-//add random ability to schema
-jQuestionsSchema.plugin(random);
 
 // create the model for quizQuestions and expose it to our app
 module.exports = mongoose.model('reportProblems', reportProblemsSchema);

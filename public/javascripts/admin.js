@@ -43,9 +43,18 @@ function displayJQuestionClicked(){
 }
 
 function displayQuizQuestionClicked(){
-  var id = $("#idInput").val();
+  var id = $("#qIdInput").val();
 
-  $.get("/quizquestion/"+id, function(data, status){
+  if(id == ""){
+      $("#quizQuestionMessage").text("ID Not Valid");
+      $("#quizQuestionMessage").removeClass("alert-success");
+      $("#quizQuestionMessage").removeClass("displayNone");
+      $("#quizQuestionMessage").addClass("alert-danger");
+      return;
+  }
+
+
+  $.get("/quizquestiondisplay/"+id, function(data, status){
     if(data.status == "error"){
       $("#quizQuestionMessage").text(data.message);
       $("#quizQuestionMessage").removeClass("alert-success");
@@ -60,7 +69,7 @@ function displayQuizQuestionClicked(){
       $("#quizQuestionQuestion").val(data.question[0].raw);
       $("#quizQuestionCategory").val(data.question[0].category);
       $("#quizQuestionAnswer").val(data.question[0].label);
-      qIdToEdit = data.question[0].id;      
+      qIdToEdit = data.question[0]._id;      
 
       resizeTextArea($("#quizQuestionQuestion"));
       //alert("question: " + data.question[0].raw);
@@ -100,7 +109,7 @@ function editQuizQuestionClicked(){
           $("#quizQuestionMessage").removeClass("displayNone");
           $("#quizQuestionMessage").addClass("alert-danger");
         }
-    })
+    });
 }
 
 function editJQuestionClicked(){

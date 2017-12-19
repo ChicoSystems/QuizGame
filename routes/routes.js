@@ -4,7 +4,7 @@
 var QuizQuestion            = require('../models/quizQuestions');
 var Users                   = require('../models/user');
 var JQuestion               = require('../models/jQuestions');
-var ReportProblem           = require('../models/reportProblems');
+var ReportProblem           = require('../models/reportProblem');
 var ObjectId                = require('mongoose').Types.ObjectId;
 
 
@@ -96,15 +96,17 @@ module.exports = function(app, passport){
   });
 
   //reports a problem with a question to the admin
-  app.post('/reportproblems/', function(req, res){
+  app.post('/reportproblems', function(req, res){
     var id = req.body.id;
     var problem = req.body.problem;
     var questionType = req.body.questionType;
-    var newProblem = new ReportProblems();
+    var newProblem = new ReportProblem();
     newProblem.id = id;
     newProblem.problem = problem;
     newProblem.questionType = questionType;
-  
+    
+    console.log("reporting problem: " + newProblem); 
+ 
     //save the new problem
     newProblem.save();
   });
@@ -127,8 +129,13 @@ module.exports = function(app, passport){
   });
 
   //gets a quiz question of given id, sends it to frontend
-  app.get('/quizquestion/:id', function(req, res){
-    QuizQuestion.find({id: req.params.id}, function(err, result){
+  app.get('/quizquestiondisplay/:id', function(req, res){
+    if(req.params.id == "" || !ObjectId.isValid(req.params.id)){
+         res.send({status: "error", message: "Question: "+req.params.id+" does not exist!"});
+      return 0;
+    }
+    var query = { _id: new ObjectId(req.params.id) };
+    QuizQuestion.find(query, function(err, result){
       if(err){
         res.send({status: "error", message: err});
       }else if(result == ""){
@@ -164,7 +171,8 @@ module.exports = function(app, passport){
   app.post('/quizquestionedit', function(req, res){
     if(req.user && req.user.permissions.admin && req.user.permissions.editQuestions){
       //update the db
-      var query = {id: req.body.id};
+      //var query = {id: req.body.id};
+      var query = { _id: new ObjectId(req.body.id) };
       QuizQuestion.findOne(query, function(err, doc){
         doc.category = req.body.category;
         doc.raw = req.body.raw;
@@ -427,7 +435,7 @@ function renderQuizQuestion(req, res){
             
             if(req.user)
                req.session.score = req.user.gameinfo.score;
-            console.log("Result: " + result);
+            console.log("id: " + result._id);
 
             //replace any occurance of the string "???" in db, with "
             result.raw = result.raw.replace(new RegExp("???".replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), "\'");
@@ -446,7 +454,8 @@ function renderQuizQuestion(req, res){
                 answerIndex : answerIndex,
                 user : req.user,
                 session : req.session,
-                questionType: questionType
+                questionType: questionType,
+                questionId : result._id
               });
           });
         } 
@@ -484,7 +493,7 @@ function renderJQuestion(req, res){
           answers[i]["label"] = answers[i]["answer"];
         }
  
-        console.log(result);
+        console.log("result[0]._id: " + result[0]._id);
      
         var questionType = "jQuestion";
         res.render('index.ejs', {
@@ -496,7 +505,8 @@ function renderJQuestion(req, res){
           answerIndex: answerIndex,
           user: req.user,
           session: req.session,
-          questionType: questionType
+          questionType: questionType,
+          questionId : result[0]._id
         });
       });
     });

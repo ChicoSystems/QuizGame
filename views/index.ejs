@@ -9,8 +9,11 @@
     <script>var loggedIn = false;</script>
   <% } %>
   <script>
-    //pass answers.length from ejs to javascript, which will refresh page if there is not 12 answers
-    var answersLength = <%= answers.length %>
+    var answersLength = <%= answers.length %>;
+  </script>
+  <script>
+    var questionId = "<%= questionId %>";
+    var questionType = "<%= questionType %>";
   </script>
 
   <script src="/javascripts/randomquestion.js"></script>
@@ -26,10 +29,19 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="modal-title" id="myModalLabel">WARNING</h4>
+        <h4 class="modal-title" id="myModalLabel">Report Problem</h4>
       </div>
       <div class="modal-body">
-        <b> This should be a radio button!</b>
+        <b> What is the problem with this question?</b><br>
+        <div class="radio">
+          <label><input type="radio" name="optradio" checked>Malformed Question</label>
+        </div>
+        <div class="radio">
+          <label><input type="radio" name="optradio">Wrong Answer</label>
+        </div>
+        <div class="radio">
+          <label><input type="radio" name="optradio">Other</label>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
