@@ -8,7 +8,7 @@ a {
 
 #quizheadername {
   font: 30px "Impact", Charcoal, sans-serif;
-  color: #442626;
+  color: #FFFFFF;
 }
 
 #quizgamescore{
@@ -59,8 +59,19 @@ a {
   /* margin:0px auto; not needed since i have width 100% now */
 }
 
+.reportProblem{
+  font-size: small;
+  color: #00B7FF;
+  position: relative;
+  top: -15px;
+}
+
 .displayNone{
   display:none;
+}
+
+.dropdown-left{
+  left:-140px;
 }
 
 .col-centered{

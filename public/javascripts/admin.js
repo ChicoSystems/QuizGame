@@ -7,6 +7,34 @@ $(function(){
 
 });
 
+function removeReportClicked(indexClicked){
+  var questionIdToRemove = $("#row"+indexClicked).find("#questionIdToRemove").text();
+  $.get("/removereport/"+questionIdToRemove, function(data, status){
+    if(data.status == "error"){
+      $("#reportsMessage").text(data.message);
+      $("#reportsMessage").removeClass("alert-success");
+      $("#reportsMessage").removeClass("displayNone");
+      $("#reportsMessage").addClass("alert-danger");
+    }else{
+      $("#row"+indexClicked).remove();
+      $("#reportsMessage").text(data.message);
+      $("#reportsMessage").removeClass("alert-danger");
+      $("#reportsMessage").removeClass("displayNone");
+      $("#reportsMessage").addClass("alert-success");
+    }
+  });
+}
+
+//admin clicked the edit question button
+function editQuestionClicked(type, id){
+  if(type == "quizQuestion"){
+    $("#qIdInput").val(id);
+    displayQuizQuestionClicked();
+  }else if(type == "jQuestion"){
+    $("#jIdInput").val(id);
+    displayJQuestionClicked();
+  }
+}
 
 function displayJQuestionClicked(){
   var id = $("#jIdInput").val();
@@ -43,9 +71,18 @@ function displayJQuestionClicked(){
 }
 
 function displayQuizQuestionClicked(){
-  var id = $("#idInput").val();
+  var id = $("#qIdInput").val();
 
-  $.get("/quizquestion/"+id, function(data, status){
+  if(id == ""){
+      $("#quizQuestionMessage").text("ID Not Valid");
+      $("#quizQuestionMessage").removeClass("alert-success");
+      $("#quizQuestionMessage").removeClass("displayNone");
+      $("#quizQuestionMessage").addClass("alert-danger");
+      return;
+  }
+
+
+  $.get("/quizquestiondisplay/"+id, function(data, status){
     if(data.status == "error"){
       $("#quizQuestionMessage").text(data.message);
       $("#quizQuestionMessage").removeClass("alert-success");
@@ -60,7 +97,7 @@ function displayQuizQuestionClicked(){
       $("#quizQuestionQuestion").val(data.question[0].raw);
       $("#quizQuestionCategory").val(data.question[0].category);
       $("#quizQuestionAnswer").val(data.question[0].label);
-      qIdToEdit = data.question[0].id;      
+      qIdToEdit = data.question[0]._id;      
 
       resizeTextArea($("#quizQuestionQuestion"));
       //alert("question: " + data.question[0].raw);
@@ -100,7 +137,7 @@ function editQuizQuestionClicked(){
           $("#quizQuestionMessage").removeClass("displayNone");
           $("#quizQuestionMessage").addClass("alert-danger");
         }
-    })
+    });
 }
 
 function editJQuestionClicked(){

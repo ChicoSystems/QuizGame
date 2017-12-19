@@ -6,6 +6,7 @@ var random   = require('mongoose-simple-random');
 
 // define the schema for our user model
 var jQuestionsSchema = mongoose.Schema({
+    id               : String,
     category         : String,   //The category of the question
     question         : String,   //The Question itself
     answer           : String,   //The answer to the question
