@@ -8,7 +8,7 @@ a {
 
 #quizheadername {
   font: 30px "Impact", Charcoal, sans-serif;
-  color: #442626;
+  color: #FFFFFF;
 }
 
 #quizgamescore{
@@ -64,7 +64,7 @@ a {
 }
 
 .dropdown-left{
-  left:-70px;
+  left:-140px;
 }
 
 .col-centered{

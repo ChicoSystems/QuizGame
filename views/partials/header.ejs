@@ -18,46 +18,78 @@
   }
  %>
 
-  <div class="container">
-    <nav class="navbar">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <a id="quizheadername" href="/">Quiz Game</a>
-        </div>
-        <% if(locals.user){ %>
-          <div class="dropdown">
-            <button class="dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <img src="<%= photo %>" height="60px" width="60px"><span class="caret"></span></img>
-            </button>
-            <ul class="dropdown-menu dropdown-left" aria-labelledby="dropdownMenuButton">
-              <a class="dropdown-item">Signed in as <b> <%= name %></b></a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="/">Game</a>
-              <a class="dropdown-item" href="/scoreboard">Scoreboard</a>
-              <a class="dropdown-item" href="/profile">Your Profile</a>
-            <% if(locals.user.permissions.admin){ %>
-              <a class="dropdown-item" href="/admin">Admin</a>
-            <% } %>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="/logout">Logout</a>
-              
-            </ul>
-          </div>
 
-        <% }else{ %>
-          <div class="dropdown">
-            <button class="dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <img src="/images/signedout.png" height="60px" width="60px"><span class="caret"></span></img>
-            </button>
-            <ul class="dropdown-menu dropdown-left" aria-labelledby="dropdownMenuButton">
-              <a class="dropdown-item" href="/login">Login</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="/scoreboard">Scoreboard</a>
-            </ul>   
-          </div>
 
+<nav class="navbar navbar-expand-sm navbar-dark bg-primary">
+  <a class="navbar-brand abs" id="quizheadername" href="/">Quiz Game</a>
+  
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsingNavbar">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="navbar-collapse collapse" id="collapsingNavbar">
+    <ul class="navbar-nav">
+      <li class="nav-item active">
+        <a class="nav-link" href="#"></a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link" href=""></a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link" href="#myAlert" data-toggle="collapse"></a>
+      </li>
+    </ul>
+
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <!-- <a class="nav-link" href="/scoreboard" data-target="#myModal" data-toggle="modal">Scoreboard</a> -->
+        <a class="nav-link" href="/scoreboard">Scoreboard</a>
+      </li>
+    </ul>
+
+<% if(locals.user){ %>
+    <div class="dropdown">
+      <button class="dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <img src="<%= photo %>" height="60px" width="60px"><span class="caret"></span></img>
+      </button>
+
+      <ul class="dropdown-menu dropdown-left" aria-labelledby="dropdownMenuButton">
+        <a class="dropdown-item">Signed in as <b> <%= name %></b></a>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="/">Game</a>
+        <a class="dropdown-item" href="/scoreboard">Scoreboard</a>
+        <a class="dropdown-item" href="/profile">Your Profile</a>
+        <% if(locals.user.permissions.admin){ %>
+        <a class="dropdown-item" href="/admin">Admin</a>
         <% } %>
-      </div>
-    </nav>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="/logout">Logout</a>
+      </ul>
+    </div>
+
+<% }else{ %>
+
+
+    <div class="dropdown">
+      <button class="dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <img src="/images/signedout.png" height="60px" width="60px"><span class="caret"></span></img>
+      </button>
+
+      <ul class="dropdown-menu dropdown-left" aria-labelledby="dropdownMenuButton">
+        <a class="dropdown-item" href="/login">Login</a>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="/scoreboard">Scoreboard</a>
+      </ul>
+    </div>
+
+<% } %>
+
   </div>
+</nav>
+
+
+
+
 
