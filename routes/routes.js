@@ -16,7 +16,7 @@ module.exports = function(app, passport){
   //=============================================
   //Stanford Question Conversions
   //============================================
-  app.get('/convertStanford', function(req, res){
+/*  app.get('/convertStanford', function(req, res){
     s_old_questions.find({}, function(err, result){
       if(err){
         res.send({status: "error", message: err});
@@ -57,7 +57,7 @@ module.exports = function(app, passport){
     });
  
   });
-
+*/
 
   //==============================================
   //Game Routes
@@ -84,13 +84,17 @@ module.exports = function(app, passport){
 
   //The main page, renders jquestion or quizquestion half time
   app.get('/', function(req, res){
-    var random = getRandomIntInclusive(0, 1);
+    var random = getRandomIntInclusive(0, 2);
+
 
     if(random == 0){
       renderJQuestion(req, res);
-    }else{
+    }else if(random == 1){
       renderQuizQuestion(req, res);
+    }else{
+      renderStanfordQuestion(req, res);
     }
+
   });
 
   //user clicked on a wrong answer
@@ -487,6 +491,56 @@ module.exports = function(app, passport){
 //===============================================
 // Functions used by routes
 //==============================================
+
+//renders a question from the stanford collection
+function renderStanfordQuestion(req, res){
+  //first we get a random question from the stanfordQuestions
+  var filter = {};
+  var fields = {};
+  StanfordQuestion.findRandom(filter, fields, {limit: 1}, function(err, result){
+    if(err) throw err;
+
+    //get 11 more answers with the same category as the result, where the answer isn't the same
+    var filter = {answer: {$ne: result[0].answer}, category: result[0].category};
+    var fields = {answer: 1};//only get the answers
+    StanfordQuestion.findRandom(filter, fields, {limit: 11}, function(error, answers){
+      if(error) throw error;
+      
+      //if signed in, save score into session
+      if(req.user) req.session.score = req.user.gameinfo.score;
+
+      //splice the correct answer into the list of answers
+      var answerIndex = Math.floor(Math.random() * 12);
+      if(answers == null) return 0;
+      answers.splice(answerIndex, 0, {answer: result[0].answer});
+
+      //modify answers array, so answer is stored as "label" instead of answer
+      //this is for compatibility with the quizQuestion type
+      var modifiedAnswers = new Array();
+      for(var i = 0; i < answers.length; i++){
+        answers[i]["label"] = answers[i]["answer"];
+      }
+
+      var questionType = "stanfordQuestion";
+      res.render('index.ejs', {
+        title: "Quiz Game",
+        category: result[0].category,
+        question: result[0].question,
+        answer  : result[0].answer,
+        answers : answers,
+        answerIndex : answerIndex,
+        user: req.user,
+        session: req.session,
+        questionType: questionType,
+        questionId: result[0]._id
+      });
+    });
+    
+     //res.send(result[0].answer);
+    
+
+  });
+}
 
 function renderQuizQuestion(req, res){
    // Get the count of all quizquestions
