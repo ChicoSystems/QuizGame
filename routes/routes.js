@@ -7,8 +7,58 @@ var JQuestion               = require('../models/jQuestions');
 var ReportProblem           = require('../models/reportProblem');
 var ObjectId                = require('mongoose').Types.ObjectId;
 
+//convert stanford questions
+var s_old_questions = require('../models/stanford_old');
+var StanfordQuestion        = require('../models/stanfordQuestions');
+
 
 module.exports = function(app, passport){
+  //=============================================
+  //Stanford Question Conversions
+  //============================================
+/*  app.get('/convertStanford', function(req, res){
+    s_old_questions.find({}, function(err, result){
+      if(err){
+        res.send({status: "error", message: err});
+      }else if(result == ""){
+        res.send({status: "error", message: "Question :"+req.params.id+" does not exist!"});
+      }else{
+        //console.log("question: " + result);
+        console.log("length: " +result.length);
+        console.log(result[1].title);
+        res.send(result[1]);
+        for(var i = 0; i < result.length; i++){
+          var category = result[i].title;
+          category = category.replace(/_/g, " "); //replace _ with space
+          console.log("category: " + category);
+          for(var j = 0; j < result[i].paragraphs.length; j++){
+             // console.log(result[i].paragraphs[j].qas.length);
+            for(var k = 0; k < result[i].paragraphs[j].qas.length; k++){
+              if(category == null || 
+                 result[i].paragraphs[j].qas[k].question == null || 
+                 result[i].paragraphs[j].qas[k].answers[0] == null){
+                 console.log("something is null");
+                //do nothing for this question, something is null
+              }else{
+                var question = result[i].paragraphs[j].qas[k].question;
+                var answer =   result[i].paragraphs[j].qas[k].answers[0].text;
+                //record this question into new db
+                console.log("Category: " + category + " - Answer: " + answer + " - Question: " + question);            
+                var stanfordQuestion = new StanfordQuestion();
+                stanfordQuestion.category = category;
+                stanfordQuestion.question = question;
+                stanfordQuestion.answer = answer;
+                stanfordQuestion.save();
+              }
+            }
+          }
+        }
+      }
+    });
+ 
+  });
+*/
+
   //==============================================
   //Game Routes
   //==============================================
@@ -34,13 +84,17 @@ module.exports = function(app, passport){
 
   //The main page, renders jquestion or quizquestion half time
   app.get('/', function(req, res){
-    var random = getRandomIntInclusive(0, 1);
+    var random = getRandomIntInclusive(0, 2);
+
 
     if(random == 0){
       renderJQuestion(req, res);
-    }else{
+    }else if(random == 1){
       renderQuizQuestion(req, res);
+    }else{
+      renderStanfordQuestion(req, res);
     }
+
   });
 
   //user clicked on a wrong answer
@@ -170,6 +224,7 @@ module.exports = function(app, passport){
   });
 
 
+  //gets a jquestion of a given id, sends it to frontend
   app.get('/jquestiondisplay/:id', function(req, res){
     console.log("id: " + req.params.id);
     if(req.params.id == "" || !ObjectId.isValid(req.params.id)){
@@ -185,6 +240,25 @@ module.exports = function(app, passport){
       }else{ 
         res.send({status: "success", message: "Success getting question: " + req.params.id, question: result});
       } 
+    });
+  });
+
+  //gets a stanfordquestion of a given id, sends it to frontend
+  app.get('/stanfordquestiondisplay/:id', function(req, res){
+    console.log("id: " + req.params.id);
+    if(req.params.id == "" || !ObjectId.isValid(req.params.id)){
+         res.send({status: "error", message: "Question: "+req.params.id+" does not exist!"});
+      return 0;
+    }
+    var query = { _id: new ObjectId(req.params.id) };
+    StanfordQuestion.find(query, function(err, result){
+      if(err){
+         res.send({status: "error", message: err});
+      }else if(result == ""){
+         res.send({status: "error", message: "Question: "+req.params.id+" does not exist!"});
+      }else{
+        res.send({status: "success", message: "Success getting question: " + req.params.id, question: result});
+      }
     });
   });
 
@@ -214,6 +288,27 @@ module.exports = function(app, passport){
       //update the db
       var query = { _id: new ObjectId(req.body.id) };
       JQuestion.findOne(query, function(err, doc){
+      console.log("doc " + doc);
+        doc.category = req.body.category;
+        doc.question = req.body.question;
+        doc.answer = req.body.answer;
+        doc.save();
+        res.send({status: "success", message: "Question was Edited"});
+      });
+    }else{
+      //user does not have permission
+      res.send({status: "error", message: "User does not have permissions to edit questions!"});
+    }
+
+  });
+
+  //front end submits stanfordquestionedit post
+  app.post('/stanfordquestionedit', function(req, res){
+    console.log("id: " + req.body.id);
+    if(req.user && req.user.permissions.admin && req.user.permissions.editQuestions){
+      //update the db
+      var query = { _id: new ObjectId(req.body.id) };
+      StanfordQuestion.findOne(query, function(err, doc){
       console.log("doc " + doc);
         doc.category = req.body.category;
         doc.question = req.body.question;
@@ -437,6 +532,56 @@ module.exports = function(app, passport){
 //===============================================
 // Functions used by routes
 //==============================================
+
+//renders a question from the stanford collection
+function renderStanfordQuestion(req, res){
+  //first we get a random question from the stanfordQuestions
+  var filter = {};
+  var fields = {};
+  StanfordQuestion.findRandom(filter, fields, {limit: 1}, function(err, result){
+    if(err) throw err;
+
+    //get 11 more answers with the same category as the result, where the answer isn't the same
+    var filter = {answer: {$ne: result[0].answer}, category: result[0].category};
+    var fields = {answer: 1};//only get the answers
+    StanfordQuestion.findRandom(filter, fields, {limit: 11}, function(error, answers){
+      if(error) throw error;
+      
+      //if signed in, save score into session
+      if(req.user) req.session.score = req.user.gameinfo.score;
+
+      //splice the correct answer into the list of answers
+      var answerIndex = Math.floor(Math.random() * 12);
+      if(answers == null) return 0;
+      answers.splice(answerIndex, 0, {answer: result[0].answer});
+
+      //modify answers array, so answer is stored as "label" instead of answer
+      //this is for compatibility with the quizQuestion type
+      var modifiedAnswers = new Array();
+      for(var i = 0; i < answers.length; i++){
+        answers[i]["label"] = answers[i]["answer"];
+      }
+
+      var questionType = "stanfordQuestion";
+      res.render('index.ejs', {
+        title: "Quiz Game",
+        category: result[0].category,
+        question: result[0].question,
+        answer  : result[0].answer,
+        answers : answers,
+        answerIndex : answerIndex,
+        user: req.user,
+        session: req.session,
+        questionType: questionType,
+        questionId: result[0]._id
+      });
+    });
+    
+     //res.send(result[0].answer);
+    
+
+  });
+}
 
 function renderQuizQuestion(req, res){
    // Get the count of all quizquestions
