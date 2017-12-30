@@ -7,8 +7,58 @@ var JQuestion               = require('../models/jQuestions');
 var ReportProblem           = require('../models/reportProblem');
 var ObjectId                = require('mongoose').Types.ObjectId;
 
+//convert stanford questions
+var s_old_questions = require('../models/stanford_old');
+var StanfordQuestion        = require('../models/stanfordQuestions');
+
 
 module.exports = function(app, passport){
+  //=============================================
+  //Stanford Question Conversions
+  //============================================
+  app.get('/convertStanford', function(req, res){
+    s_old_questions.find({}, function(err, result){
+      if(err){
+        res.send({status: "error", message: err});
+      }else if(result == ""){
+        res.send({status: "error", message: "Question :"+req.params.id+" does not exist!"});
+      }else{
+        //console.log("question: " + result);
+        console.log("length: " +result.length);
+        console.log(result[1].title);
+        res.send(result[1]);
+        for(var i = 0; i < result.length; i++){
+          var category = result[i].title;
+          category = category.replace(/_/g, " "); //replace _ with space
+          console.log("category: " + category);
+          for(var j = 0; j < result[i].paragraphs.length; j++){
+             // console.log(result[i].paragraphs[j].qas.length);
+            for(var k = 0; k < result[i].paragraphs[j].qas.length; k++){
+              if(category == null || 
+                 result[i].paragraphs[j].qas[k].question == null || 
+                 result[i].paragraphs[j].qas[k].answers[0] == null){
+                 console.log("something is null");
+                //do nothing for this question, something is null
+              }else{
+                var question = result[i].paragraphs[j].qas[k].question;
+                var answer =   result[i].paragraphs[j].qas[k].answers[0].text;
+                //record this question into new db
+                console.log("Category: " + category + " - Answer: " + answer + " - Question: " + question);            
+                var stanfordQuestion = new StanfordQuestion();
+                stanfordQuestion.category = category;
+                stanfordQuestion.question = question;
+                stanfordQuestion.answer = answer;
+                stanfordQuestion.save();
+              }
+            }
+          }
+        }
+      }
+    });
+ 
+  });
+
+
   //==============================================
   //Game Routes
   //==============================================
