@@ -224,6 +224,7 @@ module.exports = function(app, passport){
   });
 
 
+  //gets a jquestion of a given id, sends it to frontend
   app.get('/jquestiondisplay/:id', function(req, res){
     console.log("id: " + req.params.id);
     if(req.params.id == "" || !ObjectId.isValid(req.params.id)){
@@ -239,6 +240,25 @@ module.exports = function(app, passport){
       }else{ 
         res.send({status: "success", message: "Success getting question: " + req.params.id, question: result});
       } 
+    });
+  });
+
+  //gets a stanfordquestion of a given id, sends it to frontend
+  app.get('/stanfordquestiondisplay/:id', function(req, res){
+    console.log("id: " + req.params.id);
+    if(req.params.id == "" || !ObjectId.isValid(req.params.id)){
+         res.send({status: "error", message: "Question: "+req.params.id+" does not exist!"});
+      return 0;
+    }
+    var query = { _id: new ObjectId(req.params.id) };
+    StanfordQuestion.find(query, function(err, result){
+      if(err){
+         res.send({status: "error", message: err});
+      }else if(result == ""){
+         res.send({status: "error", message: "Question: "+req.params.id+" does not exist!"});
+      }else{
+        res.send({status: "success", message: "Success getting question: " + req.params.id, question: result});
+      }
     });
   });
 
@@ -268,6 +288,27 @@ module.exports = function(app, passport){
       //update the db
       var query = { _id: new ObjectId(req.body.id) };
       JQuestion.findOne(query, function(err, doc){
+      console.log("doc " + doc);
+        doc.category = req.body.category;
+        doc.question = req.body.question;
+        doc.answer = req.body.answer;
+        doc.save();
+        res.send({status: "success", message: "Question was Edited"});
+      });
+    }else{
+      //user does not have permission
+      res.send({status: "error", message: "User does not have permissions to edit questions!"});
+    }
+
+  });
+
+  //front end submits stanfordquestionedit post
+  app.post('/stanfordquestionedit', function(req, res){
+    console.log("id: " + req.body.id);
+    if(req.user && req.user.permissions.admin && req.user.permissions.editQuestions){
+      //update the db
+      var query = { _id: new ObjectId(req.body.id) };
+      StanfordQuestion.findOne(query, function(err, doc){
       console.log("doc " + doc);
         doc.category = req.body.category;
         doc.question = req.body.question;

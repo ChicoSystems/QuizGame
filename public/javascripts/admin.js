@@ -4,6 +4,7 @@ $(function(){
       resizeTextArea($("#quizQuestionQuestion"));
   var qIdToEdit = 0;
   var jIdToEdit = 0;
+  var sIdToEdit = 0;
 
 });
 
@@ -33,8 +34,47 @@ function editQuestionClicked(type, id){
   }else if(type == "jQuestion"){
     $("#jIdInput").val(id);
     displayJQuestionClicked();
+  }else if(type == "stanfordQuestion"){
+    $("#sIdInput").val(id);
+    displayStanfordQuestionClicked();
   }
 }
+
+
+function displayStanfordQuestionClicked(){
+  var id = $("#sIdInput").val();
+
+  if(id == ""){
+      $("#stanfordQuestionMessage").text("ID Not Valid");
+      $("#stanfordQuestionMessage").removeClass("alert-success");
+      $("#stanfordQuestionMessage").removeClass("displayNone");
+      $("#stanfordQuestionMessage").addClass("alert-danger");
+      return;
+  }
+
+  $.get("/stanfordquestiondisplay/"+id, function(data, status){
+    if(data.status == "error"){
+      $("#stanfordQuestionMessage").text(data.message);
+      $("#stanfordQuestionMessage").removeClass("alert-success");
+      $("#stanfordQuestionMessage").removeClass("displayNone");
+      $("#stanfordQuestionMessage").addClass("alert-danger");
+    }else{
+      $("#stanfordQuestionMessage").text(data.message);
+      $("#stanfordQuestionMessage").removeClass("alert-danger");
+      $("#stanfordQuestionMessage").removeClass("displayNone");
+      $("#stanfordQuestionMessage").addClass("alert-success");
+
+      $("#stanfordQuestionQuestion").val(data.question[0].question);
+      $("#stanfordQuestionCategory").val(data.question[0].category);
+      $("#stanfordQuestionAnswer").val(data.question[0].answer);
+      sIdToEdit = data.question[0]._id;
+
+      resizeTextArea($("#stanfordQuestionQuestion"));
+      //alert("question: " + data.question[0].raw);
+    }
+  });
+}
+
 
 function displayJQuestionClicked(){
   var id = $("#jIdInput").val();
@@ -174,6 +214,44 @@ function editJQuestionClicked(){
         }
     })
 }
+
+
+function editStanfordQuestionClicked(){
+  var category = $("#stanfordQuestionCategory").val();
+  var question = $("#stanfordQuestionQuestion").val();
+  var answer = $("#stanfordQuestionAnswer").val();
+  $.ajax({
+        type: "POST",
+        url: "/stanfordquestionedit",
+        data:{
+          id: sIdToEdit,
+          category: category,
+          question: question,
+          answer: answer
+        },
+        success: function(data){
+            if(data.status == "error"){
+              $("#stanfordQuestionMessage").text(data.message);
+              $("#stanfordQuestionMessage").removeClass("alert-success");
+              $("#stanfordQuestionMessage").removeClass("displayNone");
+              $("#stanfordQuestionMessage").addClass("alert-danger");
+            }else{
+              $("#stanfordQuestionMessage").text(data.message);
+              $("#stanfordQuestionMessage").removeClass("alert-danger");
+              $("#stanfordQuestionMessage").removeClass("displayNone");
+              $("#stanfordQuestionMessage").addClass("alert-success");
+            }
+        },
+        error: function(err){
+          $("#stanfordQuestionMessage").text(err);
+          $("#stanfordQuestionMessage").removeClass("alert-success");
+          $("#stanfordQuestionMessage").removeClass("displayNone");
+          $("#stanfordQuestionMessage").addClass("alert-danger");
+        }
+    })
+}
+
+
 
 
 function resizeTextArea($element) {
