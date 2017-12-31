@@ -137,3 +137,25 @@ a {
 .blinkGreen{
     color: green;
 }
+
+.collapsed{
+    display: none;
+}
+
+.questionText{
+  font-size:30px;
+}
+
+.answerText{
+  font-size:30px;
+  color: green;
+}
+
+#qpct{
+  float: right;
+}
+
+.scroll{
+  height: 400px;
+  overflow: auto;
+}

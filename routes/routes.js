@@ -412,12 +412,19 @@ module.exports = function(app, passport){
   // We want user logged in to visit
   // use route middleware to verify this (isLoggedIn function)
   app.get('/profile', isLoggedIn, function(req, res){
-    res.render(
-      'profile.ejs',{ 
-        user: req.user,
-        title: "Quiz Game - Profile"
-    } //get the user out of session and pass to template
-    );
+
+    //find all questionhistories with this users id
+    QuestionHistory.find({uid: new ObjectId(req.user._id)}, {}, {}, function(err, result){
+      if(err)throw err;
+      res.render(
+        'profile.ejs',{ 
+          user: req.user,
+          questionHistory: result,
+          title: "Quiz Game - Profile"
+        } //get the user out of session and pass to template
+      );
+
+    });
   });
 
   //=========

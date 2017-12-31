@@ -8,6 +8,7 @@ $(function(){
 
 });
 
+
 function removeReportClicked(indexClicked){
   var questionIdToRemove = $("#row"+indexClicked).find("#questionIdToRemove").text();
   $.get("/removereport/"+questionIdToRemove, function(data, status){
