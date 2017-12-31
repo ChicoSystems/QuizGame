@@ -15,9 +15,16 @@ $(function(){
   if(sessionStorage.getItem("not_answered")){
    // alert("previous question not answered");
     //the player loaded a question, but did not attempt to answer it, penalize
-    penalize();
+     var type = sessionStorage.getItem("qtype");
+     var id = sessionStorage.getItem("qid");
+     penalize(type, id);
   }
   sessionStorage.setItem("not_answered", true);
+
+  //set qtype and qid now, so when page reloads and penalizes, we can
+  //set the correct question history
+  sessionStorage.setItem("qtype", questionType);
+  sessionStorage.setItem("qid", questionId);
 });
 
 
@@ -64,7 +71,7 @@ function answerClicked(indexClicked){
     for(var i = 0; i < 12; i++){
       $('#'+i).attr("disabled", "disabled");
     }
-    reward(); 
+    reward(questionType, questionId); 
     
     
  
@@ -73,13 +80,13 @@ function answerClicked(indexClicked){
     $('#'+indexClicked).addClass("btn-danger");
     //$('#'+indexClicked).attr("disabled", "disabled");
     $('#'+indexClicked).addClass("disabled");
-    penalize();  
+    penalize(questionType, questionId);  
   }
 
 }
 
 //rewards the players score
-function reward(){
+function reward(qtype, qid){
     //update score display
     var scoreString = $("#score").text();
     var score = parseFloat(scoreString)+5;
@@ -88,7 +95,7 @@ function reward(){
  
     //only make an ajax call to server if logged in
     if(loggedIn){ 
-      $.get("/rightanswer/"+questionType+"/"+questionId, function(data, status){
+      $.get("/rightanswer/"+qtype+"/"+qid, function(data, status){
          setTimeout(loadNewQuestion, 500);
      });
     }else{
@@ -106,7 +113,7 @@ function blinkScore(blinkColor){
 }
 
 //penalizes the players score
-function penalize(){
+function penalize(qtype, qid){
     //update score display
     var scoreString = $("#score").text();
     var score = parseFloat(scoreString)-1;
@@ -115,7 +122,7 @@ function penalize(){
 
     //only make call to server if logged in
     if(loggedIn){
-      $.get("/wronganswer/"+questionType+"/"+questionId, function(data, status){
+      $.get("/wronganswer/"+qtype+"/"+qid, function(data, status){
       });
     }
 
