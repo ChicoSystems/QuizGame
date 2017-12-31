@@ -92,7 +92,7 @@
               </tr>
             </thead>
             <tbody>
-              <% for(var i = 0; i < questionHistory.length; i++){ %>
+              <% for(var i = questionHistory.length-1; i >= 0; i--){ %>
                 <tr onclick='questionClicked("<%= questionHistory[i].type %>","<%= questionHistory[i].qid %>")'>
                   <td><%= i %></td>
                   <td><%= questionHistory[i].qid %></td>
