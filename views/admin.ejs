@@ -5,6 +5,10 @@
 <head>
   <% include partials/head %>
   <script src="/javascripts/admin.js"></script>
+  <script>
+    //don't penalize if user came to this page
+    sessionStorage.removeItem("not_answered");
+  </script>
   <style>
         body        { word-wrap:break-word; }
   </style>
