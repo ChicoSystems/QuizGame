@@ -88,7 +88,7 @@ function reward(){
  
     //only make an ajax call to server if logged in
     if(loggedIn){ 
-      $.get("/rightanswer", function(data, status){
+      $.get("/rightanswer/"+questionType+"/"+questionId, function(data, status){
          setTimeout(loadNewQuestion, 500);
      });
     }else{
@@ -115,7 +115,7 @@ function penalize(){
 
     //only make call to server if logged in
     if(loggedIn){
-      $.get("/wronganswer", function(data, status){
+      $.get("/wronganswer/"+questionType+"/"+questionId, function(data, status){
       });
     }
 

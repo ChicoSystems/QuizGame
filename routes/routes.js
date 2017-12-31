@@ -5,6 +5,7 @@ var QuizQuestion            = require('../models/quizQuestions');
 var Users                   = require('../models/user');
 var JQuestion               = require('../models/jQuestions');
 var ReportProblem           = require('../models/reportProblem');
+var QuestionHistory         = require('../models/questionHistory');
 var ObjectId                = require('mongoose').Types.ObjectId;
 
 //convert stanford questions
@@ -98,30 +99,78 @@ module.exports = function(app, passport){
   });
 
   //user clicked on a wrong answer
-  app.get('/wronganswer', function(req, res, done){
-    //we decrease the score in the session and
-    //update that score to the db
-    req.session.score = req.session.score - 1;
-    req.user.gameinfo.score = req.session.score;
-    req.user.save();
-    res.send({
-      message: "ok",
-      score  : req.session.score
-    });
+  app.get('/wronganswer/:questionType/:questionId', function(req, res, done){
+    console.log("questionType: " + req.params.questionType + " - questionId: " + req.params.questionId);
+    console.log("uid: " + req.user._id);
+    //get the number of times user has answered this question wrong, increment that
+    
+    var query = { uid: new ObjectId(req.user._id), qid: new ObjectId(req.params.questionId), type: req.params.questionType };
+    QuestionHistory.findOne({query}, {}, {}, function(err, result){
+      if(err)throw err;
+      //question has not been attempted yet by this player, create a new history record
+      console.log("result: " + result);
+      if(result == "" || result == null){
+        console.log("creating question history");
+        var history = new QuestionHistory();
+        history.uid = new ObjectId(req.user._id);
+        history.type = req.params.questionType;
+        history.qid = new ObjectId(req.params.questionId);
+        history.wrongattempts = 1;
+        history.rightattempts = 0;
+        history.save();
+      
+      }else{
+        //question has already been attempted, increment correct field
+        console.log("updating question history");
+        result.wrongattempts = result.wrongattempts + 1;
+        result.save();
+      }
+      //we decrease the score in the session and
+      //update that score to the db
+      req.session.score = req.session.score - 1;
+      req.user.gameinfo.score = req.session.score;
+      req.user.save();
+      res.send({
+        message: "ok",
+        score  : req.session.score
+      });
+    });    
+
   });
 
   //user clicked on a right answer
-  app.get('/rightanswer', function(req, res, done){
-    //we decrease the score in the session and
-    //update that score to the db
-    req.session.score = req.session.score + 5;
-    req.user.gameinfo.score = req.session.score;
-    req.user.save();
-    res.send({
-      message: "ok",
-      score  : req.session.score
-    });
-  });
+  app.get('/rightanswer/:questionType/:questionId', function(req, res, done){
+    console.log("questionType: " + req.params.questionType + " - questionId: " + req.params.questionId);
+
+    var query = { uid: new ObjectId(req.user._id), qid: new ObjectId(req.params.questionId), type: req.params.questionType };
+    QuestionHistory.findOne({query}, {}, {}, function(err, result){
+      if(err) throw err;
+      if(result == "" || result == null){
+        //question has not been attempted yet by this player, create a new history record
+        var history = new QuestionHistory();
+        history.uid = new ObjectId(req.user._id);
+        history.type = req.params.questionType;
+        history.qid = new ObjectId(req.params.questionId);
+        history.wrongattempts = 0;
+        history.rightattempts = 1;
+        history.save();
+        
+      }else{
+        //question has already been attempted, increment correct field
+        result.rightattempts = result.rightattempts+1;
+        result.save();
+      }
+      //we decrease the score in the session and
+      //update that score to the db
+      req.session.score = req.session.score + 5;
+      req.user.gameinfo.score = req.session.score;
+      req.user.save();
+      res.send({
+        message: "ok",
+        score  : req.session.score
+      });//end res.send
+    });//end findOne
+  });//end app.get
 
   app.get('/scoreboard', function(req, res, done){
     Users.find({}, {}, ).sort('-gameinfo.score').exec(function(err, results){
