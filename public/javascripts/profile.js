@@ -1,6 +1,9 @@
 $(function(){
   //onload
 
+  //make correct question difficulty radio button selected
+  $('#dif'+difficulty).attr('checked', true);
+
 });
 
 //user clicked a question in the question history table
@@ -62,4 +65,16 @@ function deleteQuestionsClicked(){
     $("#questionHistoryBody").addClass('displayNone'); 
     $("#qpct").text('0%'); 
   });
+}
+
+//user clicked the set difficulty button
+function setDifficulty(){
+  //var newdif = $('#dif'+difficulty).val();
+  var newdif = $('input[name=optradio]:checked').attr('dif');
+
+  $.get("/setdifficulty/"+newdif, function(data, status){ 
+    $("#resetmessage").removeClass('displayNone');
+    $("#resetmessage").text(data.message);
+  });
+
 }

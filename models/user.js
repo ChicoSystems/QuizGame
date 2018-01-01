@@ -47,7 +47,8 @@ var userSchema = mongoose.Schema({
       viewReports   : {type: Boolean, default: false},
       editUsers     : {type: Boolean, default: false}
     },
-    questionHistory : [historySchema]
+    questionHistory : [historySchema],
+    difficulty      : {type: Number, default: 2}
 
 });
 

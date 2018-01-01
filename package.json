@@ -23,6 +23,7 @@
     "bcrypt-nodejs": "latest",
     "method-override": "~2.3.6",
     "express-session": "~1.14.1",
-    "mongoose-simple-random": "*"
+    "mongoose-simple-random": "*",
+    "random-weighted-choice": "~0.1.3"
   }
 }
