@@ -5,6 +5,7 @@ var QuizQuestion            = require('../models/quizQuestions');
 var Users                   = require('../models/user');
 var JQuestion               = require('../models/jQuestions');
 var ReportProblem           = require('../models/reportProblem');
+var QuestionHistory         = require('../models/questionHistory');
 var ObjectId                = require('mongoose').Types.ObjectId;
 
 //convert stanford questions
@@ -98,30 +99,78 @@ module.exports = function(app, passport){
   });
 
   //user clicked on a wrong answer
-  app.get('/wronganswer', function(req, res, done){
-    //we decrease the score in the session and
-    //update that score to the db
-    req.session.score = req.session.score - 1;
-    req.user.gameinfo.score = req.session.score;
-    req.user.save();
-    res.send({
-      message: "ok",
-      score  : req.session.score
-    });
+  app.get('/wronganswer/:questionType/:questionId', function(req, res, done){
+    console.log("questionType: " + req.params.questionType + " - questionId: " + req.params.questionId);
+    console.log("uid: " + req.user._id);
+    //get the number of times user has answered this question wrong, increment that
+    
+    var query = { uid: new ObjectId(req.user._id), qid: new ObjectId(req.params.questionId), type: req.params.questionType };
+    QuestionHistory.findOne({query}, {}, {}, function(err, result){
+      if(err)throw err;
+      //question has not been attempted yet by this player, create a new history record
+      console.log("result: " + result);
+      if(result == "" || result == null){
+        console.log("creating question history");
+        var history = new QuestionHistory();
+        history.uid = new ObjectId(req.user._id);
+        history.type = req.params.questionType;
+        history.qid = new ObjectId(req.params.questionId);
+        history.wrongattempts = 1;
+        history.rightattempts = 0;
+        history.save();
+      
+      }else{
+        //question has already been attempted, increment correct field
+        console.log("updating question history");
+        result.wrongattempts = result.wrongattempts + 1;
+        result.save();
+      }
+      //we decrease the score in the session and
+      //update that score to the db
+      req.session.score = req.session.score - 1;
+      req.user.gameinfo.score = req.session.score;
+      req.user.save();
+      res.send({
+        message: "ok",
+        score  : req.session.score
+      });
+    });    
+
   });
 
   //user clicked on a right answer
-  app.get('/rightanswer', function(req, res, done){
-    //we decrease the score in the session and
-    //update that score to the db
-    req.session.score = req.session.score + 5;
-    req.user.gameinfo.score = req.session.score;
-    req.user.save();
-    res.send({
-      message: "ok",
-      score  : req.session.score
-    });
-  });
+  app.get('/rightanswer/:questionType/:questionId', function(req, res, done){
+    console.log("questionType: " + req.params.questionType + " - questionId: " + req.params.questionId);
+
+    var query = { uid: new ObjectId(req.user._id), qid: new ObjectId(req.params.questionId), type: req.params.questionType };
+    QuestionHistory.findOne({query}, {}, {}, function(err, result){
+      if(err) throw err;
+      if(result == "" || result == null){
+        //question has not been attempted yet by this player, create a new history record
+        var history = new QuestionHistory();
+        history.uid = new ObjectId(req.user._id);
+        history.type = req.params.questionType;
+        history.qid = new ObjectId(req.params.questionId);
+        history.wrongattempts = 0;
+        history.rightattempts = 1;
+        history.save();
+        
+      }else{
+        //question has already been attempted, increment correct field
+        result.rightattempts = result.rightattempts+1;
+        result.save();
+      }
+      //we decrease the score in the session and
+      //update that score to the db
+      req.session.score = req.session.score + 5;
+      req.user.gameinfo.score = req.session.score;
+      req.user.save();
+      res.send({
+        message: "ok",
+        score  : req.session.score
+      });//end res.send
+    });//end findOne
+  });//end app.get
 
   app.get('/scoreboard', function(req, res, done){
     Users.find({}, {}, ).sort('-gameinfo.score').exec(function(err, results){
@@ -190,16 +239,42 @@ module.exports = function(app, passport){
     //check if user is an admin
     if(req.user && req.user.permissions.admin){
       ReportProblem.find({}, {}, function(err, results){
-        console.log(results);
+        if(err) throw err;
+        //console.log(results);
+  
+        //get a list of all the users
+        Users.find({}, {}, function(error, users){
+          if(error)throw error;
 
-        res.render('admin.ejs', {
-          title: "Quiz Game Admin",
-          user: req.user,
-          reports: results
+          console.log("users: " + users);
+          res.render('admin.ejs', {
+            title: "Quiz Game Admin",
+            user: req.user,
+            users: users,
+            reports: results
+          });
         });
       });
     }else{
       res.redirect('/login');
+    }
+  });
+
+  app.get('/edituser/:userID/:admin/:editQuestions/:viewReports/:editUsers', function(req, res){
+    //check if user is an admin, and has editUsers permission
+    if(req.user && req.user.permissions.admin && req.user.permissions.editUsers){
+      //user has permissions, update the user given by id
+      Users.findOne({_id: new ObjectId(req.params.userID)}, {}, function(err, results){
+        console.log(results);
+        results.permissions.admin = req.params.admin;
+        results.permissions.editQuestions = req.params.editQuestions;
+        results.permissions.viewReports = req.params.viewReports;
+        results.permissions.editUsers = req.params.editUsers;
+        results.save();
+        res.send({status: "success", message: "user was found"});
+      });
+    }else{
+      res.send({status: "error", message: "User Does Not Have Permission to Edit Users"});
     }
   });
 
@@ -363,12 +438,19 @@ module.exports = function(app, passport){
   // We want user logged in to visit
   // use route middleware to verify this (isLoggedIn function)
   app.get('/profile', isLoggedIn, function(req, res){
-    res.render(
-      'profile.ejs',{ 
-        user: req.user,
-        title: "Quiz Game - Profile"
-    } //get the user out of session and pass to template
-    );
+
+    //find all questionhistories with this users id
+    QuestionHistory.find({uid: new ObjectId(req.user._id)}, {}, {}, function(err, result){
+      if(err)throw err;
+      res.render(
+        'profile.ejs',{ 
+          user: req.user,
+          questionHistory: result,
+          title: "Quiz Game - Profile"
+        } //get the user out of session and pass to template
+      );
+
+    });
   });
 
   //=========

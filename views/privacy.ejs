@@ -2,6 +2,11 @@
 <html>
 <head>
   <% include partials/head %>
+  <script>
+    //don't penalize if user came to this page
+    sessionStorage.removeItem("not_answered");
+  </script>
+
 </head>
 <body>
 <header>

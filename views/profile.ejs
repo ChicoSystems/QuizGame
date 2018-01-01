@@ -3,6 +3,11 @@
 <head>
   <% include partials/head %>
   <script src="/javascripts/profile.js"></script>
+  <script>
+    //don't penalize if user came to this page
+    sessionStorage.removeItem("not_answered");
+  </script>
+
   <style>
         body        { word-wrap:break-word; }
   </style>
@@ -53,6 +58,59 @@
             Reset Score
           </button>
           <div class="alert alert-danger displayNone" id="resetmessage"></div> 
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- question history -->
+  <%
+    //calculate question pct
+    var qpct = 0;
+    var tright = 0;
+    var twrong = 0;
+    for(var i = 0; i < questionHistory.length; i++){
+      tright = tright + questionHistory[i].rightattempts;
+      twrong = twrong + questionHistory[i].wrongattempts;
+    }
+    var qpct = tright / (tright+twrong) * 100;
+    qpct = Math.round(qpct * 100) / 100;
+  %> 
+  <div class="jumbotron">
+    <h2><span class="fa fa-history"></span> Question History <div id="qpct"><%= qpct %>%</div></h2>
+    <div class="row">
+      <div class="card col-sm-12">
+        <div class="card-block col-sm-12 scroll">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Question ID</th>
+                <th>Correct Attempts</th>
+                <th>Incorrect Attempts</th>
+                <th>Pct Correct</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% for(var i = questionHistory.length-1; i >= 0; i--){ %>
+                <tr onclick='questionClicked("<%= questionHistory[i].type %>","<%= questionHistory[i].qid %>")'>
+                  <td><%= i %></td>
+                  <td><%= questionHistory[i].qid %></td>
+                  <td><%= questionHistory[i].rightattempts %></td>
+                  <td><%= questionHistory[i].wrongattempts %></td>
+                  <td><%= questionHistory[i].rightattempts / (questionHistory[i].rightattempts + questionHistory[i].wrongattempts) * 100 %>%</td>
+                </tr>
+                <tr class="collapsed" id="<%= questionHistory[i].qid %>" >
+                  <td colspan="4">
+                    <div class="questionText">question didn't load</div>
+                    <br>
+                    <div class="answerText">answer didn't load</div>
+                  </td>
+                </tr>
+              <% } %>          
+
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -153,8 +211,9 @@
         </div>
     </div>
   </div>
-</div>
 
+
+</div>
 <footer>
     <% include partials/footer %>
   </footer>

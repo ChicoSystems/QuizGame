@@ -5,6 +5,10 @@
 <head>
   <% include partials/head %>
   <script src="/javascripts/admin.js"></script>
+  <script>
+    //don't penalize if user came to this page
+    sessionStorage.removeItem("not_answered");
+  </script>
   <style>
         body        { word-wrap:break-word; }
   </style>
@@ -85,6 +89,84 @@
         <h1><span class="fa fa-cogs"></span> Admin</h1>
     </div>
   <div class="mydivider"></div>
+
+  <% if(user.permissions.editUsers){ %>
+
+  <div class="jumbotron">
+    <h2><span class="fa fa-users"></span> Users </h2>
+    <div class="row">
+      <div class="card col-sm-12">
+        <div class="card-block scroll">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th> User ID </th>
+                <th> Username</th>
+                <th> admin </th>
+                <th> editQuestions </th>
+                <th> viewReports </th>
+                <th> editUsers </th>
+              </tr>
+            </thead>
+            <tbody>
+            <% for(var i = 0; i < users.length; i++){ %>
+            <% 
+              //calculate username
+              var username = "";
+              if(users[i].facebook.name != null){
+                username = users[i].facebook.name;
+              }else if(users[i].twitter.username != null){
+                username = users[i].twitter.username;
+              }else if(users[i].google.name != null){
+                username = users[i].google.name;
+              }else if(users[i].local.email != null){
+                username = users[i].local.email;
+              }
+            %>
+              <tr>
+                <td><div id="selectid<%= i %>"><%= users[i]._id %></div></td>
+                <td> <%= username %></td>
+                <td> 
+                  <select id="selectadmin<%= i %>">
+                    <option value="false" <% if(!users[i].permissions.admin){ %> selected <% } %> >false</option>
+                    <option value="true" <% if(users[i].permissions.admin){ %> selected <% } %> >true</option>
+                  </select>
+                </td>
+                <td> 
+                  <select id="selecteditQuestions<%= i %>">
+                    <option value="false" <% if(!users[i].permissions.editQuestions){ %> selected <% } %> >false</option>
+                    <option value="true" <% if(users[i].permissions.editQuestions){ %> selected <% } %> >true</option>
+                  </select>
+                </td>
+                <td> 
+                  <select id="selectviewReports<%= i %>">
+                    <option value="false" <% if(!users[i].permissions.viewReports){ %> selected <% } %> >false</option>
+                    <option value="true" <% if(users[i].permissions.viewReports){ %> selected <% } %> >true</option>
+                  </select>
+                </td>
+                <td> 
+                  <select id="selecteditUsers<%= i %>">
+                    <option value="false" <% if(!users[i].permissions.editUsers){ %> selected <% } %> >false</option>
+                    <option value="true" <% if(users[i].permissions.editUsers){ %> selected <% } %> >true</option>
+                  </select>
+                </td>
+                <td> 
+                  <button type="button" class="btn btn-danger" onclick="editUserClicked('<%= i %>')">
+                    Edit User
+                  </button>
+</td>
+              </tr>
+            <% } %>
+            </tbody>
+
+          </table>
+ 
+        </div>
+      </div>
+          <div class="alert alert-danger displayNone col-sm-12" id="usersMessage"></div>
+    </div>
+  </div>
+  <% } %>
 
   <% if(user.permissions.editQuestions) { %>
   <div class="jumbotron">
@@ -184,7 +266,7 @@
     <br>
     <div class="row">
       <div class="card col-lg-12">
-        <div class="card-block">
+        <div class="card-block scroll">
           <h3 class="card-title"><span class="fa fa-pencil"></span> Question Reports</h3>
           
           <table class="table table-hover">
@@ -198,7 +280,7 @@
             </thead>
   
             <tbody>
-            <% for(var i = 0; i < reports.length; i++){ %>
+            <% for(var i = reports.length-1; i >= 0; i--){ %>
               <tr id="row<%= i %>">
                 <td><%= reports[i].questionType %></td>
                 <td><%= reports[i].problem %></td>

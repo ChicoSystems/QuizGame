@@ -3,6 +3,7 @@
 var mongoose = require('mongoose');
 var bcrypt   = require('bcrypt-nodejs');
 
+
 // define the schema for our user model
 var userSchema = mongoose.Schema({
 
@@ -37,7 +38,8 @@ var userSchema = mongoose.Schema({
     permissions     : {
       admin         : {type: Boolean, default: false},
       editQuestions : {type: Boolean, default: false},
-      viewReports   : {type: Boolean, default: false}
+      viewReports   : {type: Boolean, default: false},
+      editUsers     : {type: Boolean, default: false}
     }
 
 });
