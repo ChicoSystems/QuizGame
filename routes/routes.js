@@ -239,16 +239,42 @@ module.exports = function(app, passport){
     //check if user is an admin
     if(req.user && req.user.permissions.admin){
       ReportProblem.find({}, {}, function(err, results){
-        console.log(results);
+        if(err) throw err;
+        //console.log(results);
+  
+        //get a list of all the users
+        Users.find({}, {}, function(error, users){
+          if(error)throw error;
 
-        res.render('admin.ejs', {
-          title: "Quiz Game Admin",
-          user: req.user,
-          reports: results
+          console.log("users: " + users);
+          res.render('admin.ejs', {
+            title: "Quiz Game Admin",
+            user: req.user,
+            users: users,
+            reports: results
+          });
         });
       });
     }else{
       res.redirect('/login');
+    }
+  });
+
+  app.get('/edituser/:userID/:admin/:editQuestions/:viewReports/:editUsers', function(req, res){
+    //check if user is an admin, and has editUsers permission
+    if(req.user && req.user.permissions.admin && req.user.permissions.editUsers){
+      //user has permissions, update the user given by id
+      Users.findOne({_id: new ObjectId(req.params.userID)}, {}, function(err, results){
+        console.log(results);
+        results.permissions.admin = req.params.admin;
+        results.permissions.editQuestions = req.params.editQuestions;
+        results.permissions.viewReports = req.params.viewReports;
+        results.permissions.editUsers = req.params.editUsers;
+        results.save();
+        res.send({status: "success", message: "user was found"});
+      });
+    }else{
+      res.send({status: "error", message: "User Does Not Have Permission to Edit Users"});
     }
   });
 

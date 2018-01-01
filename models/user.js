@@ -38,7 +38,8 @@ var userSchema = mongoose.Schema({
     permissions     : {
       admin         : {type: Boolean, default: false},
       editQuestions : {type: Boolean, default: false},
-      viewReports   : {type: Boolean, default: false}
+      viewReports   : {type: Boolean, default: false},
+      editUsers     : {type: Boolean, default: false}
     }
 
 });

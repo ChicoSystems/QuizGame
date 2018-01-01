@@ -8,7 +8,38 @@ $(function(){
 
 });
 
+//admin clicked the edit user button
+function editUserClicked(indexClicked){
+  var admin = $("#selectadmin"+indexClicked).val();
+  var editQuestions = $("#selecteditQuestions"+indexClicked).val();
+  var viewReports = $("#selectviewReports"+indexClicked).val();
+  var editUsers = $("#selecteditUsers"+indexClicked).val();
+  var userID = $("#selectid"+indexClicked).text();
+  //alert(userID);
+  $.get("/edituser/"+userID+"/"+admin+"/"+editQuestions+"/"+viewReports+"/"+editUsers, function(data, status){
+    //alert(status);
+    if(data.status == "error"){
+      $("#usersMessage").text(data.message);
+      $("#usersMessage").removeClass("displayNone");
+      $("#usersMessage").removeClass("alert-success");
+      $("#usersMessage").addClass("alert-danger");
+    }else if(data.status == "success"){
+      $("#usersMessage").text(data.message);
+      $("#usersMessage").removeClass("alert-danger");
+      $("#usersMessage").removeClass("displayNone");
+      $("#usersMessage").addClass("alert-success");
+    }else{
+      $("#usersMessage").text("Error "+status );
+      $("#usersMessage").removeClass("displayNone");
+      $("#usersMessage").removeClass("alert-success");
+      $("#usersMessage").addClass("alert-danger");
+    }
+  });
+}
 
+
+
+//admin clicked the remove report button
 function removeReportClicked(indexClicked){
   var questionIdToRemove = $("#row"+indexClicked).find("#questionIdToRemove").text();
   $.get("/removereport/"+questionIdToRemove, function(data, status){
