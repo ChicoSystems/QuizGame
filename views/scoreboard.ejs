@@ -28,6 +28,8 @@
       <th>Place</th>
       <th>Username</th>
       <th>Picture</th>
+      <th>Answered</th>
+      <th>Correct</th>
       <th>Score</th>
     </tr>
   </thead>
@@ -63,6 +65,17 @@
            && locals.user.gameinfo.score == results[i].gameinfo.score)
           isme = true;
       }
+
+      //calculate pct correct
+      var tright = 0;
+      var twrong = 0;
+      for(var j = 0; j <results[i].questionHistory.length; j++){
+        tright = tright + results[i].questionHistory[j].rightattempts;
+        twrong = twrong + results[i].questionHistory[j].wrongattempts;
+      }
+      var qpct = tright / (tright+twrong) * 100;
+      qpct = Math.round(qpct * 100) / 100; //round to 2 decimals
+      if(results[i].questionHistory.length == 0) qpct = 0; 
       
       var ismeclass = "";
       if(isme)
@@ -73,6 +86,8 @@
         <th scope="row"><%=i+1%></th>
         <td><%= username %></td> 
         <td><img src="<%= photo %>" height="30px" width="30px"></img></td> 
+        <td><%= results[i].questionHistory.length %></td> 
+        <td><%= qpct %>%</td> 
         <td><%= results[i].gameinfo.score %></td> 
       </tr>
     <% } %>

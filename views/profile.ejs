@@ -37,6 +37,24 @@
     </div>
   </div>
 </div>
+
+<!-- Modal2 -->
+<div class="modal fade" id="deleteQuestionsModal" tabindex="-1" role="dialog" aria-labelledby="deleteQuestionsModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="deleteQuestionsModalLabel">WARNING</h4>
+      </div>
+      <div class="modal-body">
+        <b> This will DELETE your ENTIRE question history!</b>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="deleteQuestionsClicked()" data-dismiss="modal">Delete Question History</button>
+      </div>
+    </div>
+  </div>
+</div>
  
 </div>
 
@@ -57,10 +75,20 @@
           <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#myModal">
             Reset Score
           </button>
-          <div class="alert alert-danger displayNone" id="resetmessage"></div> 
+        </div>
+      </div>
+
+      <div class="card col-sm-6">
+        <div class="card-block">
+          <h3 class="card-title"><span class="fa fa-remove"></span> Delete Question History</h3>
+          <!-- Button trigger modal -->
+          <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteQuestionsModal">
+            Delete Question History
+          </button>
         </div>
       </div>
     </div>
+    <div class="alert alert-danger displayNone" id="resetmessage"></div> 
   </div>
   
   <!-- question history -->
@@ -69,12 +97,13 @@
     var qpct = 0;
     var tright = 0;
     var twrong = 0;
-    for(var i = 0; i < questionHistory.length; i++){
-      tright = tright + questionHistory[i].rightattempts;
-      twrong = twrong + questionHistory[i].wrongattempts;
+    for(var i = 0; i < user.questionHistory.length; i++){
+      tright = tright + user.questionHistory[i].rightattempts;
+      twrong = twrong + user.questionHistory[i].wrongattempts;
     }
     var qpct = tright / (tright+twrong) * 100;
     qpct = Math.round(qpct * 100) / 100;
+    if(user.questionHistory.length == 0) qpct = 0;
   %> 
   <div class="jumbotron">
     <h2><span class="fa fa-history"></span> Question History <div id="qpct"><%= qpct %>%</div></h2>
@@ -91,16 +120,16 @@
                 <th>Pct Correct</th>
               </tr>
             </thead>
-            <tbody>
-              <% for(var i = questionHistory.length-1; i >= 0; i--){ %>
-                <tr onclick='questionClicked("<%= questionHistory[i].type %>","<%= questionHistory[i].qid %>")'>
+            <tbody id="questionHistoryBody">
+              <% for(var i = user.questionHistory.length-1; i >= 0; i--){ %>
+                <tr onclick='questionClicked("<%= user.questionHistory[i].type %>","<%= user.questionHistory[i].qid %>")'>
                   <td><%= i %></td>
-                  <td><%= questionHistory[i].qid %></td>
-                  <td><%= questionHistory[i].rightattempts %></td>
-                  <td><%= questionHistory[i].wrongattempts %></td>
-                  <td><%= questionHistory[i].rightattempts / (questionHistory[i].rightattempts + questionHistory[i].wrongattempts) * 100 %>%</td>
+                  <td><%= user.questionHistory[i].qid %></td>
+                  <td><%= user.questionHistory[i].rightattempts %></td>
+                  <td><%= user.questionHistory[i].wrongattempts %></td>
+                  <td><%= user.questionHistory[i].rightattempts / (user.questionHistory[i].rightattempts + user.questionHistory[i].wrongattempts) * 100 %>%</td>
                 </tr>
-                <tr class="collapsed" id="<%= questionHistory[i].qid %>" >
+                <tr class="collapsed" id="<%= user.questionHistory[i].qid %>" >
                   <td colspan="4">
                     <div class="questionText">question didn't load</div>
                     <br>

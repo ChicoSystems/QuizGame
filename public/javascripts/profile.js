@@ -50,7 +50,15 @@ function questionClicked(qtype, qid){
 function resetClicked(){
   $.get("/resetscore", function(data, status){
     $("#resetmessage").removeClass('displayNone');
-    $("#resetmessage").text(data.message + " to " + data.score);
-  
+    $("#resetmessage").text(data.message + " to " + data.score); 
+  });
+}
+
+//user clicked the delete question history button
+function deleteQuestionsClicked(){
+  $.get("/deletequestionhistory", function(data, status){
+    $("#resetmessage").removeClass('displayNone');
+    $("#resetmessage").text(data.message);
+    $("#questionHistoryBody").addClass('displayNone'); 
   });
 }

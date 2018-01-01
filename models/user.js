@@ -3,6 +3,12 @@
 var mongoose = require('mongoose');
 var bcrypt   = require('bcrypt-nodejs');
 
+var historySchema = mongoose.Schema({
+  type          : String,
+  qid           : mongoose.Schema.Types.ObjectId,
+  wrongattempts : Number,
+  rightattempts : Number
+});
 
 // define the schema for our user model
 var userSchema = mongoose.Schema({
@@ -40,7 +46,8 @@ var userSchema = mongoose.Schema({
       editQuestions : {type: Boolean, default: false},
       viewReports   : {type: Boolean, default: false},
       editUsers     : {type: Boolean, default: false}
-    }
+    },
+    questionHistory : [historySchema]
 
 });
 
