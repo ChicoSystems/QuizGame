@@ -12,6 +12,44 @@ var ObjectId                = require('mongoose').Types.ObjectId;
 var s_old_questions = require('../models/stanford_old');
 var StanfordQuestion        = require('../models/stanfordQuestions');
 
+//random weighted choice, used for difficulty settings
+var rwc                     = require('random-weighted-choice');
+var rwc0 = [
+  {weight: 94, id: 0},
+  {weight: 5, id: 1},
+  {weight: 1, id: 2}
+];
+
+var rwc1 = [
+  {weight: 79, id: 0},
+  {weight: 20, id: 1},
+  {weight: 1, id: 2}
+];
+
+var rwc2 = [
+  {weight: 48, id: 0},
+  {weight: 48, id: 1},
+  {weight: 2, id: 2}
+];
+
+var rwc3 = [
+  {weight: 20, id: 0},
+  {weight: 60, id: 1},
+  {weight: 20, id: 2}
+];
+
+var rwc4 = [
+  {weight: 5, id: 0},
+  {weight: 90, id: 1},
+  {weight: 5, id: 2}
+];
+
+var rwcTable = [];
+rwcTable.push(rwc0);
+rwcTable.push(rwc1);
+rwcTable.push(rwc2);
+rwcTable.push(rwc3);
+rwcTable.push(rwc4);
 
 module.exports = function(app, passport){
   //=============================================
@@ -85,8 +123,12 @@ module.exports = function(app, passport){
 
   //The main page, renders jquestion or quizquestion half time
   app.get('/', function(req, res){
-    var random = getRandomIntInclusive(0, 2);
-
+    //set difficulty
+    var difficulty = 2;
+    if(req.user){
+      difficulty = req.user.difficulty;
+    }
+    var random = rwc(rwcTable[difficulty]);
 
     if(random == 0){
       renderJQuestion(req, res);
@@ -95,7 +137,6 @@ module.exports = function(app, passport){
     }else{
       renderStanfordQuestion(req, res);
     }
-
   });
 
   //user clicked on a wrong answer
@@ -220,6 +261,17 @@ module.exports = function(app, passport){
       res.send({
         message: "Question History Deleted"
       });
+    }
+  });
+
+  //user sets the difficulty in their profile page
+  app.get('/setdifficulty/:newdiff', function(req, res){
+    if(req.user){
+      req.user.difficulty = req.params.newdiff;
+      req.user.save();
+      res.send({message: "Successfully Changed Difficulty"});
+    }else{
+      res.send({message: "Error, not logged in, can't change difficulty"});
     }
   });
 

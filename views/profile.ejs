@@ -2,6 +2,10 @@
 <html>
 <head>
   <% include partials/head %>
+  <script>
+    var difficulty = <%= user.difficulty%>;
+    console.log(difficulty);
+  </script>
   <script src="/javascripts/profile.js"></script>
   <script>
     //don't penalize if user came to this page
@@ -87,8 +91,37 @@
           </button>
         </div>
       </div>
+
     </div>
-    <div class="alert alert-danger displayNone" id="resetmessage"></div> 
+    <div class="row"> 
+      <div class="card col-sm-6">
+        <div class="card-block">
+          <h3 class="card-title"><span class="fa fa-chain-broken"></span> Question Difficulty</h3>
+          <form>
+            <div class="radio">
+              <label><input type="radio" name="optradio" id="dif0" dif="0">Very Easy</label>
+            </div>
+            <div class="radio">
+              <label><input type="radio" name="optradio" id="dif1" dif="1">Easy</label>
+            </div>
+            <div class="radio">
+              <label><input type="radio" name="optradio" id="dif2" dif="2">Normal</label>
+            </div>
+            <div class="radio">
+              <label><input type="radio" name="optradio" id="dif3" dif="3">Hard</label>
+            </div>
+            <div class="radio">
+              <label><input type="radio" name="optradio" id="dif4" dif="4">Very Hard</label>
+            </div>
+          </form>          
+          <button type="button" class="btn btn-danger" onclick="setDifficulty()">
+            Set Difficulty
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="alert alert-danger displayNone" id="resetmessage"></div> 
   </div>
   
   <!-- question history -->
