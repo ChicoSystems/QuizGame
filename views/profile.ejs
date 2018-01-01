@@ -37,6 +37,24 @@
     </div>
   </div>
 </div>
+
+<!-- Modal2 -->
+<div class="modal fade" id="deleteQuestionsModal" tabindex="-1" role="dialog" aria-labelledby="deleteQuestionsModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="deleteQuestionsModalLabel">WARNING</h4>
+      </div>
+      <div class="modal-body">
+        <b> This will DELETE your ENTIRE question history!</b>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="deleteQuestionsClicked()" data-dismiss="modal">Delete Question History</button>
+      </div>
+    </div>
+  </div>
+</div>
  
 </div>
 
@@ -57,10 +75,20 @@
           <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#myModal">
             Reset Score
           </button>
-          <div class="alert alert-danger displayNone" id="resetmessage"></div> 
+        </div>
+      </div>
+
+      <div class="card col-sm-6">
+        <div class="card-block">
+          <h3 class="card-title"><span class="fa fa-remove"></span> Delete Question History</h3>
+          <!-- Button trigger modal -->
+          <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteQuestionsModal">
+            Delete Question History
+          </button>
         </div>
       </div>
     </div>
+    <div class="alert alert-danger displayNone" id="resetmessage"></div> 
   </div>
   
   <!-- question history -->
@@ -75,6 +103,7 @@
     }
     var qpct = tright / (tright+twrong) * 100;
     qpct = Math.round(qpct * 100) / 100;
+    if(user.questionHistory.length == 0) qpct = 0;
   %> 
   <div class="jumbotron">
     <h2><span class="fa fa-history"></span> Question History <div id="qpct"><%= qpct %>%</div></h2>
@@ -91,7 +120,7 @@
                 <th>Pct Correct</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="questionHistoryBody">
               <% for(var i = user.questionHistory.length-1; i >= 0; i--){ %>
                 <tr onclick='questionClicked("<%= user.questionHistory[i].type %>","<%= user.questionHistory[i].qid %>")'>
                   <td><%= i %></td>

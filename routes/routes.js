@@ -212,6 +212,17 @@ module.exports = function(app, passport){
     }
   });
 
+  //deletes the question history of the signed in user
+  app.get('/deletequestionhistory', function(req, res, done){
+    if(req.user){
+      req.user.questionHistory = [];
+      req.user.save();
+      res.send({
+        message: "Question History Deleted"
+      });
+    }
+  });
+
   app.get('/removereport/:id', function(req, res){
     if(req.user && req.user.permissions.admin && req.user.permissions.viewReports){
 
