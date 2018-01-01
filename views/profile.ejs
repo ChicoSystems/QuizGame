@@ -69,9 +69,9 @@
     var qpct = 0;
     var tright = 0;
     var twrong = 0;
-    for(var i = 0; i < questionHistory.length; i++){
-      tright = tright + questionHistory[i].rightattempts;
-      twrong = twrong + questionHistory[i].wrongattempts;
+    for(var i = 0; i < user.questionHistory.length; i++){
+      tright = tright + user.questionHistory[i].rightattempts;
+      twrong = twrong + user.questionHistory[i].wrongattempts;
     }
     var qpct = tright / (tright+twrong) * 100;
     qpct = Math.round(qpct * 100) / 100;
@@ -92,15 +92,15 @@
               </tr>
             </thead>
             <tbody>
-              <% for(var i = questionHistory.length-1; i >= 0; i--){ %>
-                <tr onclick='questionClicked("<%= questionHistory[i].type %>","<%= questionHistory[i].qid %>")'>
+              <% for(var i = user.questionHistory.length-1; i >= 0; i--){ %>
+                <tr onclick='questionClicked("<%= user.questionHistory[i].type %>","<%= user.questionHistory[i].qid %>")'>
                   <td><%= i %></td>
-                  <td><%= questionHistory[i].qid %></td>
-                  <td><%= questionHistory[i].rightattempts %></td>
-                  <td><%= questionHistory[i].wrongattempts %></td>
-                  <td><%= questionHistory[i].rightattempts / (questionHistory[i].rightattempts + questionHistory[i].wrongattempts) * 100 %>%</td>
+                  <td><%= user.questionHistory[i].qid %></td>
+                  <td><%= user.questionHistory[i].rightattempts %></td>
+                  <td><%= user.questionHistory[i].wrongattempts %></td>
+                  <td><%= user.questionHistory[i].rightattempts / (user.questionHistory[i].rightattempts + user.questionHistory[i].wrongattempts) * 100 %>%</td>
                 </tr>
-                <tr class="collapsed" id="<%= questionHistory[i].qid %>" >
+                <tr class="collapsed" id="<%= user.questionHistory[i].qid %>" >
                   <td colspan="4">
                     <div class="questionText">question didn't load</div>
                     <br>
