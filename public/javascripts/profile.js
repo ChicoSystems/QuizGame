@@ -60,5 +60,6 @@ function deleteQuestionsClicked(){
     $("#resetmessage").removeClass('displayNone');
     $("#resetmessage").text(data.message);
     $("#questionHistoryBody").addClass('displayNone'); 
+    $("#qpct").text('0%'); 
   });
 }
