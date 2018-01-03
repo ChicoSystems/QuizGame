@@ -101,6 +101,11 @@ module.exports = function(app, passport){
   //==============================================
   //Game Routes
   //==============================================
+
+  app.get('/sockettest', function(req, res){
+    res.render('socketTest.ejs', {title: "Quiz Game Socket Test"});
+  });
+
   app.get('/designtest', function(req, res){
     functionTest();
     res.render('designTest.ejs', {title : "Quiz Game"});
