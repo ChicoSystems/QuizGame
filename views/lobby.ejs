@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <% include partials/head %>
+
+  <script src="/javascripts/randomquestion.js"></script>
+</head>
+<body>
+<header>
+  <% include partials/header %>
+</header>
+
+<div class="container col-sm-12">
+
+  <div class="page-header text-center">
+    <h1><span class="fa fa-users"></span>
+      <%= title %>
+    </h1>
+  </div>
+
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <th> Game Name </th>
+        <th> Seconds / Question </th>
+        <th> Difficulty </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td> Isaac's Game </td>
+        <td> 20 </td>
+        <td> Easy </td>
+        <td>
+          <span class="badge badge-pill badge-dark">3</span>
+          <button type="button" class="btn btn-success">Join</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<div class="container col-sm-12"
+
+</div>
+
+
+
+  <footer>
+    <% include partials/footer %>
+  </footer>
+
+</body>
+</html>

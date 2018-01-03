@@ -480,6 +480,20 @@ module.exports = function(app, passport){
 
   });
 
+  //============================================
+  // MultiPlayer Related Routes
+  //============================================
+
+  app.get('/lobby', function(req, res){
+    if(req.user){
+      res.render('lobby.ejs', {
+        title: "Multi Player Lobby"
+      });
+    }else{
+      res.redirect('/login');
+    } 
+  });
+
   //==============================================
   //Social Login Routes
   //=============================================
