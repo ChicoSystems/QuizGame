@@ -3,7 +3,6 @@
 <head>
   <% include partials/head %>
 
-  <script src="/javascripts/randomquestion.js"></script>
 </head>
 <body>
 <header>
@@ -27,15 +26,50 @@
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td> Isaac's Game </td>
-        <td> 20 </td>
-        <td> Easy </td>
+      <tr class="table-info">
+        <td> New Game </td>
         <td>
-          <span class="badge badge-pill badge-dark">3</span>
-          <button type="button" class="btn btn-success">Join</button>
+          <label class="mr-sm-2" for="secondsInput">Seconds Per Question</label>
+          <input class="form-control col-sm-2" id="secondsInput" type="number" min="5" max="60" value="20"></input>
+        </td>
+        <td>
+            <div class="radio">
+              <label><input type="radio" name="optradio" id="dif1" dif="1">Easy</label>
+            </div>
+            <div class="radio">
+              <label><input type="radio" name="optradio" id="dif2" dif="2">Normal</label>
+            </div>
+            <div class="radio">
+              <label><input type="radio" name="optradio" id="dif3" dif="3">Hard</label>
+            </div>
+        </td>
+        <td>
+          <button type="button" class="btn btn-warning" id="createButton" onclick="createRoom()">Create</button>
         </td>
       </tr>
+      <% 
+        var num = 0;
+        for(room in rooms){
+          num++;
+
+          var roomInfo = rooms[room].info
+
+          if(roomInfo){
+      %>
+        <tr>
+          <td> <%= roomInfo.roomName %></td>
+          <td> <%= roomInfo.seconds %></td>
+          <td> <%= roomInfo.type %></td>
+          <td>
+            <span class="badge badge-pill badge-dark">3</span>
+            <button type="button" class="btn btn-success">Join</button>
+          </td>
+        </tr>
+
+      <% 
+          }
+        } 
+      %>
     </tbody>
   </table>
 
@@ -51,5 +85,11 @@
     <% include partials/footer %>
   </footer>
 
+  <script>
+    var serverIP = "<%= serverIP %>";
+    var name = "<%= name %>";
+  </script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/javascripts/lobby.js"></script>
 </body>
 </html>

@@ -1,5 +1,9 @@
 // routes/routes.js
 
+//used by socket.io to allow client to connect to server, this must change
+//if domain changes, or when we move from dev server to live
+var hostedAddress = "http://192.168.1.197";
+
 // load up the quizQestions model
 var QuizQuestion            = require('../models/quizQuestions');
 var Users                   = require('../models/user');
@@ -7,6 +11,7 @@ var JQuestion               = require('../models/jQuestions');
 var ReportProblem           = require('../models/reportProblem');
 //var QuestionHistory         = require('../models/questionHistory');
 var ObjectId                = require('mongoose').Types.ObjectId;
+var util = require('util');
 
 //convert stanford questions
 var s_old_questions = require('../models/stanford_old');
@@ -485,13 +490,33 @@ module.exports = function(app, passport){
   //============================================
 
   app.get('/lobby', function(req, res){
+    //get userName
+    var name = "guest";
     if(req.user){
+      if(req.user.facebook.name != null){
+        name = req.user.facebook.name;
+      }else if(req.user.twitter.username){
+        name = req.user.twitter.username;
+      }else if(req.user.google.name){
+        name = req.user.google.name;
+      }else if(req.user.local.email){
+        name = req.user.local.email;
+      }
+    }
+    console.log("approoms: " + JSON.stringify(app.io.sockets.adapter.rooms, {depth:null}));
+    //console.log("approoms: " + util.inspect(app.io.sockets.adapter.rooms, {depth:null}));
+    var clientConnectTo = hostedAddress +":"+ app.server.address().port;
+    //console.log(clientConnectTo);
+    //if(req.user){
       res.render('lobby.ejs', {
-        title: "Multi Player Lobby"
+        title: "Multi Player Lobby",
+        serverIP: clientConnectTo,
+        name    : name,
+        rooms   : app.io.sockets.adapter.rooms
       });
-    }else{
-      res.redirect('/login');
-    } 
+    //}else{
+    //  res.redirect('/login');
+    //} 
   });
 
   //==============================================
