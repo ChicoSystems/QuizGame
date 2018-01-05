@@ -9,14 +9,6 @@
   <% include partials/header %>
 </header>
 
-<div class="container col-sm-12 lobby">
-
-  <div class="page-header text-center">
-    <h1><span class="fa fa-users"></span>
-      <%= title %>
-    </h1>
-  </div>
-
   <div class="jumbotron col-sm-12">
     <h4><span class="fa fa-user"></span> Users </h4>
     <div class="row users">
@@ -33,9 +25,23 @@
         </div>
       </div>
 
+    </div>
+    <br>
+    <div class="row chat">
+      <input class="form-control col-sm-4" id="chatInput" type="text"></input>
+      <button type="button" class="btn btn-primary" onclick="sendChat()">Chat</button>
     </div> 
+
   </div><!-- end jumbotron -->
 
+
+<div class="container col-sm-12 lobby">
+
+  <div class="page-header text-center">
+    <h1><span class="fa fa-users"></span>
+      <%= title %>
+    </h1>
+  </div>
 
   <div class="jumbotron col-sm-12">
   <table class="table table-hover" id="roomsTable">

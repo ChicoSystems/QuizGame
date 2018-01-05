@@ -32,7 +32,12 @@ $(function(){
   });
 
   socket.on('updatechat', function(username, data){
-    $("#conversation").append('<b>' + username + ':</b> ' + data + '<br>');
+    if(username == 'SERVER'){
+      $("#conversation").append('<b>' + username + ':</b> ' + data + '<br>');
+    }else{
+      $("div#"+username+" > div.card-block > div.chat :first").remove();
+      $("div#"+username+" > div.card-block > div.chat").append("<div>"+data+"</div>");
+    }
   });
 
   socket.on('updaterooms', function(rooms){
@@ -64,7 +69,7 @@ $(function(){
   socket.on('displaylobby', function(){
     $('.gameroom').hide();
     $('.lobby').show();
-    socket.emit('addUser', name);
+    //socket.emit('addUser', name);
   });
  
 });
@@ -92,4 +97,9 @@ function createRoom(){
     difficulty: "easy",
     type : "gameroom"
   })); 
+}
+
+function sendChat(){
+  var text = $("#chatInput").val();
+  socket.emit('updatechat', text);
 }
