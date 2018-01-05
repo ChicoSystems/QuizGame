@@ -1,8 +1,10 @@
 var socket_io = require('socket.io');
 var io = socket_io();
 var socketApi = {};
-
 socketApi.io = io;
+
+//used to query questions from db
+var JQuestion               = require('../models/jQuestions');
 
 var usernames = {};
 var rooms = {};//["lobby": {owner: "SERVER", seconds: "", type: "lobby"}];
@@ -17,7 +19,7 @@ io.on('connection', function(socket){
     var user = {"username":username, "chat":["", ""], "score":0};
     rooms["lobby"].users.push(user);
     rooms["lobby"].stat = "lobby";
-    console.log("rooms: " + JSON.stringify(rooms));
+//    console.log("rooms: " + JSON.stringify(rooms));
     socket.join("lobby");
     socket.emit('updatechat', 'SERVER', 'You have connected to the lobby ' + socket.username);
     socket.broadcast.to("lobby").emit('updatechat', 'SERVER', username + ' has connected to this room');
@@ -67,8 +69,8 @@ io.on('connection', function(socket){
     
     //remove user from oldroom
     var index = rooms[oldroom].users.findIndex(function(o){
-      console.log("socket.username: " + socket.username);
-      console.log("o: " + JSON.stringify(o));
+  //    console.log("socket.username: " + socket.username);
+  //    console.log("o: " + JSON.stringify(o));
         return o.username == socket.username;
     });
 
@@ -111,7 +113,7 @@ io.on('connection', function(socket){
   socket.on('switchroom', function(newroom){
     //if the room has not been created, we cannot switch to it.
     if(rooms[newroom] == null) return 0;
-    console.log(socket.username + "switching to room: " + newroom + " from: " + socket.room);
+    //console.log(socket.username + "switching to room: " + newroom + " from: " + socket.room);
     var oldroom = socket.room;
     
     if(socket.ownedRoom != null && socket.ownedRoom == oldroom){
@@ -125,16 +127,16 @@ io.on('connection', function(socket){
     //if old room still exists, remove this user from it
     if(rooms[oldroom]){
       //remove user from old room
-      console.log("users: " + JSON.stringify(rooms[oldroom].users));
+      //console.log("users: " + JSON.stringify(rooms[oldroom].users));
 
       //remove user from oldroom
       var index = rooms[oldroom].users.findIndex(function(o){
-        console.log("socket.username: " + socket.username);
-        console.log("o: " + JSON.stringify(o));
+        //console.log("socket.username: " + socket.username);
+        //console.log("o: " + JSON.stringify(o));
           return o.username == socket.username;
       });
 
-      console.log("removing user with index of: " + index);
+      //console.log("removing user with index of: " + index);
       rooms[oldroom].users.splice(index, 1);
     
       io.sockets.in(oldroom).emit('updatechat', 'SERVER', socket.username + ' has left this room to join: ' + newroom);
@@ -165,10 +167,10 @@ io.on('connection', function(socket){
       //console.log("o: " + JSON.stringify(o));
         return o.username == socket.username;
     });
-    console.log("user to update: " + JSON.stringify(rooms[socket.room].users[index]));
+    //console.log("user to update: " + JSON.stringify(rooms[socket.room].users[index]));
     rooms[socket.room].users[index].chat[0] = rooms[socket.room].users[index].chat[1];
     rooms[socket.room].users[index].chat[1] = text;
-    console.log("user to update: " + JSON.stringify(rooms[socket.room].users[index]));
+    //console.log("user to update: " + JSON.stringify(rooms[socket.room].users[index]));
     
     io.sockets.in(socket.room).emit('updatechat', socket.username, text);
   });
@@ -182,6 +184,49 @@ io.on('connection', function(socket){
     io.sockets.in(roomName).emit('statuschanged', newStatus);
     //update all users in lobby of room status change
     io.sockets.in('lobby').emit('updaterooms', rooms);
+  });
+
+  //get question for a room
+  socket.on('getquestion', function(){
+    var roomName = socket.ownedRoom;
+  
+    //query db for a jquestion
+    var filter ={subDiscipline: {$exists: true}};
+    var fields =  {};
+    JQuestion.findRandom(filter, fields, {limit: 1}, function(err, result){
+      if(err) throw err;
+
+      var questionType = 'jQuestion';
+      //find 11 answers with the same subDiscipline as result
+      var filter = {answer: {$ne: result[0].answer}, subDiscipline: result[0].subDiscipline};
+      var fields = {answer: 1};
+      JQuestion.findRandom(filter, fields, {limit: 11}, function(error, answers){
+        if(error) throw error;
+        //splice the correct answer into the list of answers
+        var answerIndex = Math.floor(Math.random() * 12);
+        if(answers == null)return 0;
+        answers.splice(answerIndex, 0, {answer: result[0].answer});
+        //modify the answer array to answer is stored as "label"
+
+        for(var i = 0; i < answers.length; i++){
+          answers[i]["label"] = answers[i]["answer"];  
+    
+        }
+ 
+        //send category, answer, answers, answerIndex back to frontends
+        io.sockets.in(roomName).emit('getquestion', {
+          category: result[0].category,
+          question: result[0].question,
+          answer: result[0].answer,
+          answers : answers,
+          answerIndex: answerIndex,
+          questionType: questionType,
+          questionId : result[0]._id
+        });
+
+
+      });
+    });
   });
 
 });

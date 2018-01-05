@@ -25,6 +25,11 @@ a {
   display: inline;
 }
 
+#timerDiv{
+  font-size: 28px;
+  display: inline;
+}
+
 #quizgamequestion{
   font-size: 28px;
   text-align: center;
@@ -73,6 +78,13 @@ a {
   color: #00B7FF;
   position: relative;
   top: -15px;
+}
+
+.reportProblemMultiplayer{
+  font-size: small;
+  color: #00B7FF;
+  position: relative;
+  top: -75px;
 }
 
 .displayNone{

@@ -9,6 +9,36 @@
   <% include partials/header %>
 </header>
 
+<div class="container">
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="myModalLabel">Report Problem</h4>
+      </div>
+      <div class="modal-body">
+        <b> What is the problem with this question?</b><br>
+        <div class="radio">
+          <label><input type="radio" name="optradio" checked>Malformed Question</label>
+        </div>
+        <div class="radio">
+          <label><input type="radio" name="optradio">Wrong Answer</label>
+        </div>
+        <div class="radio">
+          <label><input type="radio" name="optradio">Other</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="reportProblemClicked()" data-dismiss="modal">Send Report</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+
   <div class="jumbotron small-jumbotron col-sm-12">
     <h4><span class="fa fa-user"></span> Users </h4>
     <div class="row users">
@@ -88,7 +118,23 @@
     <div class="container" id="quizgamestatus">
        Getting Status
     </div>
+    <div id="timerDiv"></div>
     <div id="statusChangeDiv"></div>
+  </div>
+
+  <div class="container col-sm-10 col-sm-offset-1" id="quizgamequestion">
+    <p id="quizgamecategory">
+      This is a Category
+    </p>
+      <br>
+      <a class="reportProblem reportProblemMultiplayer" data-toggle="modal" data-target="#myModal" href="">Report Problem With Question</a>
+    <p id="questionText">
+      This is the question
+    </p>
+  </div>
+
+  <div class="container col-md-12" id="quizgameanswers">
+
   </div>
 
 </div>

@@ -850,7 +850,7 @@ function renderJQuestion(req, res){
 
         //modify answers array, so answer is stored as "label" instead of answer
         //this is for compatibility with the quizQuestion type
-        var modifiedAnswers = new Array();
+        
         for(var i = 0; i < answers.length; i++){
           answers[i]["label"] = answers[i]["answer"];
         }
