@@ -491,7 +491,8 @@ module.exports = function(app, passport){
 
   app.get('/lobby', function(req, res){
     //get userName
-    var name = "guest";
+    var name = "guest"+ (Math.floor((Math.random() * 1000) + 1));
+
     if(req.user){
       if(req.user.facebook.name != null){
         name = req.user.facebook.name;
@@ -503,7 +504,8 @@ module.exports = function(app, passport){
         name = req.user.local.email;
       }
     }
-    console.log("approoms: " + JSON.stringify(app.io.sockets.adapter.rooms, {depth:null}));
+    console.log("approoms: " + JSON.stringify(app.io.rooms, {depth:null}));
+    //console.log("approoms: " + JSON.stringify(app.io.sockets.adapter.rooms, {depth:null}));
     //console.log("approoms: " + util.inspect(app.io.sockets.adapter.rooms, {depth:null}));
     var clientConnectTo = hostedAddress +":"+ app.server.address().port;
     //console.log(clientConnectTo);
@@ -512,7 +514,7 @@ module.exports = function(app, passport){
         title: "Multi Player Lobby",
         serverIP: clientConnectTo,
         name    : name,
-        rooms   : app.io.sockets.adapter.rooms
+        rooms   : app.io.rooms
       });
     //}else{
     //  res.redirect('/login');

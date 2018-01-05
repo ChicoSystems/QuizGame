@@ -17,12 +17,12 @@
     </h1>
   </div>
 
-  <table class="table table-hover">
+  <table class="table table-hover" id="roomsTable">
     <thead>
       <tr>
         <th> Game Name </th>
         <th> Seconds / Question </th>
-        <th> Difficulty </th>
+        <!-- <th> Difficulty </th> -->
       </tr>
     </thead>
     <tbody>
@@ -32,6 +32,7 @@
           <label class="mr-sm-2" for="secondsInput">Seconds Per Question</label>
           <input class="form-control col-sm-2" id="secondsInput" type="number" min="5" max="60" value="20"></input>
         </td>
+        <!--
         <td>
             <div class="radio">
               <label><input type="radio" name="optradio" id="dif1" dif="1">Easy</label>
@@ -43,10 +44,12 @@
               <label><input type="radio" name="optradio" id="dif3" dif="3">Hard</label>
             </div>
         </td>
+        -->
         <td>
           <button type="button" class="btn btn-warning" id="createButton" onclick="createRoom()">Create</button>
         </td>
       </tr>
+      <!--
       <% 
         var num = 0;
         for(room in rooms){
@@ -70,13 +73,14 @@
           }
         } 
       %>
+      -->
     </tbody>
   </table>
 
 </div>
 
-<div class="container col-sm-12"
-
+<div class="container col-sm-6">
+  <div id="conversation"><b> test: </b> connected. <br></div>
 </div>
 
 
