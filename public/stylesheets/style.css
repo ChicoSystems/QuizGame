@@ -16,6 +16,15 @@ a {
   text-align: center;
 }
 
+#quizgamestatus{
+  font-size:30px;
+  display: inline;
+}
+
+#statusChangeDiv{
+  display: inline;
+}
+
 #quizgamequestion{
   font-size: 28px;
   text-align: center;
@@ -158,4 +167,8 @@ a {
 .scroll{
   height: 400px;
   overflow: auto;
+}
+
+.small-jumbotron{
+  padding: 0 !important;
 }

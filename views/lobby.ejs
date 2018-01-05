@@ -9,10 +9,11 @@
   <% include partials/header %>
 </header>
 
-  <div class="jumbotron col-sm-12">
+  <div class="jumbotron small-jumbotron col-sm-12">
     <h4><span class="fa fa-user"></span> Users </h4>
     <div class="row users">
 
+<!-- This block of code actually gets written by client
       <div class="card col-sm-3">
         <div class="card-block">
           <div class="card-title text-center">
@@ -24,7 +25,7 @@
           </div>
         </div>
       </div>
-
+-->
     </div>
     <br>
     <div class="row chat">
@@ -49,7 +50,7 @@
       <tr>
         <th> Game Name </th>
         <th> Seconds / Question </th>
-        <!-- <th> Difficulty </th> -->
+        <th> Status </th>
       </tr>
     </thead>
     <tbody>
@@ -59,6 +60,7 @@
           <label class="mr-sm-2" for="secondsInput">Seconds Per Question</label>
           <input class="form-control col-sm-2" id="secondsInput" type="number" min="5" max="60" value="20"></input>
         </td>
+        <td></td>
         <!--
         <td>
             <div class="radio">
@@ -82,11 +84,11 @@
 </div>
 
 <div class="container col-sm-12 gameroom">
-
-  <div class="page-header text-center">
-    <h1><span class="fa fa-users"></span>
-      Multi Player Game
-    </h1>
+  <div class="text-center">
+    <div class="container" id="quizgamestatus">
+       Getting Status
+    </div>
+    <div id="statusChangeDiv"></div>
   </div>
 
 </div>
