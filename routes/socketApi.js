@@ -6,7 +6,7 @@ socketApi.io = io;
 
 var usernames = {};
 var rooms = {};//["lobby": {owner: "SERVER", seconds: "", type: "lobby"}];
-rooms.lobby = {owner: "SERVER", seconds: "", difficutly: "", type: "lobby"};
+rooms.lobby = {owner: "SERVER", seconds: "", difficutly: "", type: "lobby", users: []};
 
 io.on('connection', function(socket){
   io.rooms = rooms;
@@ -14,15 +14,24 @@ io.on('connection', function(socket){
     socket.username = username;
     socket.room = "lobby";
     usernames[username] = username;
+    rooms["lobby"].users.push(username);
+    //console.log("rooms: " + JSON.stringify(rooms));
     socket.join("lobby");
     socket.emit('updatechat', 'SERVER', 'You have connected to the lobby ' + socket.username);
     socket.broadcast.to("lobby").emit('updatechat', 'SERVER', username + ' has connected to this room');
     socket.emit('updaterooms', rooms);
+    io.sockets.in('lobby').emit('updateusers', rooms['lobby'].users);
   });
 
   socket.on('disconnect', function(){
+    console.log("user disconnected: " + socket.username);
     delete usernames[socket.username];
 
+    //remove user from room
+    var index = rooms[socket.room].users.indexOf(socket.username);
+    rooms[socket.room].users.splice(index, 1);
+
+    console.log("user: " + JSON.stringify(rooms[socket.room].users));
     if(socket.ownedRoom != null){
       delete rooms[socket.ownedRoom];
       io.sockets.in(socket.ownedRoom).emit('updatechat', 'SERVER', 'Host has left room ' + socket.ownedRoom + " Rejoining Lobby");
@@ -30,7 +39,7 @@ io.on('connection', function(socket){
       io.sockets.in("lobby").emit('updaterooms', rooms);
     } 
 
-    io.sockets.emit('updateusers', usernames);
+    io.sockets.in(socket.room).emit('updateusers', rooms[socket.room].users);
     socket.broadcast.emit('updatechat', 'SERVER', socket.username + ' has disconnected');
     socket.leave(socket.room);
   });
@@ -40,16 +49,18 @@ io.on('connection', function(socket){
   socket.on('createRoom', function(room){
     var oldroom = socket.room;
     var room = JSON.parse(room);
-    var newRoom = {owner: room.owner, seconds: room.seconds, difficulty: room.difficulty, type: room.type};
+    var newRoom = {owner: room.owner, seconds: room.seconds, difficulty: room.difficulty, type: room.type, users: [socket.user]};
     rooms[room.roomName] = newRoom;
 
-    console.log("createroom - old: " + oldroom + "   new: " + room.roomName);    
+    //remove user from old room
+    var index = rooms[socket.room].users.indexOf(socket.username);
+    rooms[socket.room].users.splice(index, 1);
 
     //tell client to update rooms
     socket.emit('updaterooms', rooms);
     
     //tell the lobby about the new room
-    socket.broadcast.to("lobby").emit('updaterooms', rooms);
+    io.sockets.in("lobby").emit('updaterooms', rooms);
   
     //leave the old room
     socket.leave(oldroom);
@@ -62,6 +73,11 @@ io.on('connection', function(socket){
  
     //tell old room we have left
     io.sockets.in(oldroom).emit('updatechat', 'SERVER', socket.username + ' has left the room to create: ' +room.roomName);
+  
+    //update old rooms users displays
+    io.sockets.in(oldroom).emit('updateusers', rooms[oldroom].users);
+    //update new rooms users displays
+    io.sockets.in(room.roomName).emit('updateusers', rooms[room.roomName].users);
     
     //tell new room we have joined
     io.sockets.in(room.roomName).emit('updatechat', 'SERVER', socket.username + ' has joined the room');    
@@ -85,11 +101,20 @@ io.on('connection', function(socket){
     } 
     socket.leave(socket.room);
 
+    //remove user from old room
+    var index = rooms[oldroom].users.indexOf(socket.username);
+    rooms[oldroom].users.splice(index, 1);
+    
+    //add user to newly joined room
+    rooms[newroom].users.push(socket.username);
+
     socket.join(newroom);
     socket.emit('updatechat', 'SERVER', 'you have connected to ' + newroom);
     io.sockets.in(oldroom).emit('updatechat', 'SERVER', socket.username + ' has left this room to join: ' + newroom);
+    io.sockets.in(oldroom).emit('updateusers', rooms[oldroom].users);
     socket.room = newroom;
     io.sockets.in(newroom).emit('updatechat', 'SERVER', socket.username + ' has joined this room: ' + newroom);
+    io.sockets.in(newroom).emit('updateusers', rooms[newroom].users);
     //console.log("rooms: " + JSON.stringify(rooms));
     
     //have frontend display the gameroom instead of the lobby

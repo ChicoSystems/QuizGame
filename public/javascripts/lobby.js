@@ -4,6 +4,7 @@
 var socket;
 
 $(function(){
+  $('.gameroom').hide();
   socket = io.connect(serverIP);
 
   socket.on('connect', function(data) {
@@ -11,20 +12,24 @@ $(function(){
     socket.emit('addUser', name);
   });
 
-  socket.on('messages', function(data){
-    console.log(data);
+  socket.on('updateusers', function(users){
+    console.log(JSON.stringify(users));
+      $(".users").empty();
+    $.each(users, function(key, value){
+      var userHTML = '<div class="card col-sm-3" id="'+ value +'"> ' +
+        ' <div class="card-block">' +
+        '   <div class = "card-title text-center"> ' +
+        '     <h5>'+value+'</h5>' +
+        '   </div> ' +
+        '   <div class="chat"> ' +
+        '     <div>testChat 1</div> ' +
+        '     <div>testChat 2</div> ' +
+        '   </div> ' +
+        ' </div> </div>';
+      
+      $(".users").append(userHTML);
+    });
   });
-
-  socket.on('joinedRoom', function(data){
-    console.log(data);
-    //window.location.href = "/profile";
-  });
-
-/*
-  socket.on('listRooms', function (rooms){
-    alert('rooms :'+ JSON.stringify(Object.getKeys(rooms)) + "<br> " + rooms[0]);
-  });
-*/
 
   socket.on('updatechat', function(username, data){
     $("#conversation").append('<b>' + username + ':</b> ' + data + '<br>');
@@ -50,11 +55,14 @@ $(function(){
 
   //display the game room
   socket.on('displaygameroom', function(room){
+    console.log(JSON.stringify(room));
     $('.lobby').hide();
+    $('.gameroom').show();
   });
   
   //display the lobby room
   socket.on('displaylobby', function(){
+    $('.gameroom').hide();
     $('.lobby').show();
     socket.emit('addUser', name);
   });
