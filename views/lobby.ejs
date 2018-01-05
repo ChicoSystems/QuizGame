@@ -9,7 +9,7 @@
   <% include partials/header %>
 </header>
 
-<div class="container col-sm-12">
+<div class="container col-sm-12 lobby">
 
   <div class="page-header text-center">
     <h1><span class="fa fa-users"></span>
@@ -49,38 +49,12 @@
           <button type="button" class="btn btn-warning" id="createButton" onclick="createRoom()">Create</button>
         </td>
       </tr>
-      <!--
-      <% 
-        var num = 0;
-        for(room in rooms){
-          num++;
-
-          var roomInfo = rooms[room].info
-
-          if(roomInfo){
-      %>
-        <tr>
-          <td> <%= roomInfo.roomName %></td>
-          <td> <%= roomInfo.seconds %></td>
-          <td> <%= roomInfo.type %></td>
-          <td>
-            <span class="badge badge-pill badge-dark">3</span>
-            <button type="button" class="btn btn-success">Join</button>
-          </td>
-        </tr>
-
-      <% 
-          }
-        } 
-      %>
-      -->
     </tbody>
   </table>
-
 </div>
 
 <div class="container col-sm-6">
-  <div id="conversation"><b> test: </b> connected. <br></div>
+  <div id="conversation"></div>
 </div>
 
 

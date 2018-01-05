@@ -47,6 +47,17 @@ $(function(){
       }
     });
   });//end updaterooms
+
+  //display the game room
+  socket.on('displaygameroom', function(room){
+    $('.lobby').hide();
+  });
+  
+  //display the lobby room
+  socket.on('displaylobby', function(){
+    $('.lobby').show();
+    socket.emit('addUser', name);
+  });
  
 });
 

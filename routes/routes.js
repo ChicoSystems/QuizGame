@@ -504,17 +504,12 @@ module.exports = function(app, passport){
         name = req.user.local.email;
       }
     }
-    console.log("approoms: " + JSON.stringify(app.io.rooms, {depth:null}));
-    //console.log("approoms: " + JSON.stringify(app.io.sockets.adapter.rooms, {depth:null}));
-    //console.log("approoms: " + util.inspect(app.io.sockets.adapter.rooms, {depth:null}));
     var clientConnectTo = hostedAddress +":"+ app.server.address().port;
-    //console.log(clientConnectTo);
     //if(req.user){
       res.render('lobby.ejs', {
         title: "Multi Player Lobby",
         serverIP: clientConnectTo,
         name    : name,
-        rooms   : app.io.rooms
       });
     //}else{
     //  res.redirect('/login');
