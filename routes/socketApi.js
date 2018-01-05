@@ -180,6 +180,8 @@ io.on('connection', function(socket){
     rooms[roomName].stat = newStatus;
     //update all users in room of status change
     io.sockets.in(roomName).emit('statuschanged', newStatus);
+    //update all users in lobby of room status change
+    io.sockets.in('lobby').emit('updaterooms', rooms);
   });
 
 });
