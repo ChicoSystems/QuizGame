@@ -151,90 +151,107 @@ module.exports = function(app, passport){
 
   //user clicked on a wrong answer
   app.get('/wronganswer/:questionType/:questionId', function(req, res, done){
-    var user = req.user;
+    console.log("wronganswer");
+    //if there is a user signed in update his history and score
+    if(req.user){
+      var user = req.user;
 
-    //find question in users question history
-    var questionFound = false;
-    var qIndex = null;
-    var qidToFind = req.params.questionId;//new ObjectId(req.params.questionId);
-    for(var i = 0; i < user.questionHistory.length; i++){
-      //console.log(user.questionHistory[i]);
-      if(user.questionHistory[i].qid == qidToFind &&
-         user.questionHistory[i].type == req.params.questionType){
-        questionFound = true;
-        qIndex = i;
+      //find question in users question history
+      var questionFound = false;
+      var qIndex = null;
+      var qidToFind = req.params.questionId;//new ObjectId(req.params.questionId);
+      for(var i = 0; i < user.questionHistory.length; i++){
+        //console.log(user.questionHistory[i]);
+        if(user.questionHistory[i].qid == qidToFind &&
+           user.questionHistory[i].type == req.params.questionType){
+          questionFound = true;
+          qIndex = i;
+        }
       }
-    }
 
-    //if question was found in question history, update it, otherwise create a new one
-    if(questionFound){
-      //the question was found at index qIndex, modify correct field
-      user.questionHistory[qIndex].wrongattempts++;
+      //if question was found in question history, update it, otherwise create a new one
+      if(questionFound){
+        //the question was found at index qIndex, modify correct field
+        user.questionHistory[qIndex].wrongattempts++;
+      }else{
+        //the question was not found, create a new one, and add it to user
+        var newHistory = {
+          type : req.params.questionType,
+          qid : req.params.questionId,
+          wrongattempts: 1,
+          rightattempts: 0
+        };
+        user.questionHistory.push(newHistory);// = questionHistory;
+      }
+
+      //update score, and save user back to db
+      req.session.score = req.session.score - 1;
+      user.gameinfo.score = req.session.score;
+      user.save();
+
+      //let front end know
+      res.send({
+        message: "ok",
+        score  : req.session.score
+      });
     }else{
-      //the question was not found, create a new one, and add it to user
-      var newHistory = {
-        type : req.params.questionType,
-        qid : req.params.questionId,
-        wrongattempts: 1,
-        rightattempts: 0
-      };
-      user.questionHistory.push(newHistory);// = questionHistory;
+      //user is not signed in, send error to client
+      res.send({
+        message: "error"
+      });
     }
-
-    //update score, and save user back to db
-    req.session.score = req.session.score - 1;
-    user.gameinfo.score = req.session.score;
-    user.save();
-
-    //let front end know
-    res.send({
-      message: "ok",
-      score  : req.session.score
-    });
   });
 
   //user clicked on a right answer
   app.get('/rightanswer/:questionType/:questionId', function(req, res, done){
-    var user = req.user;
-    
-    //find question in users question history
-    var questionFound = false;
-    var qIndex = null;
-    var qidToFind = req.params.questionId;
+    //if user is logged in, update score and record question, otherwise send error message
+    if(req.user){
+      console.log("rightanswer");
+      var user = req.user;
+      
+      //find question in users question history
+      var questionFound = false;
+      var qIndex = null;
+      var qidToFind = req.params.questionId;
 
-    //loop through question history
-    for(var i = 0; i < user.questionHistory.length; i++){
-      if(user.questionHistory[i].qid == qidToFind &&
-         user.questionHistory[i].type == req.params.questionType){
-        questionFound = true;
-        qIndex = i;
+      //loop through question history
+      for(var i = 0; i < user.questionHistory.length; i++){
+        if(user.questionHistory[i].qid == qidToFind &&
+           user.questionHistory[i].type == req.params.questionType){
+          questionFound = true;
+          qIndex = i;
+        }
       }
-    }
 
-    //if question was found, update, otherwise create new one
-    if(questionFound){
-      user.questionHistory[qIndex].rightattempts++;
+      //if question was found, update, otherwise create new one
+      if(questionFound){
+        user.questionHistory[qIndex].rightattempts++;
+      }else{
+        var newHistory = {
+          type : req.params.questionType,
+          qid  : req.params.questionId,
+          wrongattempts: 0,
+          rightattempts: 1
+        };
+        user.questionHistory.push(newHistory);
+      }
+
+      //we decrease the score in the session and
+      //update that score to the db
+      req.session.score = req.session.score + 5;
+      user.gameinfo.score = req.session.score;
+      user.save();
+      
+      //let front end know
+      res.send({
+        message: "ok",
+        score  : req.session.score
+      });//end res.send
     }else{
-      var newHistory = {
-        type : req.params.questionType,
-        qid  : req.params.questionId,
-        wrongattempts: 0,
-        rightattempts: 1
-      };
-      user.questionHistory.push(newHistory);
+      res.send({
+        message: "error"
+      });
     }
-
-    //we decrease the score in the session and
-    //update that score to the db
-    req.session.score = req.session.score + 5;
-    user.gameinfo.score = req.session.score;
-    user.save();
-    
-    //let front end know
-    res.send({
-      message: "ok",
-      score  : req.session.score
-    });//end res.send
   });//end app.get
 
   app.get('/scoreboard', function(req, res, done){

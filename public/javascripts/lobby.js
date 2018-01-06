@@ -8,6 +8,8 @@ var timer;
 var timeLeft = 0;
 var questionId = "";
 var questionType = "";
+var answerIndex;
+var answersLength;
 
 $(function(){
   $('.gameroom').hide();
@@ -40,7 +42,7 @@ $(function(){
         ' <div class="card-block">' +
         '   <div class = "card-title text-center"> ' +
         '     <h5>'+value.username+'</h5>' +
-        '       <h6>'+value.score+'</h6>'  +
+        '       <h6 id="score_'+value.username+'">'+value.score+'</h6>'  +
         '   </div> ' +
         '   <div class="chat"> ' +
         '     <div>'+value.chat[0]+'</div> ' +
@@ -124,10 +126,26 @@ $(function(){
   socket.on('getquestion', function(data){
     questionId = data.questionId;
     questionType = data.questionType;
+    answerIndex = data.answerIndex;
+    answersLength = data.answers.length;
     displayQuestion(data);
     displayAnswers(data);
     startTimer();
     //alert("getquestion: " + JSON.stringify(data));
+  });
+
+  //a user reports they got a question correct, turn users card green
+  socket.on('questioncorrect', function(correctUser){
+    $("#"+correctUser.username+".userRecord").removeClass("playeriswrong");
+    $("#"+correctUser.username+".userRecord").addClass("playerisright");
+    $("#score_"+correctUser.username).text(correctUser.score);
+  });
+
+  //a user reports they got a question wrong, turn users card red
+  socket.on('questionwrong', function(wrongUser){
+    $("#"+wrongUser.username+".userRecord").removeClass("playerisright");
+    $("#"+wrongUser.username+".userRecord").addClass("playeriswrong"); 
+    $("#score_"+wrongUser.username).text(wrongUser.score);
   });
  
 });
@@ -140,7 +158,7 @@ function displayAnswers(data){
   if(data.answers.length == 12){
     for(var i = 0; i < 4; i++){
       var answer = ''+
-        ' <a href="#" onclick="answerClicked('+i+')" id="'+i+'" class="btn btn-outline-primary col-md-3 btn-responsive">'+data.answers[i]["answer"]+'</a> ';
+        ' <a onclick="answerClicked('+i+')" id="'+i+'" class="btn btn-outline-primary col-md-3 btn-responsive">'+data.answers[i]["answer"]+'</a> ';
       answers+=answer;
     }
 
@@ -149,7 +167,7 @@ function displayAnswers(data){
 
     for(var i = 4; i < 8; i++){
       var answer = ''+
-        ' <a href="#" onclick="answerClicked('+i+')" id="'+i+'" class="btn btn-outline-primary col-md-3 btn-responsive">'+data.answers[i]["answer"]+'</a> ';
+        ' <a onclick="answerClicked('+i+')" id="'+i+'" class="btn btn-outline-primary col-md-3 btn-responsive">'+data.answers[i]["answer"]+'</a> ';
       answers+=answer;
     }
     answers+= "</div>";  
@@ -157,14 +175,14 @@ function displayAnswers(data){
 
     for(var i = 8; i < 12; i++){
       var answer = ''+
-        ' <a href="#" onclick="answerClicked('+i+')" id="'+i+'" class="btn btn-outline-primary col-md-3 btn-responsive">'+data.answers[i]["answer"]+'</a> ';
+        ' <a onclick="answerClicked('+i+')" id="'+i+'" class="btn btn-outline-primary col-md-3 btn-responsive">'+data.answers[i]["answer"]+'</a> ';
       answers+=answer;
     }
     answers+= "</div>";  
   }else{
     //we didn't have 12 answers, just display the correct answer
     var answer = ''+
-        ' <a href="#" onclick="answerClicked('+data.answerIndex+')" id="'+data.answerIndex+'" class="btn btn-outline-primary col-md-3 btn-responsive">'+data.answer+'</a> ';
+        ' <a onclick="answerClicked('+data.answerIndex+')" id="'+data.answerIndex+'" class="btn btn-outline-primary col-md-3 btn-responsive">'+data.answer+'</a> ';
     answers+=answer;
       
   }
@@ -262,6 +280,48 @@ function createRoom(){
 function sendChat(){
   var text = $("#chatInput").val();
   socket.emit('updatechat', text);
+}
+
+//the user clicked an answer button
+//we need to send a message to the normal server, as well as the socket room
+function answerClicked(indexClicked){
+
+    $('#'+indexClicked).removeClass("btn-outline-primary");
+   
+  //check if answer was correct
+  if(indexClicked == answerIndex){
+    //alert("you are correct");
+    $('#'+indexClicked).addClass("btn-success");
+    //send report to server & to socket
+    questionCorrect(questionType, questionId);
+  }else{
+    //alert("wrong answer");
+    $('#'+indexClicked).addClass("btn-danger");
+    questionWrong(questionType, questionId);
+    //send report to server & to socket
+  }
+  //this game mode only allows 1 guess, so disable all buttons
+  for(var i = 0; i < answersLength; i++){
+    $('#'+i).addClass("disabled");
+  //  $('#'+i).attr("disabled", "disabled");
+  } 
+}
+
+//the user got the question correct
+//send a report to the server & the socket
+function questionCorrect(qtype, qid){
+  //send report to socket
+  socket.emit('questioncorrect');
+  
+  //send report to server
+  $.get("/rightanswer/"+qtype+"/"+qid);
+}
+
+//the user got the question wrong
+//send a report to the server & the socket
+function questionWrong(qtype, qid){
+  socket.emit('questionwrong');
+  $.get("/wronganswer/"+qtype+"/"+qid);
 }
 
 //The user clicked the "report problems with question" link.

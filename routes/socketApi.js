@@ -69,12 +69,10 @@ io.on('connection', function(socket){
     
     //remove user from oldroom
     var index = rooms[oldroom].users.findIndex(function(o){
-  //    console.log("socket.username: " + socket.username);
-  //    console.log("o: " + JSON.stringify(o));
         return o.username == socket.username;
     });
 
-    console.log("removing user with index of: " + index);
+    //console.log("removing user with index of: " + index);
     rooms[oldroom].users.splice(index, 1);
 
     //tell client to update rooms
@@ -227,6 +225,35 @@ io.on('connection', function(socket){
 
       });
     });
+  });
+
+  //user reports they got a question correct
+  socket.on('questioncorrect', function(){
+    console.log(socket.username+" reports questioncorrect");
+    //update specific users score
+    
+    var index = rooms[socket.room].users.findIndex(function(o){
+        return o.username == socket.username;
+    });
+    var user = rooms[socket.room].users[index];
+    rooms[socket.room].users[index].chat[0] = rooms[socket.room].users[index].chat[1];
+    rooms[socket.room].users[index].score += 5;
+    //console.log(JSON.stringify(rooms));
+ 
+    io.sockets.in(socket.room).emit('questioncorrect', user);
+  });
+  
+  //user reports they got a question wrong
+  socket.on('questionwrong', function(){
+    console.log(socket.username+" reports questionwrong");
+    var index = rooms[socket.room].users.findIndex(function(o){
+        return o.username == socket.username;
+    });
+    var user = rooms[socket.room].users[index];
+    rooms[socket.room].users[index].chat[0] = rooms[socket.room].users[index].chat[1];
+    rooms[socket.room].users[index].score -= 1;
+    
+    io.sockets.in(socket.room).emit('questionwrong', user);
   });
 
 });
