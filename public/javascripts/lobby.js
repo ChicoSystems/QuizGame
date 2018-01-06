@@ -4,12 +4,14 @@
 var socket;
 var amIRoomOwner = false;
 var secondsPerQuestion = 0;
+var roundsPerGame = 0;
 var timer;
 var timeLeft = 0;
 var questionId = "";
 var questionType = "";
 var answerIndex;
 var answersLength;
+var round = 0;
 
 $(function(){
   $('.gameroom').hide();
@@ -66,13 +68,13 @@ $(function(){
   socket.on('updaterooms', function(rooms){
     //delete all rooms in the list
     $("#roomsTable > tbody:last").children('tr:not(:first)').remove();
-
     //rebuild rooms from list
     $.each(rooms, function(key, value){
       if(value.type == "gameroom"){
         var newRoom = '<tr> ' + 
           ' <td> ' + key + '</td> ' + 
           ' <td> ' + value.seconds + '</td> ' +
+          ' <td> ' + value.turns + '</td> ' +
           ' <td> ' + value.stat + '</td>' + 
           ' <td> ' +
           '   <button type="button" class="btn btn-success" onclick="switchRoom(\' '+ key + ' \')">Join</button> </td> ' + 
@@ -87,6 +89,7 @@ $(function(){
     //check if we are the room owner of this game room
     var roomOwner = room.owner;
     secondsPerQuestion = room.seconds;
+    roundsPerGame = room.turns;
     //alert("timer: " + timer);
     if(roomOwner == name){
       amIRoomOwner = true;
@@ -128,6 +131,8 @@ $(function(){
     questionType = data.questionType;
     answerIndex = data.answerIndex;
     answersLength = data.answers.length;
+    updateRound(data);
+    updateUserRecord(data) 
     displayQuestion(data);
     displayAnswers(data);
     startTimer();
@@ -149,6 +154,17 @@ $(function(){
   });
  
 });
+
+//updates the ingame user records, colors
+function updateUserRecord(data){
+  var users = data.users;
+  for(var i = 0; i < users.length; i++){
+    //reset each userRecord
+    $("#"+users[i].username+".userRecord").removeClass("playerisright");
+    $("#"+users[i].username+".userRecord").removeClass("playeriswrong");
+  } 
+
+}
 
 //the answer choices get displayed
 function displayAnswers(data){
@@ -192,6 +208,13 @@ function displayAnswers(data){
     $("#quizgameanswers").append(answers); 
 }
 
+//the round gets updated and displayed displayed
+function updateRound(data){
+  $("#roundDiv").text(round+" / " + roundsPerGame);   
+//  alert("data.turns: " + data.turns + "\n roundsPerGame: " + roundsPerGame);
+ // alert("updateRound: " + JSON.stringify(data));
+}
+
 //the question gets diplayed
 function displayQuestion(data){
  //alert("displaying question: " + JSON.stringify(question));
@@ -201,7 +224,10 @@ function displayQuestion(data){
 
 //the game has been started by owner
 function startGame(){
-  socket.emit('getquestion');
+  //only have owner send emit
+  if(amIRoomOwner){
+    socket.emit('getquestion');
+  }
 }
 
 //the game has been ended by owner
@@ -223,8 +249,37 @@ function startTimer(){
 }
 
 //the timer is stopped
+//we either need to get another question, or show end of game stats
 function stopTimer(){
   clearInterval(timer);
+  if(round >= roundsPerGame){
+    //deactivate all buttons, and show correct answer
+    $('#'+answerIndex).removeClass("btn-outline-primary");
+    $('#'+answerIndex).addClass("btn-success");
+    for(var i = 0; i < answersLength; i++){
+      $('#'+i).addClass("disabled");
+    } 
+    alert("now show the end of the game");
+  }else{
+    //increase round
+    round++;
+    //deactivate all buttons, and show correct answer
+    $('#'+answerIndex).removeClass("btn-outline-primary");
+    $('#'+answerIndex).addClass("btn-success");
+    for(var i = 0; i < answersLength; i++){
+      $('#'+i).addClass("disabled");
+    } 
+    
+    //pause for 1 second
+    setTimeout(function() { 
+      //if we are the owner of this room we get another question
+      if(amIRoomOwner){
+        //i am the room owner, tell the server to get us all a new question
+        socket.emit('getquestion');
+        //alert("i am room owner");
+      }      
+     }, 1000);
+  }
 }
 
 
@@ -260,6 +315,7 @@ function switchRoom(roomToSwitch){
 
 function createRoom(){
   var seconds = $('#secondsInput').val();
+  var turns = $('#turnsInput').val();
   //alert("name: " + name);
   //var roomName = "testRoom"+(Math.floor((Math.random() * 1000) + 1));
   var roomName = name + "-" + (Math.floor((Math.random() * 1000) + 1));
@@ -272,6 +328,7 @@ function createRoom(){
     roomName: roomName,
     owner   : name,
     seconds: seconds,
+    turns : turns,
     difficulty: "easy",
     type : "gameroom"
   })); 
@@ -303,7 +360,6 @@ function answerClicked(indexClicked){
   //this game mode only allows 1 guess, so disable all buttons
   for(var i = 0; i < answersLength; i++){
     $('#'+i).addClass("disabled");
-  //  $('#'+i).attr("disabled", "disabled");
   } 
 }
 
@@ -327,7 +383,7 @@ function questionWrong(qtype, qid){
 //The user clicked the "report problems with question" link.
 function reportProblemClicked(){
   var problem = $("input[type='radio']:checked").parent().text();
-  alert("report problems clicked");
+  //alert("report problems clicked");
 
    $.ajax({
         type: "POST",

@@ -8,7 +8,7 @@ var JQuestion               = require('../models/jQuestions');
 
 var usernames = {};
 var rooms = {};//["lobby": {owner: "SERVER", seconds: "", type: "lobby"}];
-rooms.lobby = {owner: "SERVER", seconds: "", difficutly: "", type: "lobby", users: []};
+rooms.lobby = {owner: "SERVER", seconds: "", difficutly: "", turns: 0, type: "lobby", users: []};
 
 io.on('connection', function(socket){
   io.rooms = rooms;
@@ -60,9 +60,10 @@ io.on('connection', function(socket){
     var room = JSON.parse(room);
     
     var user = {"username":socket.username, "chat":["", ""], "score": 0};
-    var newRoom = {owner: room.owner, seconds: room.seconds, difficulty: room.difficulty, type: room.type, users: [user], stat:"Waiting for Players"};
+    var newRoom = {owner: room.owner, seconds: room.seconds, difficulty: room.difficulty, type: room.type, turns: room.turns, users: [user], stat:"Waiting for Players"};
     rooms[room.roomName] = newRoom;
 
+    console.log("newroom: " + JSON.stringify(newRoom));
     //remove user from old room
     //var index = rooms[socket.room].users.indexOf(socket.username);
     //rooms[socket.room].users.splice(index, 1);
@@ -177,7 +178,7 @@ io.on('connection', function(socket){
   socket.on('changestatus', function(newStatus){
     var roomName = socket.ownedRoom;
     //change the status saved here
-    rooms[roomName].stat = newStatus;
+    if(rooms[roomName])rooms[roomName].stat = newStatus;
     //update all users in room of status change
     io.sockets.in(roomName).emit('statuschanged', newStatus);
     //update all users in lobby of room status change
@@ -210,6 +211,9 @@ io.on('connection', function(socket){
           answers[i]["label"] = answers[i]["answer"];  
     
         }
+        console.log("room: " + JSON.stringify(rooms));
+        var users = rooms[roomName].users;
+        console.log("users: " + JSON.stringify(users));
  
         //send category, answer, answers, answerIndex back to frontends
         io.sockets.in(roomName).emit('getquestion', {
@@ -219,7 +223,8 @@ io.on('connection', function(socket){
           answers : answers,
           answerIndex: answerIndex,
           questionType: questionType,
-          questionId : result[0]._id
+          questionId : result[0]._id,
+          users : users
         });
 
 

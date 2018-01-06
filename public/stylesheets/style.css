@@ -30,6 +30,11 @@ a {
   display: inline;
 }
 
+#roundDiv{
+  font-size: 28px;
+  display: inline;
+}
+
 #quizgamequestion{
   font-size: 28px;
   text-align: center;

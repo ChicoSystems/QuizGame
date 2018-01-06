@@ -80,6 +80,7 @@
       <tr>
         <th> Game Name </th>
         <th> Seconds / Question </th>
+        <th> Turns / Round </th>
         <th> Status </th>
       </tr>
     </thead>
@@ -89,6 +90,10 @@
         <td>
           <label class="mr-sm-2" for="secondsInput">Seconds Per Question</label>
           <input class="form-control col-sm-2" id="secondsInput" type="number" min="5" max="60" value="20"></input>
+        </td>
+        <td>
+          <label class="mr-sm-2" for="turnsInput">Turns Per Round</label>
+          <input class="form-control col-sm-2" id="turnsInput" type="number" min="5" max="60" value="10"></input>
         </td>
         <td></td>
         <!--
@@ -115,6 +120,7 @@
 
 <div class="container col-sm-12 gameroom">
   <div class="text-center">
+    <div id="roundDiv"></div> 
     <div class="container" id="quizgamestatus">
        Getting Status
     </div>
