@@ -15,9 +15,9 @@ Compare yourself to others.
 -LINECOUNT-
       44 text files.
 classified 44 files      44 unique files.                              
-    4040 files ignored.
+    4044 files ignored.
 
-http://cloc.sourceforge.net v 1.60  T=0.11 s (337.5 files/s, 39700.9 lines/s)
+http://cloc.sourceforge.net v 1.60  T=0.11 s (344.2 files/s, 40492.8 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
