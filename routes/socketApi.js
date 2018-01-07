@@ -46,7 +46,7 @@ io.on('connection', function(socket){
     if(socket.ownedRoom != null){
       delete rooms[socket.ownedRoom];
       io.sockets.in(socket.ownedRoom).emit('updatechat', 'SERVER', 'Host has left room ' + socket.ownedRoom + " Rejoining Lobby");
-      io.sockets.in(socket.ownedRoom).emit('displaylobby');
+      io.sockets.in(socket.ownedRoom).emit('ownerleftgame');
       //cause all players in room, to switch to lobby
       //io.sockets.in(socket.ownedRoom).emit('switchToLobby', "lobby");
       io.sockets.in("lobby").emit('updaterooms', rooms);

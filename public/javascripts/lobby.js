@@ -119,6 +119,12 @@ $(function(){
     //socket.emit('switchroom', room);
   });
 
+  //owner left the game in progress
+  //user should reload lobby completely.
+  socket.on('ownerleftgame', function(){
+    window.location.href = '/lobby';
+  });  
+
   //the status of the room we are in has changed
   socket.on('statuschanged', function(newStatus){
     if(newStatus == "In Game"){
