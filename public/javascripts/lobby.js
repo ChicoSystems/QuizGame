@@ -263,7 +263,7 @@ function endGame(room){
   for(var i = 0; i < users.length; i++){
     var place = i+1;
     //calculate users bonus
-    var userBonus = 100 / place;
+    var userBonus = (100 / place)*(round/roundsPerGame);
     var itsMe = false;
     userBonus = Math.round(userBonus);
 
