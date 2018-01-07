@@ -218,7 +218,11 @@ io.on('connection', function(socket){
     
         }
         console.log("room: " + JSON.stringify(rooms));
-        var users = rooms[roomName].users;
+        if(rooms[roomName] == null){
+          var users = [];
+        }else{
+           var users = rooms[roomName].users;
+        }
         console.log("users: " + JSON.stringify(users));
  
         //send category, answer, answers, answerIndex back to frontends
