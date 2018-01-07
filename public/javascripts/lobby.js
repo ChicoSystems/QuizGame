@@ -19,7 +19,7 @@ $(function(){
 
   socket.on('connect', function(data) {
     //alert("onconnect " + name);
-    socket.emit('addUser', name);
+    socket.emit('addUser', name, id);
   });
 
   socket.on('updateusers', function(users){
@@ -40,11 +40,11 @@ $(function(){
     console.log("users: " +JSON.stringify(users));
       $(".users").empty();
     $.each(users, function(key, value){
-      var userHTML = '<div class="card col-sm-3 userRecord" id="'+ value.username +'"> ' +
+      var userHTML = '<div class="card col-sm-3 userRecord" id="'+ value.id +'"> ' +
         ' <div class="card-block">' +
         '   <div class = "card-title text-center"> ' +
         '     <h5>'+value.username+'</h5>' +
-        '       <h6 id="score_'+value.username+'">'+value.score+'</h6>'  +
+        '       <h6 id="score_'+value.id+'">'+value.score+'</h6>'  +
         '   </div> ' +
         '   <div class="chat"> ' +
         '     <div>'+value.chat[0]+'</div> ' +
@@ -56,12 +56,13 @@ $(function(){
     });
   });
 
-  socket.on('updatechat', function(username, data){
-    if(username == 'SERVER'){
-      $("#conversation").append('<b>' + username + ':</b> ' + data + '<br>');
+  socket.on('updatechat', function(myid, data){
+    if(myid == 'SERVER'){
+      $("#conversation").append('<b>' + myid + ':</b> ' + data + '<br>');
     }else{
-      $("div#"+username+" > div.card-block > div.chat :first").remove();
-      $("div#"+username+" > div.card-block > div.chat").append("<div>"+data+"</div>");
+      console.log("chat from: " + myid + " - " + data);
+      $("div#"+myid+" > div.card-block > div.chat :first").remove();
+      $("div#"+myid+" > div.card-block > div.chat").append("<div>"+data+"</div>");
     }
   });
 
@@ -102,7 +103,12 @@ $(function(){
     //get room status to show
     $('#quizgamestatus').text(room.stat);
     if(amIRoomOwner) displayStatusChangeButton();
+    
+    //show the game room, but hide the question
+    $('#quizgamequestion').hide();
+    $('#endgame').hide();
     $('.gameroom').show();
+    
   });
   
   //display the lobby room
@@ -117,12 +123,14 @@ $(function(){
   socket.on('statuschanged', function(newStatus){
     if(newStatus == "In Game"){
       startGame(); 
-    }else if(newStatus == "End Game"){
-      endGame();
     }
 
     //update the status display
     $("#quizgamestatus").text(newStatus);
+  });
+
+  socket.on('endgame', function(room){
+    endGame(room);
   });
 
   //the server has sent us a new question to display
@@ -141,16 +149,16 @@ $(function(){
 
   //a user reports they got a question correct, turn users card green
   socket.on('questioncorrect', function(correctUser){
-    $("#"+correctUser.username+".userRecord").removeClass("playeriswrong");
-    $("#"+correctUser.username+".userRecord").addClass("playerisright");
-    $("#score_"+correctUser.username).text(correctUser.score);
+    $("#"+correctUser.id+".userRecord").removeClass("playeriswrong");
+    $("#"+correctUser.id+".userRecord").addClass("playerisright");
+    $("#score_"+correctUser.id).text(correctUser.score);
   });
 
   //a user reports they got a question wrong, turn users card red
   socket.on('questionwrong', function(wrongUser){
-    $("#"+wrongUser.username+".userRecord").removeClass("playerisright");
-    $("#"+wrongUser.username+".userRecord").addClass("playeriswrong"); 
-    $("#score_"+wrongUser.username).text(wrongUser.score);
+    $("#"+wrongUser.id+".userRecord").removeClass("playerisright");
+    $("#"+wrongUser.id+".userRecord").addClass("playeriswrong"); 
+    $("#score_"+wrongUser.id).text(wrongUser.score);
   });
  
 });
@@ -160,8 +168,8 @@ function updateUserRecord(data){
   var users = data.users;
   for(var i = 0; i < users.length; i++){
     //reset each userRecord
-    $("#"+users[i].username+".userRecord").removeClass("playerisright");
-    $("#"+users[i].username+".userRecord").removeClass("playeriswrong");
+    $("#"+users[i].id+".userRecord").removeClass("playerisright");
+    $("#"+users[i].id+".userRecord").removeClass("playeriswrong");
   } 
 
 }
@@ -217,9 +225,10 @@ function updateRound(data){
 
 //the question gets diplayed
 function displayQuestion(data){
- //alert("displaying question: " + JSON.stringify(question));
   $("#questionText").text(data.question);
   $("#quizgamecategory").text(data.category);
+  //show the question section
+  $('#quizgamequestion').show();
 }
 
 //the game has been started by owner
@@ -230,8 +239,81 @@ function startGame(){
   }
 }
 
+//sort users top score to bottom
+function compareUsersByScore(a, b){
+  if(a.score <= b.score){
+    return 1;
+  }
+
+  if(a.score > b.score){
+    return -1;
+  }
+}
+
 //the game has been ended by owner
-function endGame(){
+function endGame(room){
+  clearInterval(timer);
+  //alert("the game is ended: " +JSON.stringify(room));
+  //build end game table
+  var users = room.users;
+  users = users.sort(compareUsersByScore); 
+  $('#endgamebody').empty();
+  var usersHTML = '';
+  var myBonus = 0;
+  for(var i = 0; i < users.length; i++){
+    var place = i+1;
+    //calculate users bonus
+    var userBonus = 100 / place;
+    var itsMe = false;
+    userBonus = Math.round(userBonus);
+
+    if(users[i].username == name){
+      myBonus = userBonus;
+      itsMe = true;
+    }
+    
+    usersHTML += '<tr>'; 
+    usersHTML += '<td>' + place + '</td>';
+    usersHTML += '<td>' + users[i].username + '</td>';
+    usersHTML += '<td>' + users[i].score + '</td>';
+    usersHTML += '<td>' + userBonus + '</td>';
+
+    usersHTML += '</tr>';
+  }
+
+  $('#endgamebody').append(usersHTML); 
+
+  //hide question and answers
+  $('#quizgamequestion').hide();
+  $('#quizgameanswers').hide();
+
+  //update quiz game status
+  $('#quizgamestatus').text(room.stat);
+
+  //display redeem bonus button
+  //alert("your bonus: " + myBonus);
+  redeemBonus(myBonus);
+
+  //show end game table
+  $('#endgame').show();
+}
+
+//redeem bonus for playing multiplayer game
+function redeemBonus(bonus){
+  //send redeemBonus get to server
+  $.ajax({
+        type: "POST",
+        url: "/redeembonus",
+        data:{
+          bonus: bonus
+        },
+        success: function(data){
+          console.log("success redeeming bonus" + data);
+        },
+        error: function(err){
+          console.log("error redeeming bonus: " + err);
+        }
+    });
 
 }
 
@@ -259,7 +341,8 @@ function stopTimer(){
     for(var i = 0; i < answersLength; i++){
       $('#'+i).addClass("disabled");
     } 
-    alert("now show the end of the game");
+    //alert("now show the end of the game");
+    if(amIRoomOwner)socket.emit('endgame');
   }else{
     //increase round
     round++;
@@ -301,9 +384,13 @@ function statusChangeClicked(){
     //change button
     $("#statusChangeButton").text("End Game");
   }else if(previousStatus == "In Game"){
-    nextStatus = "Game Ended";
+    nextStatus = "End Game";
   }
-  socket.emit('changestatus', nextStatus);
+  if(nextStatus == "End Game"){
+    socket.emit('endgame');
+  }else{
+    socket.emit('changestatus', nextStatus);
+  }
 
 }
 

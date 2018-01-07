@@ -334,6 +334,18 @@ module.exports = function(app, passport){
     newProblem.save();
   });
 
+  //client playing multiplayer redeems their bonus
+  app.post('/redeembonus', function(req, res){
+    if(req.user){
+      var bonus = parseInt(req.body.bonus);
+      console.log("redeeming bonus of " + bonus);
+      req.user.gameinfo.score = req.user.gameinfo.score + bonus;
+      req.user.save();
+    }else{
+      console.log("can't redeem bonus for user not signed in");
+    }
+  });
+
   //=============================================
   // Admin Routes
   //============================================
@@ -522,15 +534,17 @@ module.exports = function(app, passport){
       }
     }
     var clientConnectTo = hostedAddress +":"+ app.server.address().port;
-    //if(req.user){
+    if(req.user){
       res.render('lobby.ejs', {
         title: "Multi Player Lobby",
         serverIP: clientConnectTo,
+        user    : req.user,
         name    : name,
+        id      : req.user._id
       });
-    //}else{
-    //  res.redirect('/login');
-    //} 
+    }else{
+      res.redirect('/login');
+    } 
   });
 
   //==============================================

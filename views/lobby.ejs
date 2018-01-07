@@ -143,6 +143,27 @@
 
   </div>
 
+  <div class="container col-md-12" id="endgame">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Place</th>
+          <th>Name</th>
+          <th>Score</th>
+          <th>Bonus</th>
+        </tr>
+      </thead>
+      <tbody id="endgamebody">
+        <tr>
+          <td>1</td>
+          <td>Isaac</td>
+          <td>68</td>
+          <td>100</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
 </div>
 
 <div class="container col-sm-6">
@@ -158,6 +179,7 @@
   <script>
     var serverIP = "<%= serverIP %>";
     var name = "<%= name %>";
+    var id = "<%= id %>";
   </script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/javascripts/lobby.js"></script>
