@@ -15,16 +15,16 @@ Compare yourself to others.
 -LINECOUNT-
       44 text files.
 classified 44 files      44 unique files.                              
-    4044 files ignored.
+    4147 files ignored.
 
-http://cloc.sourceforge.net v 1.60  T=0.11 s (344.2 files/s, 40492.8 lines/s)
+http://cloc.sourceforge.net v 1.60  T=0.12 s (329.0 files/s, 41531.8 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Javascript                      19            420            495           1852
-EJS                             17            196              9           1300
-CSS                              1             33              4            157
+Javascript                      19            464            556           2031
+EJS                             17            192              9           1330
+CSS                              1             37              4            170
 Bourne Shell                     1              1              0              3
 -------------------------------------------------------------------------------
-SUM:                            38            650            508           3312
+SUM:                            38            694            569           3534
 -------------------------------------------------------------------------------
