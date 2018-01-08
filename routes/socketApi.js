@@ -6,7 +6,6 @@ socketApi.io = io;
 //used to query questions from db
 var JQuestion               = require('../models/jQuestions');
 
-var usernames = {};
 var rooms = {};//["lobby": {owner: "SERVER", seconds: "", type: "lobby"}];
 rooms.lobby = {owner: "SERVER", seconds: "", difficutly: "", turns: 0, type: "lobby", users: []};
 
@@ -19,7 +18,14 @@ io.on('connection', function(socket){
     socket.username = username;
     socket.myid = id;
     socket.room = "lobby";
-    usernames[username] = username;
+    //if there is already a user in the lobby with this id, we tell him to load main page
+    var index = rooms[socket.room].users.findIndex(function(o){
+       return o.id == socket.myid;
+    });
+    if(index != -1){
+      //rooms[socket.room].users.splice(index, 1);
+      io.sockets.in('lobby').emit('removeyourself', id);
+    }
     var user = {"username":username, "chat":["", ""], "score":0, "id": id};
     rooms["lobby"].users.push(user);
     rooms["lobby"].stat = "lobby";
@@ -33,8 +39,7 @@ io.on('connection', function(socket){
   });
 
   socket.on('disconnect', function(){
-    //console.log("user disconnected: " + socket.username);
-    delete usernames[socket.username];
+    console.log("user disconnected: " + socket.username);
 
     //remove user from room
     if(rooms[socket.room]){

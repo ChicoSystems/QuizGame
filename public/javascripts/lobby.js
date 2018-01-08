@@ -177,6 +177,15 @@ $(function(){
     $("#"+wrongUser.id+".userRecord").addClass("playeriswrong"); 
     $("#score_"+wrongUser.id).text(wrongUser.score);
   });
+
+  //server is instructing a user in room to remove himself
+  //check if that user is me, if so, load main app page
+  socket.on('removeyourself', function(removeID){
+    if(removeID == id){
+      //it is me, remove myself
+      window.location.href = '/';
+    }
+  });
  
 });
 
