@@ -1,5 +1,9 @@
 // routes/routes.js
 
+//used by socket.io to allow client to connect to server, this must change
+//if domain changes, or when we move from dev server to live
+var hostedAddress = "http://192.168.1.197";
+
 // load up the quizQestions model
 var QuizQuestion            = require('../models/quizQuestions');
 var Users                   = require('../models/user');
@@ -7,6 +11,7 @@ var JQuestion               = require('../models/jQuestions');
 var ReportProblem           = require('../models/reportProblem');
 //var QuestionHistory         = require('../models/questionHistory');
 var ObjectId                = require('mongoose').Types.ObjectId;
+var util = require('util');
 
 //convert stanford questions
 var s_old_questions = require('../models/stanford_old');
@@ -101,6 +106,11 @@ module.exports = function(app, passport){
   //==============================================
   //Game Routes
   //==============================================
+
+  app.get('/sockettest', function(req, res){
+    res.render('socketTest.ejs', {title: "Quiz Game Socket Test"});
+  });
+
   app.get('/designtest', function(req, res){
     functionTest();
     res.render('designTest.ejs', {title : "Quiz Game"});
@@ -141,90 +151,107 @@ module.exports = function(app, passport){
 
   //user clicked on a wrong answer
   app.get('/wronganswer/:questionType/:questionId', function(req, res, done){
-    var user = req.user;
+    console.log("wronganswer");
+    //if there is a user signed in update his history and score
+    if(req.user){
+      var user = req.user;
 
-    //find question in users question history
-    var questionFound = false;
-    var qIndex = null;
-    var qidToFind = req.params.questionId;//new ObjectId(req.params.questionId);
-    for(var i = 0; i < user.questionHistory.length; i++){
-      //console.log(user.questionHistory[i]);
-      if(user.questionHistory[i].qid == qidToFind &&
-         user.questionHistory[i].type == req.params.questionType){
-        questionFound = true;
-        qIndex = i;
+      //find question in users question history
+      var questionFound = false;
+      var qIndex = null;
+      var qidToFind = req.params.questionId;//new ObjectId(req.params.questionId);
+      for(var i = 0; i < user.questionHistory.length; i++){
+        //console.log(user.questionHistory[i]);
+        if(user.questionHistory[i].qid == qidToFind &&
+           user.questionHistory[i].type == req.params.questionType){
+          questionFound = true;
+          qIndex = i;
+        }
       }
-    }
 
-    //if question was found in question history, update it, otherwise create a new one
-    if(questionFound){
-      //the question was found at index qIndex, modify correct field
-      user.questionHistory[qIndex].wrongattempts++;
+      //if question was found in question history, update it, otherwise create a new one
+      if(questionFound){
+        //the question was found at index qIndex, modify correct field
+        user.questionHistory[qIndex].wrongattempts++;
+      }else{
+        //the question was not found, create a new one, and add it to user
+        var newHistory = {
+          type : req.params.questionType,
+          qid : req.params.questionId,
+          wrongattempts: 1,
+          rightattempts: 0
+        };
+        user.questionHistory.push(newHistory);// = questionHistory;
+      }
+
+      //update score, and save user back to db
+      req.session.score = req.session.score - 1;
+      user.gameinfo.score = req.session.score;
+      user.save();
+
+      //let front end know
+      res.send({
+        message: "ok",
+        score  : req.session.score
+      });
     }else{
-      //the question was not found, create a new one, and add it to user
-      var newHistory = {
-        type : req.params.questionType,
-        qid : req.params.questionId,
-        wrongattempts: 1,
-        rightattempts: 0
-      };
-      user.questionHistory.push(newHistory);// = questionHistory;
+      //user is not signed in, send error to client
+      res.send({
+        message: "error"
+      });
     }
-
-    //update score, and save user back to db
-    req.session.score = req.session.score - 1;
-    user.gameinfo.score = req.session.score;
-    user.save();
-
-    //let front end know
-    res.send({
-      message: "ok",
-      score  : req.session.score
-    });
   });
 
   //user clicked on a right answer
   app.get('/rightanswer/:questionType/:questionId', function(req, res, done){
-    var user = req.user;
-    
-    //find question in users question history
-    var questionFound = false;
-    var qIndex = null;
-    var qidToFind = req.params.questionId;
+    //if user is logged in, update score and record question, otherwise send error message
+    if(req.user){
+      console.log("rightanswer");
+      var user = req.user;
+      
+      //find question in users question history
+      var questionFound = false;
+      var qIndex = null;
+      var qidToFind = req.params.questionId;
 
-    //loop through question history
-    for(var i = 0; i < user.questionHistory.length; i++){
-      if(user.questionHistory[i].qid == qidToFind &&
-         user.questionHistory[i].type == req.params.questionType){
-        questionFound = true;
-        qIndex = i;
+      //loop through question history
+      for(var i = 0; i < user.questionHistory.length; i++){
+        if(user.questionHistory[i].qid == qidToFind &&
+           user.questionHistory[i].type == req.params.questionType){
+          questionFound = true;
+          qIndex = i;
+        }
       }
-    }
 
-    //if question was found, update, otherwise create new one
-    if(questionFound){
-      user.questionHistory[qIndex].rightattempts++;
+      //if question was found, update, otherwise create new one
+      if(questionFound){
+        user.questionHistory[qIndex].rightattempts++;
+      }else{
+        var newHistory = {
+          type : req.params.questionType,
+          qid  : req.params.questionId,
+          wrongattempts: 0,
+          rightattempts: 1
+        };
+        user.questionHistory.push(newHistory);
+      }
+
+      //we decrease the score in the session and
+      //update that score to the db
+      req.session.score = req.session.score + 5;
+      user.gameinfo.score = req.session.score;
+      user.save();
+      
+      //let front end know
+      res.send({
+        message: "ok",
+        score  : req.session.score
+      });//end res.send
     }else{
-      var newHistory = {
-        type : req.params.questionType,
-        qid  : req.params.questionId,
-        wrongattempts: 0,
-        rightattempts: 1
-      };
-      user.questionHistory.push(newHistory);
+      res.send({
+        message: "error"
+      });
     }
-
-    //we decrease the score in the session and
-    //update that score to the db
-    req.session.score = req.session.score + 5;
-    user.gameinfo.score = req.session.score;
-    user.save();
-    
-    //let front end know
-    res.send({
-      message: "ok",
-      score  : req.session.score
-    });//end res.send
   });//end app.get
 
   app.get('/scoreboard', function(req, res, done){
@@ -305,6 +332,27 @@ module.exports = function(app, passport){
  
     //save the new problem
     newProblem.save();
+  });
+
+  //lets client know if it is logged in, used by multiplayer
+  app.get('/isloggedin', function(req, res){
+    if(req.user){
+      res.send("true");
+    }else{
+      res.send("false");
+    }
+  });
+
+  //client playing multiplayer redeems their bonus
+  app.post('/redeembonus', function(req, res){
+    if(req.user){
+      var bonus = parseInt(req.body.bonus);
+      console.log("redeeming bonus of " + bonus);
+      req.user.gameinfo.score = req.user.gameinfo.score + bonus;
+      req.user.save();
+    }else{
+      console.log("can't redeem bonus for user not signed in");
+    }
   });
 
   //=============================================
@@ -473,6 +521,39 @@ module.exports = function(app, passport){
       res.send({status: "error", message: "User does not have permissions to edit questions!"});
     }
 
+  });
+
+  //============================================
+  // MultiPlayer Related Routes
+  //============================================
+
+  app.get('/lobby', function(req, res){
+    //get userName
+    var name = "guest"+ (Math.floor((Math.random() * 1000) + 1));
+
+    if(req.user){
+      if(req.user.facebook.name != null){
+        name = req.user.facebook.name;
+      }else if(req.user.twitter.username){
+        name = req.user.twitter.username;
+      }else if(req.user.google.name){
+        name = req.user.google.name;
+      }else if(req.user.local.email){
+        name = req.user.local.email;
+      }
+    }
+    var clientConnectTo = hostedAddress +":"+ app.server.address().port;
+    if(req.user){
+      res.render('lobby.ejs', {
+        title: "Multi Player Lobby",
+        serverIP: clientConnectTo,
+        user    : req.user,
+        name    : name,
+        id      : req.user._id
+      });
+    }else{
+      res.redirect('/login');
+    } 
   });
 
   //==============================================
@@ -809,7 +890,7 @@ function renderJQuestion(req, res){
 
         //modify answers array, so answer is stored as "label" instead of answer
         //this is for compatibility with the quizQuestion type
-        var modifiedAnswers = new Array();
+        
         for(var i = 0; i < answers.length; i++){
           answers[i]["label"] = answers[i]["answer"];
         }
