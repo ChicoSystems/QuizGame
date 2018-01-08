@@ -39,7 +39,7 @@ io.on('connection', function(socket){
     if(rooms[socket.room]){
       //var index = rooms[socket.room].users.indexOf(socket.username);
       //remove user from oldroom
-      var index = rooms[oldroom].users.findIndex(function(o){
+      var index = rooms[socket.room].users.findIndex(function(o){
          return o.id == socket.myid;
       });
       rooms[socket.room].users.splice(index, 1);

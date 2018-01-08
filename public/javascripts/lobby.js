@@ -11,7 +11,7 @@ var questionId = "";
 var questionType = "";
 var answerIndex;
 var answersLength;
-var round = 0;
+var round = 1;
 
 //listen for enter keypress
 $(document).keypress(function(e) {
