@@ -11,10 +11,10 @@ var rooms = {};//["lobby": {owner: "SERVER", seconds: "", type: "lobby"}];
 rooms.lobby = {owner: "SERVER", seconds: "", difficutly: "", turns: 0, type: "lobby", users: []};
 
 io.on('connection', function(socket){
-  console.log("on connection");
+  //console.log("on connection");
   io.rooms = rooms;
   socket.on('addUser', function(username, id){
-    console.log("addUser - username: " + username + "  id: " + id);
+    //console.log("addUser - username: " + username + "  id: " + id);
     socket.username = username;
     socket.myid = id;
     socket.room = "lobby";
@@ -32,14 +32,18 @@ io.on('connection', function(socket){
   });
 
   socket.on('disconnect', function(){
-    console.log("user disconnected: " + socket.username);
+    //console.log("user disconnected: " + socket.username);
     delete usernames[socket.username];
 
     //remove user from room
     if(rooms[socket.room]){
-      var index = rooms[socket.room].users.indexOf(socket.username);
+      //var index = rooms[socket.room].users.indexOf(socket.username);
+      //remove user from oldroom
+      var index = rooms[oldroom].users.findIndex(function(o){
+         return o.id == socket.myid;
+      });
       rooms[socket.room].users.splice(index, 1);
-      console.log("user: " + JSON.stringify(rooms[socket.room].users));
+      //console.log("user: " + JSON.stringify(rooms[socket.room].users));
       io.sockets.in(socket.room).emit('updateusers', rooms[socket.room].users);
     }
 
@@ -66,14 +70,14 @@ io.on('connection', function(socket){
     var newRoom = {owner: room.owner, seconds: room.seconds, difficulty: room.difficulty, type: room.type, turns: room.turns, users: [user], stat:"Waiting for Players"};
     rooms[room.roomName] = newRoom;
 
-    console.log("newroom: " + JSON.stringify(newRoom));
+    //console.log("newroom: " + JSON.stringify(newRoom));
     //remove user from old room
     //var index = rooms[socket.room].users.indexOf(socket.username);
     //rooms[socket.room].users.splice(index, 1);
     
     //remove user from oldroom
     var index = rooms[oldroom].users.findIndex(function(o){
-        return o.username == socket.username;
+        return o.id == socket.myid;
     });
 
     //console.log("removing user with index of: " + index);
@@ -133,9 +137,7 @@ io.on('connection', function(socket){
 
       //remove user from oldroom
       var index = rooms[oldroom].users.findIndex(function(o){
-        //console.log("socket.username: " + socket.username);
-        //console.log("o: " + JSON.stringify(o));
-          return o.username == socket.username;
+          return o.id == socket.myid;
       });
 
       //console.log("removing user with index of: " + index);
@@ -163,16 +165,12 @@ io.on('connection', function(socket){
 
   socket.on('updatechat', function(text){
     console.log("updatechat- username: " +socket.username + " text: " + text);
-    console.log("room: " + JSON.stringify(rooms[socket.room]));
+    //console.log("room: " + JSON.stringify(rooms[socket.room]));
     //update the chat record, in the users record, in the rooms record
     //get user index
     var index = rooms[socket.room].users.findIndex(function(o){
-      //console.log("socket.username: " + socket.username);
-      //console.log("o: " + JSON.stringify(o));
-        return o.username == socket.username;
+        return o.id == socket.myid;
     });
-    console.log("userindex: " + index);
-    //console.log("user to update: " + JSON.stringify(rooms[socket.room].users[index]));
     rooms[socket.room].users[index].chat[0] = rooms[socket.room].users[index].chat[1];
     rooms[socket.room].users[index].chat[1] = text;
     //console.log("user to update: " + JSON.stringify(rooms[socket.room].users[index]));
@@ -217,13 +215,13 @@ io.on('connection', function(socket){
           answers[i]["label"] = answers[i]["answer"];  
     
         }
-        console.log("room: " + JSON.stringify(rooms));
+        //console.log("room: " + JSON.stringify(rooms));
         if(rooms[roomName] == null){
           var users = [];
         }else{
            var users = rooms[roomName].users;
         }
-        console.log("users: " + JSON.stringify(users));
+        //console.log("users: " + JSON.stringify(users));
  
         //send category, answer, answers, answerIndex back to frontends
         io.sockets.in(roomName).emit('getquestion', {
@@ -244,11 +242,11 @@ io.on('connection', function(socket){
 
   //user reports they got a question correct
   socket.on('questioncorrect', function(){
-    console.log(socket.username+" reports questioncorrect");
+    //console.log(socket.username+" reports questioncorrect");
     //update specific users score
     
     var index = rooms[socket.room].users.findIndex(function(o){
-        return o.username == socket.username;
+        return o.id == socket.myid;
     });
     var user = rooms[socket.room].users[index];
     rooms[socket.room].users[index].chat[0] = rooms[socket.room].users[index].chat[1];
@@ -260,9 +258,9 @@ io.on('connection', function(socket){
   
   //user reports they got a question wrong
   socket.on('questionwrong', function(){
-    console.log(socket.username+" reports questionwrong");
+    //console.log(socket.username+" reports questionwrong");
     var index = rooms[socket.room].users.findIndex(function(o){
-        return o.username == socket.username;
+        return o.id == socket.myid;
     });
     var user = rooms[socket.room].users[index];
     rooms[socket.room].users[index].chat[0] = rooms[socket.room].users[index].chat[1];

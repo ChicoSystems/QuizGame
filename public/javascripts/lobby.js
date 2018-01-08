@@ -13,6 +13,13 @@ var answerIndex;
 var answersLength;
 var round = 0;
 
+//listen for enter keypress
+$(document).keypress(function(e) {
+  if(e.which == 13) {
+    sendChat();   
+  }
+});
+
 $(function(){
   $('.gameroom').hide();
   socket = io.connect(serverIP);
@@ -430,6 +437,7 @@ function createRoom(){
 function sendChat(){
   var text = $("#chatInput").val();
   socket.emit('updatechat', text);
+  $("#chatInput").val('');
 }
 
 //the user clicked an answer button

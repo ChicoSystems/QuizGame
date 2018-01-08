@@ -39,9 +39,10 @@
 </div>
 
 
+<div class="container col-sm-12">
   <div class="jumbotron small-jumbotron col-sm-12">
     <h4><span class="fa fa-user"></span> Users </h4>
-    <div class="row users">
+    <div class="row users no-left-margin">
 
 <!-- This block of code actually gets written by client
       <div class="card col-sm-3">
@@ -58,13 +59,13 @@
 -->
     </div>
     <br>
-    <div class="row chat">
-      <input class="form-control col-sm-4" id="chatInput" type="text"></input>
-      <button type="button" class="btn btn-primary" onclick="sendChat()">Chat</button>
+    <div class="row chat no-left-margin">
+      <input class="form-control col-sm-6" id="chatInput" type="text" placeholder="Chat Here" maxlength="33"></input>
+      <button type="button" class="btn btn-primary btn-lg col-sm-4" onclick="sendChat()">Chat</button>
     </div> 
 
   </div><!-- end jumbotron -->
-
+</div>
 
 <div class="container col-sm-12 lobby">
 
@@ -89,7 +90,7 @@
         <td> New Game </td>
         <td>
           <label class="mr-md-3" for="secondsInput">Seconds Per Question</label>
-          <input class="form-control" id="secondsInput" type="number" min="5" max="60" value="20"></input>
+          <input class="form-control" id="secondsInput" type="number" min="5" max="60" value="15"></input>
         </td>
         <td>
           <label class="mr-md-3" for="turnsInput">Turns Per Round</label>
