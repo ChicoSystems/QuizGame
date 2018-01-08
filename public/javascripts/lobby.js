@@ -1,55 +1,51 @@
 //lobby.js
 //a multiplayer lobby
 //variable serverIP passed in via .ejs variable
-var socket;
-var amIRoomOwner = false;
-var secondsPerQuestion = 0;
-var roundsPerGame = 0;
-var timer;
-var timeLeft = 0;
-var lobbyTimer;
-var lobbyTimeLeft = 0;
-var questionId = "";
-var questionType = "";
-var answerIndex;
-var answersLength;
-var round = 1;
+var socket;                   //The socket.io instance
+var amIRoomOwner = false;     //Keeps track if we own the room we are in
+var secondsPerQuestion = 0;   //The number of seconds given to answer each question
+var roundsPerGame = 0;        //The number of questions in each game
+var timer;                    //Used to count down seconds in each question
+var timeLeft = 0;             //The number of seconds left in the current question
+var lobbyTimer;               //Used to count down time at end of game
+var lobbyTimeLeft = 0;        //The # of seconds left currently @ end of game
+var questionId = "";          //The DB id of the current question
+var questionType = "";        //The type of the current question
+var answerIndex;              //The index of the current answer
+var answersLength;            //The number of current answers
+var round = 1;                //The current question number we are on
 
-//listen for enter keypress
+//If User presses enter button, we want to send what is in chat box
 $(document).keypress(function(e) {
   if(e.which == 13) {
     sendChat();   
   }
 });
 
+//This is called when the page is loaded, register socket listeners, etc.
 $(function(){
+
+  //We don't want to display the game room at first, just the lobby
   $('.gameroom').hide();
-  //socket = io.connect(serverIP);
+
+  //Initiate the socket connection.
   socket = io.connect(serverIP, {'forceNew': true});
 
+  //Server tells us we've connected
   socket.on('connect', function(data) {
+    //Make sure we are logged in, if not, redirect to login page
     checkifLoggedIn();
-    //alert("onconnect " + name);
+    
+    //Tell server to add us to the lobby
     socket.emit('addUser', name, id);
   });
 
+  //Server tells us to update our users list
   socket.on('updateusers', function(users){
-    //get all users in dom, and their chats, save to array
-    //var info = $("div.users > div.userRecord > div.card-block > div.card-title");
-    //var info = $(".aname").attr('data-value');
-    
-/*
-    var info = [];
-    $(".aname").each(function(){
-      console.log("ello");
-      alert($(this).text());
-    });
-
-    console.log("userRecords: " +JSON.stringify(info));
-*/
-
-    console.log("users: " +JSON.stringify(users));
-      $(".users").empty();
+    //First Empty the users section in the DOM  
+    $(".users").empty();
+  
+    //Loop through each user sent by server, add each to DOM
     $.each(users, function(key, value){
       var userHTML = '<div class="card col-sm-3 userRecord" id="'+ value.id +'"> ' +
         ' <div class="card-block">' +
@@ -62,25 +58,30 @@ $(function(){
         '     <div>'+value.chat[1]+'</div> ' +
         '   </div> ' +
         ' </div> </div>';
-      
       $(".users").append(userHTML);
     });
   });
 
+  //Server tells us a user has sent a chat
   socket.on('updatechat', function(myid, data){
+
+    //Check if chat is from server
     if(myid == 'SERVER'){
+      //Chat is from server, add it to conversation area at bottom of page
       $("#conversation").append('<b>' + myid + ':</b> ' + data + '<br>');
     }else{
-      console.log("chat from: " + myid + " - " + data);
+      //Chat is from a user, update that individual users chat section
       $("div#"+myid+" > div.card-block > div.chat :first").remove();
       $("div#"+myid+" > div.card-block > div.chat").append("<div>"+data+"</div>");
     }
   });
 
+  //Server tells us to update our list of rooms
   socket.on('updaterooms', function(rooms){
-    //delete all rooms in the list
+    //delete all rooms in the DOM list
     $("#roomsTable > tbody:last").children('tr:not(:first)').remove();
-    //rebuild rooms from list
+
+    //rebuild DOM rooms section from list of rooms sent from server
     $.each(rooms, function(key, value){
       if(value.type == "gameroom"){
         var newRoom = '<tr> ' + 
@@ -96,41 +97,43 @@ $(function(){
     });
   });//end updaterooms
 
-  //display the game room
+  //Server tells us to display the game room
   socket.on('displaygameroom', function(room){
     //check if we are the room owner of this game room
     var roomOwner = room.owner;
     secondsPerQuestion = room.seconds;
     roundsPerGame = room.turns;
-    //alert("timer: " + timer);
     if(roomOwner == name){
       amIRoomOwner = true;
     }else{
       amIRoomOwner = false;
     }
-    console.log(JSON.stringify(room));
+
+    //Hide the lobby room
     $('.lobby').hide();
     
     //get room status to show
     $('#quizgamestatus').text(room.stat);
+
+    //Show the status change button if we are the rooms owner
     if(amIRoomOwner) displayStatusChangeButton();
     
-    //show the game room, but hide the question
+    //show the game room, but hide the question, as game hasn't started yet
     $('#quizgamequestion').hide();
     $('#endgame').hide();
     $('.gameroom').show();
-    
   });
   
-  //display the lobby room
+  //Server tells us to show the lobby
   socket.on('displaylobby', function(room){
+    //No one owns the lobby
     amIRoomOwner = false;
+
     $('.gameroom').hide();
     $('.lobby').show();
-    //socket.emit('switchroom', room);
   });
 
-  //owner left the game in progress
+  //Server tells us owner left the game in progress
   //user should reload lobby completely.
   socket.on('ownerleftgame', function(){
     window.location.href = '/lobby';
@@ -138,6 +141,7 @@ $(function(){
 
   //the status of the room we are in has changed
   socket.on('statuschanged', function(newStatus){
+    //If status has change to "In Game" start the game
     if(newStatus == "In Game"){
       startGame(); 
     }
@@ -146,9 +150,12 @@ $(function(){
     $("#quizgamestatus").text(newStatus);
   });
 
+  //Server has told us the game has ended
   socket.on('endgame', function(room){
+    //Display the end of game scores, redeem points, etc
     endGame(room);
   });
+
 
   //the server has sent us a new question to display
   socket.on('getquestion', function(data){
@@ -161,17 +168,17 @@ $(function(){
     displayQuestion(data);
     displayAnswers(data);
     startTimer();
-    //alert("getquestion: " + JSON.stringify(data));
   });
 
-  //a user reports they got a question correct, turn users card green
+
+  //Server tells us a user got a question correct, turn users card green
   socket.on('questioncorrect', function(correctUser){
     $("#"+correctUser.id+".userRecord").removeClass("playeriswrong");
     $("#"+correctUser.id+".userRecord").addClass("playerisright");
     $("#score_"+correctUser.id).text(correctUser.score);
   });
 
-  //a user reports they got a question wrong, turn users card red
+  //Server tells us a user got a question wrong, turn users card red
   socket.on('questionwrong', function(wrongUser){
     $("#"+wrongUser.id+".userRecord").removeClass("playerisright");
     $("#"+wrongUser.id+".userRecord").addClass("playeriswrong"); 
@@ -186,7 +193,6 @@ $(function(){
       window.location.href = '/';
     }
   });
- 
 });
 
 //queries the backend to see if we are logged in, if so, does nothing, if not, loads lobby
@@ -209,7 +215,7 @@ function updateUserRecord(data){
 
 }
 
-//the answer choices get displayed
+//Display all possible answers to a question
 function displayAnswers(data){
   $("#quizgameanswers").empty();
   var answers = ''+
@@ -247,34 +253,33 @@ function displayAnswers(data){
   }
     answers+='</div>';
    
-    //alert("answer: " + JSON.stringify(data.answers)); 
     $("#quizgameanswers").append(answers); 
 }
 
 //the round gets updated and displayed displayed
 function updateRound(data){
   $("#roundDiv").text(round+" / " + roundsPerGame);   
-//  alert("data.turns: " + data.turns + "\n roundsPerGame: " + roundsPerGame);
- // alert("updateRound: " + JSON.stringify(data));
 }
 
 //the question gets diplayed
 function displayQuestion(data){
+  //Update the question, text, answers and categories
   $("#questionText").text(data.question);
   $("#quizgamecategory").text(data.category);
+
   //show the question section
   $('#quizgamequestion').show();
 }
 
-//the game has been started by owner
+//The Game gets started by the owner
 function startGame(){
-  //only have owner send emit
+  //Owner instructs server to send everyone a question
   if(amIRoomOwner){
     socket.emit('getquestion');
   }
 }
 
-//sort users top score to bottom
+//Sort users by largest score
 function compareUsersByScore(a, b){
   if(a.score <= b.score){
     return 1;
@@ -287,38 +292,43 @@ function compareUsersByScore(a, b){
 
 //the game has been ended by owner
 function endGame(room){
-  clearInterval(timer);
-  //alert("the game is ended: " +JSON.stringify(room));
-  //build end game table
+  clearInterval(timer); //Reset the question timer
+  
   var users = room.users;
   users = users.sort(compareUsersByScore); 
+
+  //Make sure end game information in DOM is empty
   $('#endgamebody').empty();
   var usersHTML = '';
   var myBonus = 0;
+
+  //Rebuild information of end game DOM
   for(var i = 0; i < users.length; i++){
-    var place = i+1;
+    var place = i+1; //The place the user has ended in, matches are random
+    
     //calculate users bonus
     var baseScore = 100;
     var baseNumQ = 20;
-    //var userBonus = (100 / place)*(round/roundsPerGame);
     var userBonus = (baseScore / place) * (round / roundsPerGame) * (roundsPerGame / baseNumQ);
-    var itsMe = false;
     userBonus = Math.round(userBonus);
-
+    
+    //Find out if this users is me
+    var itsMe = false;
     if(users[i].username == name){
       myBonus = userBonus;
       itsMe = true;
     }
     
+    //Building the html to add to the dom
     usersHTML += '<tr>'; 
     usersHTML += '<td>' + place + '</td>';
     usersHTML += '<td>' + users[i].username + '</td>';
     usersHTML += '<td>' + users[i].score + '</td>';
     usersHTML += '<td>' + userBonus + '</td>';
-
     usersHTML += '</tr>';
   }
 
+  //Add the built html to the dom
   $('#endgamebody').append(usersHTML); 
 
   //hide question and answers
@@ -328,8 +338,7 @@ function endGame(room){
   //update quiz game status
   $('#quizgamestatus').text(room.stat);
 
-  //display redeem bonus button
-  //alert("your bonus: " + myBonus);
+  //redeem my bonus score on the server backend
   redeemBonus(myBonus);
 
   //remove statusChangeButton
@@ -345,7 +354,7 @@ function endGame(room){
   $('#endgame').show();
 }
 
-//adds a lobby button to statusChangeDiv
+//Create a "Lobby" button and add it to the page, allowing the user to leave to lobby
 function addLobbyButton(){
   var button = '<button type="button" class="btn btn-primary" id="lobbyButton" onclick="loadLobby()"> Lobby <div id="lobbytimer"></div> </button>';
   $("#statusChangeDiv").append(button);
@@ -353,7 +362,9 @@ function addLobbyButton(){
 
 //starts a countdown in the lobby button, when it is done it loads lobby
 function startLobbyCountdown(){
-  lobbyTimeLeft = 10;
+  lobbyTimeLeft = 10; //Time given for reviewing end of game table
+
+  //Start the timer
   timer = setInterval(function(){
     lobbyTimeLeft--;
     $("#lobbytimer").text(lobbyTimeLeft);
@@ -361,12 +372,12 @@ function startLobbyCountdown(){
   }, 1000);
 }
 
-//called to load the lobby page
+//Reload the /lobby page, causes socket.io disconnection, and connection
 function loadLobby(){
   window.location.href = "/lobby";
 }
 
-//redeem bonus for playing multiplayer game
+//Redeem given bonus with backend server
 function redeemBonus(bonus){
   //send redeemBonus get to server
   $.ajax({
@@ -382,10 +393,9 @@ function redeemBonus(bonus){
           console.log("error redeeming bonus: " + err);
         }
     });
-
 }
 
-//the timer is restarted
+//Starts the Question timer
 function startTimer(){
   clearInterval(timer);
   timeLeft = secondsPerQuestion;
@@ -395,10 +405,9 @@ function startTimer(){
     $("#timerDiv").text(timeLeft);
     if(timeLeft <= 0)stopTimer();
   }, 1000);
-   
 }
 
-//the timer is stopped
+//Stops the question timer
 //we either need to get another question, or show end of game stats
 function stopTimer(){
   clearInterval(timer);
@@ -433,19 +442,19 @@ function stopTimer(){
   }
 }
 
-
-
-//if the user is owner of the room, the status change button will show
+//Displays Change status button on page, only owner of room should call this
 function displayStatusChangeButton(){
   var statusChangeButton = '<button type="button" class="btn btn-danger" id="statusChangeButton" onclick="statusChangeClicked()"> Start Game </button>';
   $("#statusChangeDiv").append(statusChangeButton);
 }
 
-//owner clicked the statusChangeButton
+//Change Status Button has been clicked
 function statusChangeClicked(){
-  //alert("status change clicked");
+  //Get the previous status
   var previousStatus = $("#quizgamestatus").text();
-  var nextStatus = "error";
+  var nextStatus = "error"; //default next status
+
+  //decide next status based on previous status
   if(previousStatus == "Waiting for Players"){
     nextStatus = "In Game";
     //startGame();
@@ -455,30 +464,36 @@ function statusChangeClicked(){
     nextStatus = "End Game";
   }
   if(nextStatus == "End Game"){
+    //Tell server the game has ended
     socket.emit('endgame');
   }else{
+    //Tell server about status change
     socket.emit('changestatus', nextStatus);
   }
-
 }
 
+//Switch to another game room, or lobby
 function switchRoom(roomToSwitch){
-  //alert("switch to: " + roomToSwitch);
   roomToSwitch = roomToSwitch.trim();
+
+  //tell server room we want to switch to
   socket.emit('switchroom', roomToSwitch);
 }
 
+//Create a new game room
 function createRoom(){
-  var seconds = $('#secondsInput').val();
-  var turns = $('#turnsInput').val();
-  //alert("name: " + name);
-  //var roomName = "testRoom"+(Math.floor((Math.random() * 1000) + 1));
+  var seconds = $('#secondsInput').val(); //The seconds per question we want
+  var turns = $('#turnsInput').val(); //The question per game we want
+  
+  //New room name is a mix of users name, and a random number
   var roomName = name + "-" + (Math.floor((Math.random() * 1000) + 1));
-  roomName = roomName.trim();
+  roomName = roomName.trim(); //No leading or trailing spaces in room name
+
+  //Disable the create room button, so we cannot accidently create a room 2 times
   $("#createButton").addClass("disabled");
   $("#createButton").attr("disabled", "disabled");
 
-
+  //Tell the server about the room we want to create
   socket.emit('createRoom', JSON.stringify({
     roomName: roomName,
     owner   : name,
@@ -489,6 +504,7 @@ function createRoom(){
   })); 
 }
 
+//Send a chat message to the server
 function sendChat(){
   var text = $("#chatInput").val();
   socket.emit('updatechat', text);
@@ -539,8 +555,8 @@ function questionWrong(qtype, qid){
 //The user clicked the "report problems with question" link.
 function reportProblemClicked(){
   var problem = $("input[type='radio']:checked").parent().text();
-  //alert("report problems clicked");
 
+  //report the problem to backend
    $.ajax({
         type: "POST",
         url: "/reportproblems",
@@ -556,6 +572,5 @@ function reportProblemClicked(){
           console.log("error submitting problem: " + err);
         }
     });
-
 }
 
