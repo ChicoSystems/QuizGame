@@ -334,6 +334,15 @@ module.exports = function(app, passport){
     newProblem.save();
   });
 
+  //lets client know if it is logged in, used by multiplayer
+  app.get('/isloggedin', function(req, res){
+    if(req.user){
+      res.send("true");
+    }else{
+      res.send("false");
+    }
+  });
+
   //client playing multiplayer redeems their bonus
   app.post('/redeembonus', function(req, res){
     if(req.user){

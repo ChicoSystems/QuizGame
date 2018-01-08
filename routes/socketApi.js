@@ -11,7 +11,8 @@ var rooms = {};//["lobby": {owner: "SERVER", seconds: "", type: "lobby"}];
 rooms.lobby = {owner: "SERVER", seconds: "", difficutly: "", turns: 0, type: "lobby", users: []};
 
 io.on('connection', function(socket){
-  //console.log("on connection");
+  console.log("on connection");
+  console.log('users: ' + JSON.stringify(rooms["lobby"].users));
   io.rooms = rooms;
   socket.on('addUser', function(username, id){
     //console.log("addUser - username: " + username + "  id: " + id);

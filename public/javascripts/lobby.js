@@ -7,6 +7,8 @@ var secondsPerQuestion = 0;
 var roundsPerGame = 0;
 var timer;
 var timeLeft = 0;
+var lobbyTimer;
+var lobbyTimeLeft = 0;
 var questionId = "";
 var questionType = "";
 var answerIndex;
@@ -22,9 +24,11 @@ $(document).keypress(function(e) {
 
 $(function(){
   $('.gameroom').hide();
-  socket = io.connect(serverIP);
+  //socket = io.connect(serverIP);
+  socket = io.connect(serverIP, {'forceNew': true});
 
   socket.on('connect', function(data) {
+    checkifLoggedIn();
     //alert("onconnect " + name);
     socket.emit('addUser', name, id);
   });
@@ -176,6 +180,15 @@ $(function(){
  
 });
 
+//queries the backend to see if we are logged in, if so, does nothing, if not, loads lobby
+function checkifLoggedIn(){
+  $.get("/isloggedin", function(data, status){
+    if(data == "false"){
+      window.location.href = "/lobby";
+    }
+  });
+}
+
 //updates the ingame user records, colors
 function updateUserRecord(data){
   var users = data.users;
@@ -276,7 +289,10 @@ function endGame(room){
   for(var i = 0; i < users.length; i++){
     var place = i+1;
     //calculate users bonus
-    var userBonus = (100 / place)*(round/roundsPerGame);
+    var baseScore = 100;
+    var baseNumQ = 20;
+    //var userBonus = (100 / place)*(round/roundsPerGame);
+    var userBonus = (baseScore / place) * (round / roundsPerGame) * (roundsPerGame / baseNumQ);
     var itsMe = false;
     userBonus = Math.round(userBonus);
 
@@ -307,8 +323,38 @@ function endGame(room){
   //alert("your bonus: " + myBonus);
   redeemBonus(myBonus);
 
+  //remove statusChangeButton
+  $("#statusChangeButton").hide();
+  
+  //add lobby button
+  addLobbyButton();
+
+  //start lobby countdown
+  startLobbyCountdown();
+
   //show end game table
   $('#endgame').show();
+}
+
+//adds a lobby button to statusChangeDiv
+function addLobbyButton(){
+  var button = '<button type="button" class="btn btn-primary" id="lobbyButton" onclick="loadLobby()"> Lobby <div id="lobbytimer"></div> </button>';
+  $("#statusChangeDiv").append(button);
+}
+
+//starts a countdown in the lobby button, when it is done it loads lobby
+function startLobbyCountdown(){
+  lobbyTimeLeft = 10;
+  timer = setInterval(function(){
+    lobbyTimeLeft--;
+    $("#lobbytimer").text(lobbyTimeLeft);
+    if(lobbyTimeLeft <= 0)loadLobby();
+  }, 1000);
+}
+
+//called to load the lobby page
+function loadLobby(){
+  window.location.href = "/lobby";
 }
 
 //redeem bonus for playing multiplayer game

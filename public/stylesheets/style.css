@@ -205,3 +205,7 @@ background-color: #dc3545;
 .no-left-margin{
   margin-left: 0px;
 }
+
+td{
+  font-size:25px;
+}
