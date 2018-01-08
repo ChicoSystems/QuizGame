@@ -16,6 +16,25 @@ a {
   text-align: center;
 }
 
+#quizgamestatus{
+  font-size:30px;
+  display: inline;
+}
+
+#statusChangeDiv{
+  display: inline;
+}
+
+#timerDiv{
+  font-size: 28px;
+  display: inline;
+}
+
+#roundDiv{
+  font-size: 28px;
+  display: inline;
+}
+
 #quizgamequestion{
   font-size: 28px;
   text-align: center;
@@ -64,6 +83,13 @@ a {
   color: #00B7FF;
   position: relative;
   top: -15px;
+}
+
+.reportProblemMultiplayer{
+  font-size: small;
+  color: #00B7FF;
+  position: relative;
+  top: -75px;
 }
 
 .displayNone{
@@ -158,4 +184,28 @@ a {
 .scroll{
   height: 400px;
   overflow: auto;
+}
+
+.small-jumbotron{
+  padding: 0 !important;
+}
+
+.playeriswrong{
+background-color: #dc3545;
+}
+
+.playerisright{
+  background-color: #28a745;
+}
+
+.nav-big{
+  font-size: 20px;
+}
+
+.no-left-margin{
+  margin-left: 0px;
+}
+
+td{
+  font-size:25px;
 }
