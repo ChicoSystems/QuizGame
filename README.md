@@ -1,9 +1,13 @@
 Quiz Game
 ===========
+Demo: http://quiz.chicosystems.com
 
-Quiz Game is an online quiz game.
-Rack up as many points as you can.
-Compare yourself to others.
+Quiz Game is an online single-player/multi-player trivia game
+
+Play against your friends trying to answer tens of thousands of different questions
+
+Rack up as many points as you can & compare yourself against others.
+
 
 ============
 
@@ -13,7 +17,8 @@ Compare yourself to others.
 ==================================================================
 ``` -LINECOUNT-
       44 text files.
-classified 44 files      44 unique files.                              
+classified 44 files
+      44 unique files.                              
     4172 files ignored.
 
 http://cloc.sourceforge.net v 1.60  T=0.14 s (279.6 files/s, 35405.8 lines/s)
