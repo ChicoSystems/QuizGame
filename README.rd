@@ -1,5 +1,4 @@
 Quiz Game
-
 ===========
 
 Quiz Game is an online quiz game.
@@ -14,7 +13,8 @@ Compare yourself to others.
 ==================================================================
 -LINECOUNT-
       44 text files.
-classified 44 files      44 unique files.                              
+classified 44 files
+      44 unique files.                              
     4147 files ignored.
 
 http://cloc.sourceforge.net v 1.60  T=0.12 s (329.0 files/s, 41531.8 lines/s)
