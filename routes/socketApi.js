@@ -159,10 +159,13 @@ io.on('connection', function(socket){
       io.sockets.in(oldroom).emit('updateusers', rooms[oldroom].users);
     }    
 
+  
+
     //add user to newly joined room
     var user = {"username":socket.username, "chat":["", ""], "score": 0, "id": socket.myid}; 
     rooms[newroom].users.push(user);
     socket.join(newroom);
+    
 
     //let client know he is connected to new room
     socket.emit('updatechat', 'SERVER', 'you have connected to ' + newroom);
@@ -172,6 +175,16 @@ io.on('connection', function(socket){
     io.sockets.in(newroom).emit('updatechat', 'SERVER', socket.username + ' has joined this room: ' + newroom);
     io.sockets.in(newroom).emit('updateusers', rooms[newroom].users);
     //console.log("rooms: " + JSON.stringify(rooms));
+    //if there is already a user in this room with this id, we tell him to load main page
+    var index = rooms[newroom].users.findIndex(function(o){
+       return o.id == socket.myid;
+    });
+    if(index != -1){
+      //if user we are telling to leave (other copy of us) was owner, then we become owner
+      socket.ownedRoom = newroom;
+      var id = rooms[newroom].users[index].id;
+      io.sockets.in(newroom).emit('removeyourself', id);
+    }
     
     //have client display room that was switched to
     socket.emit('displaygameroom', rooms[newroom]);
