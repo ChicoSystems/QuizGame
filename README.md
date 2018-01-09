@@ -61,6 +61,20 @@ Quiz Game has three different collections of questions:
 * Edit the question collections
 * View user reports on malformed questions
 
+## Contributing
+Quiz Game is a npm/node.js application that uses the [express.js](https://expressjs.com/) framework.
+* First you need to install the application
+* Make useful changes
+* Open a pull request on this repository at [github](https://github.com/ChicoSystems/QuizGame)
+
+#### Installation
+* Clone this repository
+* Run npm install
+* If you want to have social login, rename config/auth-sample.js to config/auth.js & fill in proper fields with your social account information. You'll need to create an app for each social account as documented in [this](https://scotch.io/tutorials/easy-node-authentication-setup-and-local) tutorial
+* Download the [database](http://chicosystems.com/quizgamedb) and install it with mongorestore
+* Make sure config/database.js points to the url of your database
+* run npm start to start the application
+
 
 
 ==================================================================
