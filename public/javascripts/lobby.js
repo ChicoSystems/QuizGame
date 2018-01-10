@@ -84,10 +84,14 @@ $(function(){
     //rebuild DOM rooms section from list of rooms sent from server
     $.each(rooms, function(key, value){
       if(value.type == "gameroom"){
+        var difficulty = '';
+        if(value.difficulty == 0)difficulty = "Easy";
+        if(value.difficulty == 1)difficulty = "Hard";
         var newRoom = '<tr> ' + 
           ' <td> ' + key + '</td> ' + 
           ' <td> ' + value.seconds + '</td> ' +
           ' <td> ' + value.turns + '</td> ' +
+          ' <td> ' + difficulty + '</td> ' +
           ' <td> ' + value.stat + '</td>' + 
           ' <td> ' +
           '   <button type="button" class="btn btn-success" onclick="switchRoom(\' '+ key + ' \')">Join</button> </td> ' + 
@@ -190,7 +194,9 @@ $(function(){
   socket.on('removeyourself', function(removeID){
     if(removeID == id){
       //it is me, remove myself
+      alert("removeyourself");
       window.location.href = '/';
+      
     }
   });
 });
@@ -199,6 +205,7 @@ $(function(){
 function checkifLoggedIn(){
   $.get("/isloggedin", function(data, status){
     if(data == "false"){
+      alert("not logged in, returning to lobby");
       window.location.href = "/lobby";
     }
   });
@@ -419,7 +426,10 @@ function stopTimer(){
       $('#'+i).addClass("disabled");
     } 
     //alert("now show the end of the game");
-    if(amIRoomOwner)socket.emit('endgame');
+    //pause for 1 second
+    setTimeout(function(){
+      if(amIRoomOwner)socket.emit('endgame');
+    }, 1000);
   }else{
     //increase round
     round++;
@@ -484,7 +494,9 @@ function switchRoom(roomToSwitch){
 function createRoom(){
   var seconds = $('#secondsInput').val(); //The seconds per question we want
   var turns = $('#turnsInput').val(); //The question per game we want
-  
+  var difficulty = $("input[type=radio]:checked").attr("dif");
+  //alert("Difficulty: " + JSON.stringify(difficulty)); 
+ 
   //New room name is a mix of users name, and a random number
   var roomName = name + "-" + (Math.floor((Math.random() * 1000) + 1));
   roomName = roomName.trim(); //No leading or trailing spaces in room name
@@ -499,7 +511,7 @@ function createRoom(){
     owner   : name,
     seconds: seconds,
     turns : turns,
-    difficulty: "easy",
+    difficulty: difficulty,
     type : "gameroom"
   })); 
 }
