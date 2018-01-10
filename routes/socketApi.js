@@ -5,6 +5,24 @@ socketApi.io = io;
 
 //used to query questions from db
 var JQuestion               = require('../models/jQuestions');
+var QuizQuestion            = require('../models/quizQuestions');
+
+//Used for difficulty settings
+var rwc                     = require('random-weighted-choice');
+var rwc0 = [
+  {weight: 95, id: 0},
+  {weight: 5, id: 1}
+];
+
+var rwc1 = [
+  {weight: 55, id: 0},
+  {weight: 45, id: 1}
+];
+
+var rwcTable = [];
+rwcTable.push(rwc0);
+rwcTable.push(rwc1);
+
 
 var rooms = {};//["lobby": {owner: "SERVER", seconds: "", type: "lobby"}];
 rooms.lobby = {owner: "SERVER", seconds: "", difficutly: "", turns: 0, type: "lobby", users: []};
@@ -25,6 +43,7 @@ io.on('connection', function(socket){
        return o.id == socket.myid;
     });
     if(index != -1){
+      console.log("users told to remove themselves from lobby");
       io.sockets.in('lobby').emit('removeyourself', id);
     }
 
@@ -129,6 +148,8 @@ io.on('connection', function(socket){
 
   //A user is switching between rooms
   socket.on('switchroom', function(newroom){
+    console.log("switching to room: " + JSON.stringify(rooms[newroom]));
+
     //if the room has not been created, we cannot switch to it.
     if(rooms[newroom] == null) return 0;
 
@@ -159,10 +180,13 @@ io.on('connection', function(socket){
       io.sockets.in(oldroom).emit('updateusers', rooms[oldroom].users);
     }    
 
+  
+
     //add user to newly joined room
     var user = {"username":socket.username, "chat":["", ""], "score": 0, "id": socket.myid}; 
     rooms[newroom].users.push(user);
     socket.join(newroom);
+    
 
     //let client know he is connected to new room
     socket.emit('updatechat', 'SERVER', 'you have connected to ' + newroom);
@@ -172,6 +196,20 @@ io.on('connection', function(socket){
     io.sockets.in(newroom).emit('updatechat', 'SERVER', socket.username + ' has joined this room: ' + newroom);
     io.sockets.in(newroom).emit('updateusers', rooms[newroom].users);
     //console.log("rooms: " + JSON.stringify(rooms));
+
+    /* //buggy, figure out another way to do this
+    //if there is already a user in this room with this id, we tell him to load main page
+    var index = rooms[newroom].users.findIndex(function(o){
+       return o.id == socket.myid;
+    });
+    if(index != -1){
+      //if user we are telling to leave (other copy of us) was owner, then we become owner
+      socket.ownedRoom = newroom;
+      var id = rooms[newroom].users[index].id;
+      console.log("users told to remove themselves from " + newroom);
+      io.sockets.in(newroom).emit('removeyourself', id); //this is buggy
+    }
+    */
     
     //have client display room that was switched to
     socket.emit('displaygameroom', rooms[newroom]);
@@ -207,7 +245,19 @@ io.on('connection', function(socket){
   //room owner's timer wants room to get a new question to answer
   socket.on('getquestion', function(){
     var roomName = socket.ownedRoom;
-  
+    var difficulty = rooms[roomName].difficulty;
+    //console.log("difficulty: " + difficulty);
+
+    var randomChooser = rwc(rwcTable[[difficulty]]);
+    //console.log("randomChooser: " + randomChooser);
+
+    if(randomChooser == 0){
+      sendJQuestion(socket);
+    }else{
+      sendQuizQuestion(socket);
+    }  
+    
+    /*
     //query db for a jquestion
     var filter ={subDiscipline: {$exists: true}};
     var fields =  {};
@@ -250,7 +300,7 @@ io.on('connection', function(socket){
           users : users
         });
       });
-    });
+    }); */
   });
 
   //user reports they got a question correct
@@ -292,5 +342,113 @@ io.on('connection', function(socket){
     io.sockets.in(roomName).emit('endgame', rooms[roomName]);
   });
 });
+
+//sends a jquestion to all clients in sockets room
+function sendJQuestion(socket){
+  var roomName = socket.room;
+  
+  //query db for a jquestion
+  var filter ={subDiscipline: {$exists: true}};
+  var fields =  {};
+  JQuestion.findRandom(filter, fields, {limit: 1}, function(err, result){
+    if(err) throw err;
+
+    var questionType = 'jQuestion';
+
+    //find 11 answers with the same subDiscipline as result
+    var filter = {answer: {$ne: result[0].answer}, subDiscipline: result[0].subDiscipline};
+    var fields = {answer: 1};
+    JQuestion.findRandom(filter, fields, {limit: 11}, function(error, answers){
+      if(error) throw error;
+
+      //splice the correct answer into the list of answers
+      var answerIndex = Math.floor(Math.random() * 12);
+      if(answers == null)return 0;
+      answers.splice(answerIndex, 0, {answer: result[0].answer});
+
+      //modify the answer array to answer is stored as "label"
+      for(var i = 0; i < answers.length; i++){
+        answers[i]["label"] = answers[i]["answer"];      
+      }
+
+      if(rooms[roomName] == null){
+        var users = [];
+      }else{
+         var users = rooms[roomName].users;
+      }
+
+      //send category, answer, answers, answerIndex back to everyone in room
+      io.sockets.in(roomName).emit('getquestion', {
+        category: result[0].category,
+        question: result[0].question,
+        answer: result[0].answer,
+        answers : answers,
+        answerIndex: answerIndex,
+        questionType: questionType,
+        questionId : result[0]._id,
+        users : users
+      });
+    });
+  }); 
+}
+
+function sendQuizQuestion(socket){
+  var roomName = socket.room;
+  
+  //query db for a quiz question
+  var filter = {};
+  var fields = {};
+  QuizQuestion.findRandom(filter, fields, {limit: 1}, function(err, result){
+    if(err) throw err;
+
+    var questionType = 'quizQuestion';
+
+    //find 11 answers with the same category, but different answers
+    var filter = {label: {$ne: result[0].label}, category: result[0].category};
+    var fields = {label: 1}; //only pull up the answers
+
+    //query the db for the 11 answers
+    QuizQuestion.findRandom(filter, fields, {limit: 11}, function(error, answers){
+      if(error) throw error;
+
+      //replace any occurance of the string ?? & ??? with " in question
+      //replace any occurance of the string "???" in db, with "
+      result[0].raw = result[0].raw.replace(new RegExp("???".replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), "\'");
+      result[0].raw = result[0].raw.replace(new RegExp("??".replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), "\'");
+
+      //splice the correct answer into the list of answers
+      var answerIndex = Math.floor(Math.random() * 12);
+      answers.splice(answerIndex, 0, {label: result[0].label});
+
+      //modify the answer array to answer is stored as "label"
+      for(var i = 0; i < answers.length; i++){
+        answers[i] = {answer: answers[i]["label"]};//answers[i]["label"];
+      }
+
+      console.log("modifiedAnswers: " + JSON.stringify(answers));
+
+      //get users in room
+      if(rooms[roomName] == null){
+        var users = [];
+      }else{
+        var users = rooms[roomName].users;
+      }
+
+      //send need info to everyone in room
+      io.sockets.in(roomName).emit('getquestion', {
+        category: result[0].category,
+        question: result[0].raw,
+        answer  : result[0].label,
+        answers : answers,
+        answerIndex: answerIndex,
+        questionType: questionType,
+        questionId  : result[0]._id,
+        users       : users
+      });
+
+    });
+  });
+
+}
 
 module.exports = socketApi;

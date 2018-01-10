@@ -82,6 +82,7 @@
         <th> Game Name </th>
         <th> Seconds / Question </th>
         <th> Turns / Round </th>
+        <th> Difficulty </th>
         <th> Status </th>
       </tr>
     </thead>
@@ -96,20 +97,21 @@
           <label class="mr-md-3" for="turnsInput">Turns Per Round</label>
           <input class="form-control" id="turnsInput" type="number" min="5" max="60" value="10"></input>
         </td>
-        <td></td>
-        <!--
+        
+        -
         <td>
             <div class="radio">
-              <label><input type="radio" name="optradio" id="dif1" dif="1">Easy</label>
+              <label><input type="radio" name="optradio" id="dif0" dif="0" name="dif" checked="checked">Easy</label>
             </div>
-            <div class="radio">
+        <!--    <div class="radio">
               <label><input type="radio" name="optradio" id="dif2" dif="2">Normal</label>
-            </div>
+            </div> -->
             <div class="radio">
-              <label><input type="radio" name="optradio" id="dif3" dif="3">Hard</label>
+              <label><input type="radio" name="optradio" id="dif1" dif="1" name="dif">Hard</label>
             </div>
         </td>
-        -->
+        
+        <td></td>
         <td>
           <button type="button" class="btn btn-warning" id="createButton" onclick="createRoom()">Create</button>
         </td>
