@@ -2,7 +2,7 @@
 
 //used by socket.io to allow client to connect to server, this must change
 //if domain changes, or when we move from dev server to live
-var hostedAddress = "http://quiz.chicosystems.com";
+var hostedAddress = "http://192.168.1.197";
 
 // load up the quizQestions model
 var QuizQuestion            = require('../models/quizQuestions');
