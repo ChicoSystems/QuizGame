@@ -47,18 +47,21 @@ $(function(){
   
     //Loop through each user sent by server, add each to DOM
     $.each(users, function(key, value){
-      var userHTML = '<div class="card col-sm-3 userRecord" id="'+ value.id +'"> ' +
-        ' <div class="card-block">' +
-        '   <div class = "card-title text-center"> ' +
-        '     <h5>'+value.username+'</h5>' +
-        '       <h6 id="score_'+value.id+'">'+value.score+'</h6>'  +
-        '   </div> ' +
-        '   <div class="chat"> ' +
-        '     <div>'+value.chat[0]+'</div> ' +
-        '     <div>'+value.chat[1]+'</div> ' +
-        '   </div> ' +
-        ' </div> </div>';
-      $(".users").append(userHTML);
+      //only add this user to the dom if his status is = "present"
+      if(value.status == "present"){
+        var userHTML = '<div class="card col-sm-3 userRecord" id="'+ value.id +'"> ' +
+          ' <div class="card-block">' +
+          '   <div class = "card-title text-center"> ' +
+          '     <h5>'+value.username+'</h5>' +
+          '       <h6 id="score_'+value.id+'">'+value.score+'</h6>'  +
+          '   </div> ' +
+          '   <div class="chat"> ' +
+          '     <div>'+value.chat[0]+'</div> ' +
+          '     <div>'+value.chat[1]+'</div> ' +
+          '   </div> ' +
+          ' </div> </div>';
+        $(".users").append(userHTML);
+      }
     });
   });
 
@@ -86,7 +89,8 @@ $(function(){
       if(value.type == "gameroom"){
         var difficulty = '';
         if(value.difficulty == 0)difficulty = "Easy";
-        if(value.difficulty == 1)difficulty = "Hard";
+        if(value.difficulty == 1)difficulty = "Normal";
+        if(value.difficulty == 2)difficulty = "Hard";
         var newRoom = '<tr> ' + 
           ' <td> ' + key + '</td> ' + 
           ' <td> ' + value.seconds + '</td> ' +
@@ -194,7 +198,7 @@ $(function(){
   socket.on('removeyourself', function(removeID){
     if(removeID == id){
       //it is me, remove myself
-      alert("removeyourself");
+      //alert("removeyourself");
       window.location.href = '/';
       
     }
@@ -205,7 +209,7 @@ $(function(){
 function checkifLoggedIn(){
   $.get("/isloggedin", function(data, status){
     if(data == "false"){
-      alert("not logged in, returning to lobby");
+      //alert("not logged in, returning to lobby");
       window.location.href = "/lobby";
     }
   });

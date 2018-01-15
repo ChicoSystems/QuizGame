@@ -10,11 +10,16 @@ var QuizQuestion            = require('../models/quizQuestions');
 //Used for difficulty settings
 var rwc                     = require('random-weighted-choice');
 var rwc0 = [
-  {weight: 95, id: 0},
-  {weight: 5, id: 1}
+  {weight: 100, id: 0},
+  {weight: 0, id: 1}
 ];
 
 var rwc1 = [
+  {weight: 90, id: 0},
+  {weight: 10, id: 1}
+];
+
+var rwc2 = [
   {weight: 55, id: 0},
   {weight: 45, id: 1}
 ];
@@ -22,6 +27,7 @@ var rwc1 = [
 var rwcTable = [];
 rwcTable.push(rwc0);
 rwcTable.push(rwc1);
+rwcTable.push(rwc2);
 
 
 var rooms = {};//["lobby": {owner: "SERVER", seconds: "", type: "lobby"}];
@@ -43,13 +49,18 @@ io.on('connection', function(socket){
        return o.id == socket.myid;
     });
     if(index != -1){
+      //we become the user in this room that is already present, tell any other socket with
+      //same user to leave
+      rooms[socket.room].users[index].status = "present";
       console.log("users told to remove themselves from lobby");
       io.sockets.in('lobby').emit('removeyourself', id);
+    }else{
+      //we are being added to this room for the first time
+      //Add the user to the lobby
+      var user = {"username":username, "chat":["", ""], "score":0, "id": id, "status": "present"};
+      rooms["lobby"].users.push(user);
     }
 
-    //Add the user to the lobby
-    var user = {"username":username, "chat":["", ""], "score":0, "id": id};
-    rooms["lobby"].users.push(user);
     rooms["lobby"].stat = "lobby";
     socket.join("lobby");
     socket.emit('updatechat', 'SERVER', 'You have connected to the lobby ' + socket.username);
@@ -61,16 +72,20 @@ io.on('connection', function(socket){
 
   //A client disconnects from socket.io server
   socket.on('disconnect', function(){
-    console.log("user disconnected: " + socket.username);
+    console.log("user disconnected: " + socket.username + " from: " +socket.room);
 
-    //remove user from room
+    //We don't want to remove user from room when they disconnect
+    //but we do want to mark them as absent, so they don't show up as a user
+    //but this way, if they reconnect, they will be able to play with same score
     if(rooms[socket.room]){
       //find users index
       var index = rooms[socket.room].users.findIndex(function(o){
          return o.id == socket.myid;
       });
       //remove user from room record
-      rooms[socket.room].users.splice(index, 1);
+      //rooms[socket.room].users.splice(index, 1);
+      //mark user as absent
+      rooms[socket.room].users[index].status = "absent";
       
       //update room on which users are now present.
       io.sockets.in(socket.room).emit('updateusers', rooms[socket.room].users);
@@ -103,15 +118,16 @@ io.on('connection', function(socket){
     var room = JSON.parse(room);
     
     //create room, add user record to that room
-    var user = {"username":socket.username, "chat":["", ""], "score": 0, "id":socket.myid};
+    var user = {"username":socket.username, "chat":["", ""], "score": 0, "id":socket.myid, "status": "present"};
     var newRoom = {owner: room.owner, seconds: room.seconds, difficulty: room.difficulty, type: room.type, turns: room.turns, users: [user], stat:"Waiting for Players"};
     rooms[room.roomName] = newRoom;
 
-    //remove user from oldroom
+    //don't remove user from old room, just mark as absent
     var index = rooms[oldroom].users.findIndex(function(o){
         return o.id == socket.myid;
     });
-    rooms[oldroom].users.splice(index, 1);
+    //rooms[oldroom].users.splice(index, 1);
+    rooms[oldroom].users[index].status = "absent";
 
     //tell client to update rooms
     socket.emit('updaterooms', rooms);
@@ -166,14 +182,15 @@ io.on('connection', function(socket){
     //have the socket leave the room
     socket.leave(socket.room);
 
-    //if old room still exists, remove this user from it
+    //don't remove user, just mark as absent
     if(rooms[oldroom]){
       
       //remove user from oldroom
       var index = rooms[oldroom].users.findIndex(function(o){
           return o.id == socket.myid;
       });
-      rooms[oldroom].users.splice(index, 1);
+      //rooms[oldroom].users.splice(index, 1);
+      rooms[oldroom].users[index].status= "absent";
     
       //let users in old room know we left it
       io.sockets.in(oldroom).emit('updatechat', 'SERVER', socket.username + ' has left this room to join: ' + newroom);
@@ -181,10 +198,19 @@ io.on('connection', function(socket){
     }    
 
   
-
-    //add user to newly joined room
-    var user = {"username":socket.username, "chat":["", ""], "score": 0, "id": socket.myid}; 
-    rooms[newroom].users.push(user);
+    //if user has already existed in current room, just change users status to present
+    var index = rooms[newroom].users.findIndex(function(o){
+          return o.id == socket.myid;
+    });
+    if(index != -1){
+      //user already exists, change status
+      rooms[newroom].users[index].status = "present";
+    }else{
+      //user is joining room for first time
+      //otherwise add user to newly joined room
+      var user = {"username":socket.username, "chat":["", ""], "score": 0, "id": socket.myid, "status": "present"}; 
+      rooms[newroom].users.push(user);
+    }
     socket.join(newroom);
     
 
