@@ -197,7 +197,7 @@ $(function(){
   socket.on('removeyourself', function(removeID){
     if(removeID == id){
       //it is me, remove myself
-      alert("removeyourself");
+      //alert("removeyourself");
       window.location.href = '/';
       
     }
@@ -208,7 +208,7 @@ $(function(){
 function checkifLoggedIn(){
   $.get("/isloggedin", function(data, status){
     if(data == "false"){
-      alert("not logged in, returning to lobby");
+      //alert("not logged in, returning to lobby");
       window.location.href = "/lobby";
     }
   });

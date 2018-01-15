@@ -206,6 +206,11 @@ background-color: #dc3545;
   margin-left: 0px;
 }
 
+.chat{
+  font-size:20px;
+  text-align: center;
+}
+
 td{
   font-size:25px;
 }

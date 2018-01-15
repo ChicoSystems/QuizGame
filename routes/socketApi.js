@@ -116,11 +116,12 @@ io.on('connection', function(socket){
     var newRoom = {owner: room.owner, seconds: room.seconds, difficulty: room.difficulty, type: room.type, turns: room.turns, users: [user], stat:"Waiting for Players"};
     rooms[room.roomName] = newRoom;
 
-    //remove user from oldroom
+    //don't remove user from old room, just mark as absent
     var index = rooms[oldroom].users.findIndex(function(o){
         return o.id == socket.myid;
     });
-    rooms[oldroom].users.splice(index, 1);
+    //rooms[oldroom].users.splice(index, 1);
+    rooms[oldroom].users[index].status = "absent";
 
     //tell client to update rooms
     socket.emit('updaterooms', rooms);
