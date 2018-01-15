@@ -10,11 +10,16 @@ var QuizQuestion            = require('../models/quizQuestions');
 //Used for difficulty settings
 var rwc                     = require('random-weighted-choice');
 var rwc0 = [
-  {weight: 95, id: 0},
-  {weight: 5, id: 1}
+  {weight: 100, id: 0},
+  {weight: 0, id: 1}
 ];
 
 var rwc1 = [
+  {weight: 90, id: 0},
+  {weight: 10, id: 1}
+];
+
+var rwc2 = [
   {weight: 55, id: 0},
   {weight: 45, id: 1}
 ];
@@ -22,6 +27,7 @@ var rwc1 = [
 var rwcTable = [];
 rwcTable.push(rwc0);
 rwcTable.push(rwc1);
+rwcTable.push(rwc2);
 
 
 var rooms = {};//["lobby": {owner: "SERVER", seconds: "", type: "lobby"}];

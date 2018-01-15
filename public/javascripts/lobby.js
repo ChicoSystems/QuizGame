@@ -89,7 +89,8 @@ $(function(){
       if(value.type == "gameroom"){
         var difficulty = '';
         if(value.difficulty == 0)difficulty = "Easy";
-        if(value.difficulty == 1)difficulty = "Hard";
+        if(value.difficulty == 1)difficulty = "Normal";
+        if(value.difficulty == 2)difficulty = "Hard";
         var newRoom = '<tr> ' + 
           ' <td> ' + key + '</td> ' + 
           ' <td> ' + value.seconds + '</td> ' +
