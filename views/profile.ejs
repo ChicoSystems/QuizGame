@@ -139,7 +139,7 @@
     if(user.questionHistory.length == 0) qpct = 0;
   %> 
   <div class="jumbotron">
-    <h2><span class="fa fa-history"></span> Question History <div id="qpct"><%= qpct %>%</div></h2>
+    <h2><span class="fa fa-history"></span> Question History <div id="qpct"> <%= qpct %>%</div><div id="qscore">Score: <%= user.gameinfo.score %>  </div></h2>
     <div class="row">
       <div class="card col-sm-12">
         <div class="card-block col-sm-12 scroll">
