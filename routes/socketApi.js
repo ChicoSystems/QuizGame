@@ -271,6 +271,7 @@ io.on('connection', function(socket){
   //room owner's timer wants room to get a new question to answer
   socket.on('getquestion', function(){
     var roomName = socket.ownedRoom;
+    if(rooms[roomName] == null)return 0;
     var difficulty = rooms[roomName].difficulty;
     //console.log("difficulty: " + difficulty);
 
