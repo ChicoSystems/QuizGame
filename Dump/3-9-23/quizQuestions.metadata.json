@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"r":"2dsphere"},"name":"r_2dsphere","background":true,"2dsphereIndexVersion":{"$numberInt":"2"}}],"uuid":"93438d14f42d43d59c6a57da741a0910","collectionName":"quizQuestions","type":"collection"}

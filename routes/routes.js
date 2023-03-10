@@ -14,6 +14,19 @@ var ReportProblem           = require('../models/reportProblem');
 var ObjectId                = require('mongoose').Types.ObjectId;
 var util = require('util');
 
+const { Configuration, OpenAIApi } = require("openai");
+require('dotenv').config();
+
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+  organization: "org-vVcrP7At2k89pbLet9QZgjgu"
+});
+
+const openai = new OpenAIApi(configuration);
+
+
+
+
 //convert stanford questions
 var s_old_questions = require('../models/stanford_old');
 var StanfordQuestion        = require('../models/stanfordQuestions');
@@ -132,6 +145,12 @@ module.exports = function(app, passport){
     renderJQuestion(req, res);
   });
 
+  app.get('/discord/question', async function(req, res){
+    //res.send
+    var jsonQuestion = await getDiscordQuestion(req, res);
+    res.json(jsonQuestion);
+  });
+
   //The main page, renders jquestion or quizquestion half time
   app.get('/', function(req, res){
     //set difficulty
@@ -141,13 +160,14 @@ module.exports = function(app, passport){
     }
     var random = rwc(rwcTable[difficulty]);
 
-    if(random == 0){
+    /////if(random == 0){
       renderJQuestion(req, res);
-    }else if(random == 1){
+      /////renderQuizQuestion(req, res);
+    /*}else if(random == 1){
       renderQuizQuestion(req, res);
     }else{
       renderStanfordQuestion(req, res);
-    }
+    }*/
   });
 
   //user clicked on a wrong answer
@@ -255,16 +275,16 @@ module.exports = function(app, passport){
     }
   });//end app.get
 
-  app.get('/scoreboard', function(req, res, done){
-    Users.find({}, {}, ).sort('-gameinfo.score').exec(function(err, results){
-      if(err) throw err;
+  app.get('/scoreboard', async function(req, res, done){
+    var results = await Users.find({}, {}, ).sort('-gameinfo.score').exec();//function(err, results){
+      //if(err) throw err;
 
       res.render('scoreboard.ejs',{
         title: "Quiz Game Scoreboard",
         results: results,
         user: req.user
       });
-    });
+    ////////});
   });
 
   //resets the score of the signed in user
@@ -819,9 +839,11 @@ function renderStanfordQuestion(req, res){
   });
 }
 
-function renderQuizQuestion(req, res){
+async function renderQuizQuestion(req, res){
    // Get the count of all quizquestions
-    QuizQuestion.count().exec(function (err, count) {
+    //////QuizQuestion.count().exec(function (err, count) {
+
+    var count = await QuizQuestion.countDocuments(); 
 
     // Get a random entry
     var random = Math.floor(Math.random() * count)
@@ -862,16 +884,287 @@ function renderQuizQuestion(req, res){
           });
         } 
       })
-    })
+    /////})
 
 }
 
-//Renders a question from the jquestion collection
-function renderJQuestion(req, res){
+//getDiscordQuestion()
+async function getDiscordQuestion(req, res){
+  var count = await QuizQuestion.countDocuments(); 
+
+    // Get a random entry
+    var random = Math.floor(Math.random() * count)
   //first we get a random question from the JQuestions    
     var filter = {subDiscipline: {$exists: true}};
     var fields = {}; //only pull up the answers
-    JQuestion.findRandom( filter, fields, {limit: 1}, function(err, result){
+
+  // Attempt new query
+  var result = await JQuestion.findOne(filter, fields).skip(random);
+  console.log(result);
+
+  // Check if the wrongAnswers field exists in this document, if it doesn't, we're going to
+  // generate wrong answers with chatGPT
+  wrongAnswers = [];
+  if(result.wrongAnswers.length == 0){
+    //if(true){ // REMOVE THIS AND REPLACE WITH ABOVE
+    // If we have no generated answers, we have also not cleaned the question.
+    // use chatgpt to clean the question
+    newQuestion = await chatGPT("The answer to this jeopardy question is: "+result.answer+". Rewrite this jeopardy question to be a normal question: '" +result.question+ "'. Do not include the anwer.");
+    wrongAnswerString = await chatGPT("The answer to the following question is " + result.answer + ". Come up with 11 wrong answers. The question is: " + result.question + " Seperate Answers with a comma.");
+    
+    // if the wrong answer string ends witha  ., remove it
+    if(wrongAnswerString.charAt(wrongAnswerString.length - 1) == '.'){
+      wrongAnswerString = wrongAnswerString.slice(0, -1);
+    }
+
+    // make wrong answer string completely capital
+    wrongAnswerString = wrongAnswerString.toUpperCase();
+
+    //save the newly generated question:
+    result.question = newQuestion;
+
+    result.answer = result.answer.toUpperCase();
+    
+    wrongAnswers = wrongAnswerString.split(",");
+
+    //wrongAnswers = ["Aristarchus", "Tycho Brahe", "Johannes Kepler", "Isaac Newton", "Albert Einstein", "Edwin Hubble", "Stephen Hawking", "Galen", "Andreas Vesalius", "William Harvey", "Robert Boyle"];
+    
+
+    if(wrongAnswers.length != 11){
+
+      // the wrong answer didn't get split by a, comma, maybe a space will work?
+      wrongAnswers = wrongAnswerString.split(" ");
+
+      // check if the first item is two new lines, if so, remove it.
+      if(wrongAnswers[0] == "\n\n"){
+        wrongAnswers.splice(0, 1);
+      }
+
+      // maybe splitting by a space worked?
+      if(wrongAnswers.length != 11){
+
+        // it still didn't work, maybe splitting my new lines, and removing blanks?
+        wrongAnswers = wrongAnswerString.split("\n");
+        var temp = [];
+        for(item in wrongAnswers){
+          if(wrongAnswers[item].length != 0 && wrongAnswers[item] != 0 && wrongAnswers[item] != '0'){
+            temp.push(wrongAnswers[item]);
+          }
+        }
+
+        wrongAnswers = temp;
+
+        if(wrongAnswers.length != 11){
+          renderJQuestion(req, res);
+          return;
+        }else{
+          result.wrongAnswers = wrongAnswers;
+          result.save();
+        }
+
+        
+      }else{
+        result.wrongAnswers = wrongAnswers;
+        result.save();
+      }
+      
+    }else{
+      result.wrongAnswers = wrongAnswers;
+      result.save();
+    }
+
+    
+  }else{
+    wrongAnswers = result.wrongAnswers;
+  }
+
+  var answers = [];
+
+  // put the object returnd from db into an array
+  for(wA in wrongAnswers){
+    answers.push({answer: wrongAnswers[wA]});
+  }
+
+
+  //if signed in, save score into session
+  if(req.user) req.session.score = req.user.gameinfo.score;
+
+  // Mix the correct answer up with the wrong answers
+  var answerIndex = Math.floor(Math.random() * 12);
+  if(answers == null)return 0;
+  answers.splice(answerIndex, 0, {answer: result.answer});
+
+  //modify answers array, so answer is stored as "label" instead of answer
+  //this is for compatibility with the quizQuestion type
+  
+  for(var i = 0; i < answers.length; i++){
+    answers[i]["label"] = answers[i]["answer"];
+  }
+
+  var questionType = "jQuestion";
+
+
+  discordQuestionToReturn = 
+      {
+        "id": result._id,
+        "category": result.category,
+        "question": result.question,
+        "answer": result.answer,
+        "answers": answers,
+        "answerIndex": answerIndex,
+        "user": req.user,
+        "session": req.session
+      }
+  
+
+  return discordQuestionToReturn;
+
+  /*res.render('index.ejs', {
+    title: "Quiz Game",
+    category: result.category,
+    question: result.question,
+    answer  : result.answer,
+    answers : answers,
+    answerIndex: answerIndex,
+    user: req.user,
+    session: req.session,
+    questionType: questionType,
+    questionId : result._id
+  });*/
+}
+
+//Renders a question from the jquestion collection
+async function renderJQuestion(req, res){
+
+  var count = await QuizQuestion.countDocuments(); 
+
+    // Get a random entry
+    var random = Math.floor(Math.random() * count)
+  //first we get a random question from the JQuestions    
+    var filter = {subDiscipline: {$exists: true}};
+    var fields = {}; //only pull up the answers
+
+  // Attempt new query
+  var result = await JQuestion.findOne(filter, fields).skip(random);
+  console.log(result);
+
+  // Check if the wrongAnswers field exists in this document, if it doesn't, we're going to
+  // generate wrong answers with chatGPT
+  wrongAnswers = [];
+  if(result.wrongAnswers.length == 0){
+    //if(true){ // REMOVE THIS AND REPLACE WITH ABOVE
+    // If we have no generated answers, we have also not cleaned the question.
+    // use chatgpt to clean the question
+    newQuestion = await chatGPT("The answer to this jeopardy question is: "+result.answer+". Rewrite this jeopardy question to be a normal question: '" +result.question+ "'. Do not include the anwer.");
+    wrongAnswerString = await chatGPT("The answer to the following question is " + result.answer + ". Come up with 11 wrong answers. The question is: " + result.question + " Seperate Answers with a comma.");
+    
+    // if the wrong answer string ends witha  ., remove it
+    if(wrongAnswerString.charAt(wrongAnswerString.length - 1) == '.'){
+      wrongAnswerString = wrongAnswerString.slice(0, -1);
+    }
+
+    // make wrong answer string completely capital
+    wrongAnswerString = wrongAnswerString.toUpperCase();
+
+    //save the newly generated question:
+    result.question = newQuestion;
+
+    result.answer = result.answer.toUpperCase();
+    
+    wrongAnswers = wrongAnswerString.split(",");
+
+    //wrongAnswers = ["Aristarchus", "Tycho Brahe", "Johannes Kepler", "Isaac Newton", "Albert Einstein", "Edwin Hubble", "Stephen Hawking", "Galen", "Andreas Vesalius", "William Harvey", "Robert Boyle"];
+    
+
+    if(wrongAnswers.length != 11){
+
+      // the wrong answer didn't get split by a, comma, maybe a space will work?
+      wrongAnswers = wrongAnswerString.split(" ");
+
+      // check if the first item is two new lines, if so, remove it.
+      if(wrongAnswers[0] == "\n\n"){
+        wrongAnswers.splice(0, 1);
+      }
+
+      // maybe splitting by a space worked?
+      if(wrongAnswers.length != 11){
+
+        // it still didn't work, maybe splitting my new lines, and removing blanks?
+        wrongAnswers = wrongAnswerString.split("\n");
+        var temp = [];
+        for(item in wrongAnswers){
+          if(wrongAnswers[item].length != 0 && wrongAnswers[item] != 0 && wrongAnswers[item] != '0'){
+            temp.push(wrongAnswers[item]);
+          }
+        }
+
+        wrongAnswers = temp;
+
+        if(wrongAnswers.length != 11){
+          renderJQuestion(req, res);
+          return;
+        }else{
+          result.wrongAnswers = wrongAnswers;
+          result.save();
+        }
+
+        
+      }else{
+        result.wrongAnswers = wrongAnswers;
+        result.save();
+      }
+      
+    }else{
+      result.wrongAnswers = wrongAnswers;
+      result.save();
+    }
+
+    
+  }else{
+    wrongAnswers = result.wrongAnswers;
+  }
+
+  var answers = [];
+
+  // put the object returnd from db into an array
+  for(wA in wrongAnswers){
+    answers.push({answer: wrongAnswers[wA]});
+  }
+
+
+  //if signed in, save score into session
+  if(req.user) req.session.score = req.user.gameinfo.score;
+
+  // Mix the correct answer up with the wrong answers
+  var answerIndex = Math.floor(Math.random() * 12);
+  if(answers == null)return 0;
+  answers.splice(answerIndex, 0, {answer: result.answer});
+
+  //modify answers array, so answer is stored as "label" instead of answer
+  //this is for compatibility with the quizQuestion type
+  
+  for(var i = 0; i < answers.length; i++){
+    answers[i]["label"] = answers[i]["answer"];
+  }
+
+  var questionType = "jQuestion";
+  res.render('index.ejs', {
+    title: "Quiz Game",
+    category: result.category,
+    question: result.question,
+    answer  : result.answer,
+    answers : answers,
+    answerIndex: answerIndex,
+    user: req.user,
+    session: req.session,
+    questionType: questionType,
+    questionId : result._id
+  });
+
+
+
+
+    /*JQuestion.findRandom( filter, fields, {limit: 1}, function(err, result){
       if(err) throw err;
       //get 11 more answers from the same discipline as the result, where the answer isn't the same
       var filter = {answer: {$ne: result[0].answer}, subDiscipline: result[0].subDiscipline};
@@ -912,7 +1205,36 @@ function renderJQuestion(req, res){
           questionId : result[0]._id
         });
       });
-    });
+    });*/
+}
+
+/** Talk to chat gpt */
+async function chatGPT(inputString){
+  //clean the string of apostrophies
+  inputString = inputString.replace(/'/g, '');
+  inputString = inputString.replace(/"/g, '');
+
+  // strip out every number that has a . after
+
+  const completion = await openai.createChatCompletion({
+    model: "gpt-3.5-turbo",
+    max_tokens: 100,
+    messages: [{role: "user", content: inputString}]
+  });
+
+  var returnString = completion.data.choices[0].message.content
+
+//clean the output of number.
+  returnString = returnString.replace(/[0-9]+\./g, "");
+  returnString = returnString.replace(/[0-9]+\)/g, "");
+  returnString = returnString.replace(/\\n/g, '');
+
+  // remove end of sentence periods.
+  returnString = returnString.replace(/\.\s/g, " ");
+  //returnString = returnString.replace(/./g, '');
+
+  console.log(returnString);
+  return returnString;
 }
 
 function functionTest(){

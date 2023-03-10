@@ -25,10 +25,11 @@ module.exports = function(passport) {
   });
 
   // used to deserialize the user
-  passport.deserializeUser(function(id, done) {
-    User.findById(id, function(err, user) {
+  passport.deserializeUser(async function(id, done) {
+    var user = await User.findById(id).exec();//, function(err, user) {
+      var err = null;
       done(err, user);
-    });
+    /////});
   });
 
   // =========================================================================
@@ -46,14 +47,14 @@ module.exports = function(passport) {
   function(req, email, password, done) {
     // asynchronous
     // User.findOne wont fire unless data is sent back
-    process.nextTick(function() {
+    process.nextTick(async function() {
 
       // find a user whose email is the same as the forms email
       // we are checking to see if the user trying to login already exists
-      User.findOne({ 'local.email' :  email }, function(err, user) {
+      var user = await User.findOne({ 'local.email' :  email }).exec();//, function(err, user) {
         // if there are any errors, return the error
-        if (err)
-          return done(err);
+        //if (returnedUsererr)
+        //  return done(err);
 
         // check to see if theres already a user with that email
         if (user) {
@@ -61,20 +62,22 @@ module.exports = function(passport) {
         } else {
           // if there is no user with that email
           // create the user
-          var newUser = new User();
+          var user = new User();
 
           // set the user's local credentials
-          newUser.local.email = email;
-          newUser.local.password = newUser.generateHash(password);
+          user.local.email = email;
+          user.local.password = user.generateHash(password);
 
+
+          await user.save();
           // save the user
-          newUser.save(function(err) {
+          /*newUser.save(function(err) {
             if (err)
               throw err;
             return done(null, newUser);
-          });
+          });*/
         }
-      });    
+      /////});    
     });
   }));
 
@@ -354,13 +357,13 @@ module.exports = function(passport) {
     passwordField : 'password',
     passReqToCallback : true // allows us to pass back the entire request to the callback
   },
-  function(req, email, password, done) { // callback with email and password from our form
+  async function(req, email, password, done) { // callback with email and password from our form
     // find a user whose email is the same as the forms email
     // we are checking to see if the user trying to login already exists
-    User.findOne({ 'local.email' :  email }, function(err, user) {
+    var user = await User.findOne({ 'local.email' :  email }).exec();//, function(err, user) {
       // if there are any errors, return the error before anything else
-      if (err)
-        return done(err);
+      //if (err)
+      //  return done(err);
 
       // if no user is found, return the message
         if (!user)
@@ -372,7 +375,7 @@ module.exports = function(passport) {
 
           // all is well, return successful user
           return done(null, user);
-    });
+    //////});
 
   }));
 
