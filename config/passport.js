@@ -6,6 +6,15 @@ var FacebookStrategy = require('passport-facebook').Strategy;
 var TwitterStrategy = require('passport-twitter').Strategy;
 var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 
+// custom passport strategy used by discord bots to authenticate.
+//import passportCustom from 'passport-custom';
+//const CustomStrategy = passportCustom.Strategy;
+var CustomStrategy = require('passport-custom').Strategy;
+//import passportCustom from 'passport-custom';
+//const CustomStrategy = passportCustom.Strategy;
+
+
+
 // load up the user model
 var User            = require('../models/user');
 
@@ -14,6 +23,8 @@ var configAuth = require('./auth');
 
 // expose this function to our app using module.exports
 module.exports = function(passport) {
+
+  
 
   // passport session setup ==================================================
   // required for persistent login sessions
@@ -25,10 +36,11 @@ module.exports = function(passport) {
   });
 
   // used to deserialize the user
-  passport.deserializeUser(function(id, done) {
-    User.findById(id, function(err, user) {
+  passport.deserializeUser(async function(id, done) {
+    var user = await User.findById(id).exec();//, function(err, user) {
+      var err = null;
       done(err, user);
-    });
+    /////});
   });
 
   // =========================================================================
@@ -46,14 +58,14 @@ module.exports = function(passport) {
   function(req, email, password, done) {
     // asynchronous
     // User.findOne wont fire unless data is sent back
-    process.nextTick(function() {
+    process.nextTick(async function() {
 
       // find a user whose email is the same as the forms email
       // we are checking to see if the user trying to login already exists
-      User.findOne({ 'local.email' :  email }, function(err, user) {
+      var user = await User.findOne({ 'local.email' :  email }).exec();//, function(err, user) {
         // if there are any errors, return the error
-        if (err)
-          return done(err);
+        //if (returnedUsererr)
+        //  return done(err);
 
         // check to see if theres already a user with that email
         if (user) {
@@ -61,20 +73,22 @@ module.exports = function(passport) {
         } else {
           // if there is no user with that email
           // create the user
-          var newUser = new User();
+          var user = new User();
 
           // set the user's local credentials
-          newUser.local.email = email;
-          newUser.local.password = newUser.generateHash(password);
+          user.local.email = email;
+          user.local.password = user.generateHash(password);
 
+
+          await user.save();
           // save the user
-          newUser.save(function(err) {
+          /*newUser.save(function(err) {
             if (err)
               throw err;
             return done(null, newUser);
-          });
+          });*/
         }
-      });    
+      /////});    
     });
   }));
 
@@ -354,13 +368,13 @@ module.exports = function(passport) {
     passwordField : 'password',
     passReqToCallback : true // allows us to pass back the entire request to the callback
   },
-  function(req, email, password, done) { // callback with email and password from our form
+  async function(req, email, password, done) { // callback with email and password from our form
     // find a user whose email is the same as the forms email
     // we are checking to see if the user trying to login already exists
-    User.findOne({ 'local.email' :  email }, function(err, user) {
+    var user = await User.findOne({ 'local.email' :  email }).exec();//, function(err, user) {
       // if there are any errors, return the error before anything else
-      if (err)
-        return done(err);
+      //if (err)
+      //  return done(err);
 
       // if no user is found, return the message
         if (!user)
@@ -372,9 +386,71 @@ module.exports = function(passport) {
 
           // all is well, return successful user
           return done(null, user);
-    });
+    //////});
 
   }));
+
+
+
+  //===============================
+  //Discord Bot Login
+  //==============================
+  // Discord user's don't have to sign up or login normally, each of their
+  // api endpoints will call passport.authenticate('discord-login');,
+  // this will check if the user exists, if so it will return the user
+  // if not, it will create a discord user in our db, and then return that
+  // user.
+  passport.use('discord-bot-login', new CustomStrategy(
+    async function(req, done) {
+
+      // Attempt to get a user from the db with this discord.id
+      var user = await User.findOne({ 'discord.id' :  req.query.discord_user_id }).exec();
+
+      // If the user doesn't exist in the db, create one.
+      if(user == null){
+        user = new User();    // create the new user
+        user.discord.id = req.query.discord_user_id;
+        user.discord.username = req.query.discord_user_name;
+        user.discord.tag = req.query.discord_user_tag;
+        user.discord.photo = req.query.discord_avatar_url;
+        
+        console.log("Created New User: " + user.discord.tag);
+        await user.save();
+      }
+
+      var userChanged = false;
+
+      /*
+      // check and update avatar
+      if(user.discord.photo != req.query.discord_avatar_url){
+        // save the new avatar url
+        user.discord.photo = req.query.discord_avatar_url;
+        console.log("user updated avatar: " + user.discord.tag);
+        userChanged = true;
+      }
+      
+      if(user.discord.username != req.query.discord_user_name){
+        console.log("user "+user.discord.name+" updated name to: " + req.query.discord_user_name);
+        user.discord.username = req.query.discord_user_name;
+        userChanged = true;
+      }
+
+      if(user.discord.tag != req.query.discord_user_tag){
+        user.discord.tag = req.query.discord_user_tag;
+        userChanged = true;
+      }
+
+      if(userChanged){
+        await user.save();
+      }
+      */
+
+      console.log("User : " + user.discord.tag + " has authenticated");
+
+      // Do your custom user finding logic here, or set to false based on req object
+      done(null, user);
+    }
+  ));
 
 
 };

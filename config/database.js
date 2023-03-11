@@ -1,4 +1,4 @@
 // config/database.js
 module.exports = {
-  'url' : 'localhost:27017/QuizGame'
+  'url' : 'mongodb://127.0.0.1:27017/QuizGame'
 };

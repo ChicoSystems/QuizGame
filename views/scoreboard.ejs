@@ -64,6 +64,13 @@
         if(locals.user && locals.user.local.email == username 
            && locals.user.gameinfo.score == results[i].gameinfo.score)
           isme = true;
+      }else if(results[i].discord.tag != null){
+        username = results[i].discord.tag;
+        photo = results[i].discord.photo;
+        if(locals.user && locals.user.local.email == username 
+           && locals.user.gameinfo.score == results[i].gameinfo.score)
+          isme = true;
+
       }
 
       //calculate pct correct

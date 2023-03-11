@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"random":"2dsphere"},"name":"random_2dsphere","background":true,"2dsphereIndexVersion":{"$numberInt":"3"}}],"uuid":"1711b66ce04040d8a902174cf306e91f","collectionName":"jQuestions","type":"collection"}
