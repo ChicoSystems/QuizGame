@@ -1041,7 +1041,7 @@ async function getDiscordQuestion(req, res){
 
     
   //first we get a random question from the JQuestions    
-    var filter = {wrongAnswers: {$exists: true}};
+    var filter = {};////{wrongAnswers: {$exists: true}};
     var fields = {}; //only pull up the answers
 
     // Get a random entry
