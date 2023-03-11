@@ -151,6 +151,153 @@ module.exports = function(app, passport){
     res.json(jsonQuestion);
   });
 
+  app.get('/discord/question/auth/', passport.authenticate('discord-bot-login'), async function(req, res){
+    //res.send
+    var jsonQuestion = await getDiscordQuestion(req, res);
+    res.json(jsonQuestion);
+  });
+
+
+  //user clicked on a wrong answer
+  app.get('/discord/wrongAnswer/auth', passport.authenticate('discord-bot-login'), async function(req, res){
+    var question_id = req.query.question_id;
+    var user_id = req.query.discord_user_id;
+
+    console.log("user: " + user_id + " got question wrong: " + question_id);
+
+    var user = null;
+    if(req.user){
+      user = req.user;
+    }else{
+      user = await Users.findOne({ 'discord.id' :  user_id }).exec();
+    }
+
+
+    //if there is a user signed in update his history and score
+    if(user && user != null){
+      //var user = req.user;
+
+      //find question in users question history
+      var questionFound = false;
+      var qIndex = null;
+      var qidToFind = question_id;
+      for(var i = 0; i < user.questionHistory.length; i++){
+        //console.log(user.questionHistory[i]);
+        if(user.questionHistory[i].qid == qidToFind &&
+           user.questionHistory[i].type == "jQuestion"){
+          questionFound = true;
+          qIndex = i;
+        }
+      }
+
+      //if question was found in question history, update it, otherwise create a new one
+      if(questionFound){
+        //the question was found at index qIndex, modify correct field
+        user.questionHistory[qIndex].wrongattempts++;
+      }else{
+        //the question was not found, create a new one, and add it to user
+        var newHistory = {
+          type : "jQuestion",
+          qid : question_id,
+          wrongattempts: 1,
+          rightattempts: 0
+        };
+        user.questionHistory.push(newHistory);// = questionHistory;
+      }
+
+      //update score, and save user back to db
+      //////req.session.score = req.session.score - 1;
+      //////user.gameinfo.score = req.session.score;
+      user.gameinfo.score--;
+      await user.save();
+
+      //let front end know
+      res.json({
+        message: "ok",
+        score  : user.gameinfo.score
+      });
+    }else{
+      //user is not signed in, send error to client
+      res.json({
+        message: "error"
+      });
+    }
+  });
+
+
+  //user clicked on a wrong answer
+  app.get('/discord/wrongAnswer/:question_id/:user_id/:user_name', async function(req, res, done){
+    var question_id = req.params.question_id;
+    var user_id = req.params.user_id;
+    var user_name = req.params.user_name;
+
+    console.log("user: " + user_name + " got question wrong: " + question_id);
+
+    var user = null;
+    if(req.user){
+      user = req.user;
+    }else{
+      user = await Users.findOne({ 'discord.id' :  user_id }).exec();
+    }
+
+
+    //if there is a user signed in update his history and score
+    if(user && user != null){
+      //var user = req.user;
+
+      //find question in users question history
+      var questionFound = false;
+      var qIndex = null;
+      var qidToFind = question_id;
+      for(var i = 0; i < user.questionHistory.length; i++){
+        //console.log(user.questionHistory[i]);
+        if(user.questionHistory[i].qid == qidToFind &&
+           user.questionHistory[i].type == "jQuestion"){
+          questionFound = true;
+          qIndex = i;
+        }
+      }
+
+      //if question was found in question history, update it, otherwise create a new one
+      if(questionFound){
+        //the question was found at index qIndex, modify correct field
+        user.questionHistory[qIndex].wrongattempts++;
+      }else{
+        //the question was not found, create a new one, and add it to user
+        var newHistory = {
+          type : "jQuestion",
+          qid : question_id,
+          wrongattempts: 1,
+          rightattempts: 0
+        };
+        user.questionHistory.push(newHistory);// = questionHistory;
+      }
+
+      //update score, and save user back to db
+      //////req.session.score = req.session.score - 1;
+      //////user.gameinfo.score = req.session.score;
+      user.gameinfo.score--;
+      user.save();
+
+      //let front end know
+      res.send({
+        message: "ok",
+        score  : user.gameinfo.score
+      });
+    }else{
+      //user is not signed in, send error to client
+      res.send({
+        message: "error"
+      });
+    }
+  });
+
+  /*app.get('/discord/question/', passport.authenticate('discord-bot-login'), async function(req, res){
+    //res.send
+    var jsonQuestion = await getDiscordQuestion(req, res);
+    res.json(jsonQuestion);
+  });*/
+
   //The main page, renders jquestion or quizquestion half time
   app.get('/', function(req, res){
     //set difficulty
@@ -890,13 +1037,17 @@ async function renderQuizQuestion(req, res){
 
 //getDiscordQuestion()
 async function getDiscordQuestion(req, res){
-  var count = await QuizQuestion.countDocuments(); 
+  
+
+    
+  //first we get a random question from the JQuestions    
+    var filter = {wrongAnswers: {$exists: true}};
+    var fields = {}; //only pull up the answers
 
     // Get a random entry
+    //var count = await JQuestion.find(filter, fields).countDocuments();
+    var count = await JQuestion.countDocuments(filter); 
     var random = Math.floor(Math.random() * count)
-  //first we get a random question from the JQuestions    
-    var filter = {subDiscipline: {$exists: true}};
-    var fields = {}; //only pull up the answers
 
   // Attempt new query
   var result = await JQuestion.findOne(filter, fields).skip(random);
@@ -975,6 +1126,7 @@ async function getDiscordQuestion(req, res){
 
     
   }else{
+    console.log("Skipping ChatGPT Generation");
     wrongAnswers = result.wrongAnswers;
   }
 

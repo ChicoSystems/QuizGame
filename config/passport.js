@@ -6,6 +6,15 @@ var FacebookStrategy = require('passport-facebook').Strategy;
 var TwitterStrategy = require('passport-twitter').Strategy;
 var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 
+// custom passport strategy used by discord bots to authenticate.
+//import passportCustom from 'passport-custom';
+//const CustomStrategy = passportCustom.Strategy;
+var CustomStrategy = require('passport-custom').Strategy;
+//import passportCustom from 'passport-custom';
+//const CustomStrategy = passportCustom.Strategy;
+
+
+
 // load up the user model
 var User            = require('../models/user');
 
@@ -14,6 +23,8 @@ var configAuth = require('./auth');
 
 // expose this function to our app using module.exports
 module.exports = function(passport) {
+
+  
 
   // passport session setup ==================================================
   // required for persistent login sessions
@@ -378,6 +389,68 @@ module.exports = function(passport) {
     //////});
 
   }));
+
+
+
+  //===============================
+  //Discord Bot Login
+  //==============================
+  // Discord user's don't have to sign up or login normally, each of their
+  // api endpoints will call passport.authenticate('discord-login');,
+  // this will check if the user exists, if so it will return the user
+  // if not, it will create a discord user in our db, and then return that
+  // user.
+  passport.use('discord-bot-login', new CustomStrategy(
+    async function(req, done) {
+
+      // Attempt to get a user from the db with this discord.id
+      var user = await User.findOne({ 'discord.id' :  req.query.discord_user_id }).exec();
+
+      // If the user doesn't exist in the db, create one.
+      if(user == null){
+        user = new User();    // create the new user
+        user.discord.id = req.query.discord_user_id;
+        user.discord.username = req.query.discord_user_name;
+        user.discord.tag = req.query.discord_user_tag;
+        user.discord.photo = req.query.discord_avatar_url;
+        
+        console.log("Created New User: " + user.discord.tag);
+        await user.save();
+      }
+
+      var userChanged = false;
+
+      /*
+      // check and update avatar
+      if(user.discord.photo != req.query.discord_avatar_url){
+        // save the new avatar url
+        user.discord.photo = req.query.discord_avatar_url;
+        console.log("user updated avatar: " + user.discord.tag);
+        userChanged = true;
+      }
+      
+      if(user.discord.username != req.query.discord_user_name){
+        console.log("user "+user.discord.name+" updated name to: " + req.query.discord_user_name);
+        user.discord.username = req.query.discord_user_name;
+        userChanged = true;
+      }
+
+      if(user.discord.tag != req.query.discord_user_tag){
+        user.discord.tag = req.query.discord_user_tag;
+        userChanged = true;
+      }
+
+      if(userChanged){
+        await user.save();
+      }
+      */
+
+      console.log("User : " + user.discord.tag + " has authenticated");
+
+      // Do your custom user finding logic here, or set to false based on req object
+      done(null, user);
+    }
+  ));
 
 
 };

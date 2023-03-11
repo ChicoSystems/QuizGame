@@ -38,6 +38,12 @@ var userSchema = mongoose.Schema({
         name         : String,
         photo        : String
     },
+    discord         : {
+        id          : String,
+        username    : String,
+        tag         : String,
+        photo       : String
+    },
     gameinfo        : {
       score         : {type: Number, default: 0}
     },
