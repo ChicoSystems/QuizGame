@@ -15,7 +15,7 @@
 
         <script src="/socket.io/socket.io.js"></script>
         <script>  
-          var socket = io.connect('http://192.168.1.197:3002');
+          var socket = io.connect('http://127.0.0.1:3002');
           socket.on('connect', function(data) {
             socket.emit('join', 'Hello World from client');
           });
