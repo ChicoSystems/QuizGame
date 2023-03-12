@@ -9,6 +9,7 @@ var reportProblemsSchema = mongoose.Schema({
     id               : String,   //The category of the question
     problem          : String,   //The Question itself
     questionType     : String,   //The answer to the question
+    reportedBy       : String,   // The user id of the person  who reported this
 },
 {
   collection: 'reportProblems'

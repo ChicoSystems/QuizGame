@@ -370,9 +370,156 @@ io.on('connection', function(socket){
   });
 });
 
+
+// sends a jquestion to all clients in sockets room
+async function sendJQuestion(socket){
+  var roomName = socket.room;
+
+
+    //first we get a random question from the JQuestions   
+  ///////var filter = {}; // this filter queries the entire jQuestion database, chat gpt will be used to transform questions
+  var filter = {wrongAnswers: {$exists: true}}; // This filter queries questions in the db, where wrong answers exist, this means that chatgpt will not be used
+  var fields = {}; //only pull up the answers
+
+  // Get a random entry
+  //var count = await JQuestion.find(filter, fields).countDocuments();
+  var count = await JQuestion.countDocuments(filter); 
+  var random = Math.floor(Math.random() * count)
+
+  // Attempt new query
+  var result = await JQuestion.findOne(filter, fields).skip(random);
+  console.log(result);
+
+  // Check if the wrongAnswers field exists in this document, if it doesn't, we're going to
+  // generate wrong answers with chatGPT
+  wrongAnswers = [];
+  
+  if(result.wrongAnswers.length == 0){
+    //if(true){ // REMOVE THIS AND REPLACE WITH ABOVE
+    // If we have no generated answers, we have also not cleaned the question.
+    // use chatgpt to clean the question
+    newQuestion = await chatGPT("The answer to this jeopardy question is: "+result.answer+". Rewrite this jeopardy question to be a normal question: '" +result.question+ "'. Do not include the anwer.");
+    wrongAnswerString = await chatGPT("The answer to the following question is " + result.answer + ". Come up with 11 wrong answers. The question is: " + result.question + " Seperate Answers with a comma.");
+    
+    // if the wrong answer string ends witha  ., remove it
+    if(wrongAnswerString.charAt(wrongAnswerString.length - 1) == '.'){
+      wrongAnswerString = wrongAnswerString.slice(0, -1);
+    }
+
+    // make wrong answer string completely capital
+    wrongAnswerString = wrongAnswerString.toUpperCase();
+
+    //save the newly generated question:
+    result.question = newQuestion;
+
+    result.answer = result.answer.toUpperCase();
+    
+    wrongAnswers = wrongAnswerString.split(",");
+
+    //wrongAnswers = ["Aristarchus", "Tycho Brahe", "Johannes Kepler", "Isaac Newton", "Albert Einstein", "Edwin Hubble", "Stephen Hawking", "Galen", "Andreas Vesalius", "William Harvey", "Robert Boyle"];
+    
+
+    if(wrongAnswers.length != 11){
+
+      // the wrong answer didn't get split by a, comma, maybe a space will work?
+      wrongAnswers = wrongAnswerString.split(" ");
+
+      // check if the first item is two new lines, if so, remove it.
+      if(wrongAnswers[0] == "\n\n"){
+        wrongAnswers.splice(0, 1);
+      }
+
+      // maybe splitting by a space worked?
+      if(wrongAnswers.length != 11){
+
+        // it still didn't work, maybe splitting my new lines, and removing blanks?
+        wrongAnswers = wrongAnswerString.split("\n");
+        var temp = [];
+        for(item in wrongAnswers){
+          if(wrongAnswers[item].length != 0 && wrongAnswers[item] != 0 && wrongAnswers[item] != '0'){
+            temp.push(wrongAnswers[item]);
+          }
+        }
+
+        wrongAnswers = temp;
+
+        if(wrongAnswers.length != 11){
+          renderJQuestion(res, req);
+          return;
+        }else{
+          result.wrongAnswers = wrongAnswers;
+          result.save();
+        }
+
+        
+      }else{
+        result.wrongAnswers = wrongAnswers;
+        result.save();
+      }
+      
+    }else{
+      result.wrongAnswers = wrongAnswers;
+      result.save();
+    }
+
+    
+  }else{
+    console.log("Skipping ChatGPT Generation");
+    wrongAnswers = result.wrongAnswers;
+  }
+
+  var answers = [];
+
+  // put the object returnd from db into an array
+  for(wA in wrongAnswers){
+    answers.push({answer: wrongAnswers[wA]});
+  }
+
+
+  //if signed in, save score into session
+  ///if(req.user) req.session.score = req.user.gameinfo.score; // not useable in socketio
+
+  // Mix the correct answer up with the wrong answers
+  var answerIndex = Math.floor(Math.random() * 12);
+  if(answers == null)return 0;
+  answers.splice(answerIndex, 0, {answer: result.answer});
+
+  //modify answers array, so answer is stored as "label" instead of answer
+  //this is for compatibility with the quizQuestion type
+  
+  for(var i = 0; i < answers.length; i++){
+    answers[i]["label"] = answers[i]["answer"];
+  }
+
+  var questionType = "jQuestion";
+
+
+
+
+  if(rooms[roomName] == null){
+    var users = [];
+  }else{
+     var users = rooms[roomName].users;
+  }
+
+  //send category, answer, answers, answerIndex back to everyone in room
+  io.sockets.in(roomName).emit('getquestion', {
+    category: result.category,
+    question: result.question,
+    answer: result.answer,
+    answers : answers,
+    answerIndex: answerIndex,
+    questionType: questionType,
+    questionId : result._id,
+    users : users
+  });
+}
+
+/*
 //sends a jquestion to all clients in sockets room
 function sendJQuestion(socket){
   var roomName = socket.room;
+  
   
   //query db for a jquestion
   var filter ={subDiscipline: {$exists: true}};
@@ -398,6 +545,9 @@ function sendJQuestion(socket){
         answers[i]["label"] = answers[i]["answer"];      
       }
 
+
+
+
       if(rooms[roomName] == null){
         var users = [];
       }else{
@@ -418,6 +568,8 @@ function sendJQuestion(socket){
     });
   }); 
 }
+
+*/
 
 function sendQuizQuestion(socket){
   var roomName = socket.room;

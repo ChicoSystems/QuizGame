@@ -29,7 +29,8 @@ $(function(){
   $('.gameroom').hide();
 
   //Initiate the socket connection.
-  socket = io.connect(serverIP, {'forceNew': true});
+  /////socket = io.connect(serverIP, {'forceNew': true});
+  socket = io.connect();
 
   //Server tells us we've connected
   socket.on('connect', function(data) {

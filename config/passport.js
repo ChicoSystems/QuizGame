@@ -445,7 +445,7 @@ module.exports = function(passport) {
       }
       */
 
-      console.log("User : " + user.discord.tag + " has authenticated");
+      console.log("User : " + user.discord.id + " has authenticated");
 
       // Do your custom user finding logic here, or set to false based on req object
       done(null, user);
