@@ -1124,8 +1124,8 @@ async function renderQuizQuestion(req, res){
 async function getDiscordQuestion(req, res){
   
   //first we get a random question from the JQuestions   
-  ///////var filter = {}; // this filter queries the entire jQuestion database, chat gpt will be used to transform questions
-  var filter = {wrongAnswers: {$exists: true}}; // This filter queries questions in the db, where wrong answers exist, this means that chatgpt will not be used
+  var filter = {}; // this filter queries the entire jQuestion database, chat gpt will be used to transform questions
+  ////////var filter = {wrongAnswers: {$exists: true}}; // This filter queries questions in the db, where wrong answers exist, this means that chatgpt will not be used
   var fields = {}; //only pull up the answers
 
   // Get a random entry
