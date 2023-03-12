@@ -158,8 +158,15 @@ module.exports = function(app, passport){
   });
 
 
-  //user clicked on a wrong answer
-  app.get('/discord/wrongAnswer/auth', passport.authenticate('discord-bot-login'), async function(req, res){
+  /**
+   * A Backend Function for the discord quiz bot. Logs if a user got an answer correct/wrong in the db.
+   * If the user had not existed previously they will be automatically authenticated with their discord
+   * id and their question will be logged.
+   * @param {*} isAnswerCorrect A boolean, true if their answer was correct, false if not.
+   * @param {*} req The http request
+   * @param {*} res The http response.
+   */
+  async function discordLogAnswer(isAnswerCorrect, req, res){
     var question_id = req.query.question_id;
     var user_id = req.query.discord_user_id;
 
@@ -192,23 +199,48 @@ module.exports = function(app, passport){
 
       //if question was found in question history, update it, otherwise create a new one
       if(questionFound){
-        //the question was found at index qIndex, modify correct field
-        user.questionHistory[qIndex].wrongattempts++;
+        
+        // Did the user just answer this question correctly?
+        if(isAnswerCorrect){
+          // The question was answered right, increase the number of right attempts for this question in the user's history.
+          user.questionHistory[qIndex].rightattempts++;
+        }else{
+          // The answer was wrong, increase the number of wrong attempts for this question in the user's questions history.
+          user.questionHistory[qIndex].wrongattempts++;
+        }
       }else{
-        //the question was not found, create a new one, and add it to user
-        var newHistory = {
-          type : "jQuestion",
-          qid : question_id,
-          wrongattempts: 1,
-          rightattempts: 0
-        };
+        // The the user has not previously answered this question.
+
+        // create a newHistory struction
+        var newHistory = {};
+
+        // depending on if the user got the quetion right or wrong, change their wright attempt vs wrong attempt.
+        if(isAnswerCorrect){
+          newHistory = {
+            type : "jQuestion",
+            qid : question_id,
+            wrongattempts: 0,
+            rightattempts: 1
+          };
+        }else{
+          newHistory = {
+            type : "jQuestion",
+            qid : question_id,
+            wrongattempts: 1,
+            rightattempts: 0
+          };
+        }
+        
         user.questionHistory.push(newHistory);// = questionHistory;
       }
 
-      //update score, and save user back to db
-      //////req.session.score = req.session.score - 1;
-      //////user.gameinfo.score = req.session.score;
-      user.gameinfo.score--;
+      // update the users game info.
+      if(isAnswerCorrect){
+        user.gameinfo.score++;
+      }else{
+        user.gameinfo.score--;
+      }
+      
       await user.save();
 
       //let front end know
@@ -222,6 +254,22 @@ module.exports = function(app, passport){
         message: "error"
       });
     }
+  }
+
+  // The discord user clicked an answer correctly
+  app.get('/discord/rightAnswer/auth', passport.authenticate('discord-bot-login'), async function(req, res){
+    var isAnswerCorrect = true;
+
+    // Log the users correct answer in the backend.
+    discordLogAnswer(isAnswerCorrect, req, res);
+  });
+
+  //user clicked on a wrong answer
+  app.get('/discord/wrongAnswer/auth', passport.authenticate('discord-bot-login'), async function(req, res){
+    var isAnswerCorrect = false;
+
+    // Log the users correct answer in the backend.
+    discordLogAnswer(isAnswerCorrect, req, res);
   });
 
 
@@ -1040,8 +1088,9 @@ async function getDiscordQuestion(req, res){
   
 
     
-  //first we get a random question from the JQuestions    
-    var filter = {};////{wrongAnswers: {$exists: true}};
+  //first we get a random question from the JQuestions   
+    ///////var filter = {}; // this filter queries the entire jQuestion database, chat gpt will be used to transform questions
+    var filter = {wrongAnswers: {$exists: true}}; // This filter queries questions in the db, where wrong answers exist, this means that chatgpt will not be used
     var fields = {}; //only pull up the answers
 
     // Get a random entry
