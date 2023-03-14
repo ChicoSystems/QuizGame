@@ -4,15 +4,21 @@
 //if domain changes, or when we move from dev server to live
 //var hostedAddress = "http://192.168.1.197";
 var hostedAddress = "http://quiz.chicosystems.com"; //  no port
+var CHAT_GPT_MODERATION_ADDRESS = "https://api.openai.com/v1/moderations";
 
 // load up the quizQestions model
 var QuizQuestion            = require('../models/quizQuestions');
 var Users                   = require('../models/user');
 var JQuestion               = require('../models/jQuestions');
 var ReportProblem           = require('../models/reportProblem');
+var PersonalityResponse           = require('../models/PersonalityResponse');
+var ContentModeration = require('../models/ContentModeration') ;
+var ActionTaken = require('../models/ActionTaken') ;
+var StateResponse = require('../models/StateResponse') ;
 //var QuestionHistory         = require('../models/questionHistory');
 var ObjectId                = require('mongoose').Types.ObjectId;
 var util = require('util');
+var fetch = require('node-fetch');
 
 const { Configuration, OpenAIApi } = require("openai");
 require('dotenv').config();
@@ -23,6 +29,8 @@ const configuration = new Configuration({
 });
 
 const openai = new OpenAIApi(configuration);
+//const axios = require("axios"); // http requests
+
 
 //convert stanford questions
 var s_old_questions = require('../models/stanford_old');
@@ -140,6 +148,491 @@ module.exports = function(app, passport){
 
   app.get('/jquestion', function (req, res){
     renderJQuestion(req, res);
+  });
+
+
+  /**
+   * Hits up the chat gpt moderation api to get a moderation
+   * object, telling how this is classified for violence and unpleasantness.
+   * @param {*} input // The string we are classifying
+   * @returns // the open ai classfication object
+   */
+  async function chatGPTModeration(inputList){
+
+    // create an empty moderation list
+    var returnModerationList = [];
+
+    // build the request address to match the backend api point
+    var REQUEST_ADDRESS = encodeURI(CHAT_GPT_MODERATION_ADDRESS);
+
+    // Loop through the input list, send a moderation request for every item
+    //for(i in inputList){
+     // var input = inputList[i];
+
+      
+
+      API_URL = `https://api.openai.com/v1/moderations`
+
+      const headers = 
+      {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+      };
+
+      try{
+        const moderator = await fetch(API_URL, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({
+          input: inputList,
+        }),
+      });
+
+        const data = await moderator.json();
+
+        // loop through data results, pushing to returnarray
+        for(d in data.results){
+          var modresult = data.results[d];
+          returnModerationList.push(modresult);
+        }
+      }catch(error){
+        console.log("error in moderation " + error);
+      }
+
+      
+
+    
+
+    // Return our returned http value.
+    return returnModerationList;
+  }
+
+
+  
+
+  async function generateChatGPTResponsesWithModeration(inputSentence, numResponsesToGenerate){
+
+    // A data structure to hold our generated responses
+    var returnResponses = [];
+
+    // Make a chat gpt api call.
+    var chatGPTReponses = await chatGPT2(inputSentence, numResponsesToGenerate);   // this is an array of new responses.
+    
+    // Run the output through chatgpt's moderation tool
+    var openAPIModerationObject = await chatGPTModeration(chatGPTReponses); // this is an array of moderation objects
+
+    for(r in chatGPTReponses){
+      var newResponse = chatGPTReponses[r];
+
+      // get the moderation object from the api
+      var newModerationObject = openAPIModerationObject[r];
+
+      // create the matching object for the database
+      var contentModerationObject = new ContentModeration();
+
+      //contentModerationObject._id = newModerationObject.id;
+      contentModerationObject.model = "moderation-normal";
+      contentModerationObject.results = newModerationObject;
+      
+
+      var response = {
+        "text": newResponse,
+        "moderation" : contentModerationObject
+      }
+
+      // add this new response to our data structure.
+      returnResponses.push(response);
+    }
+    return returnResponses;
+  }
+
+
+  /**
+   * Generate a new response object via chat gpt, and check it with the moderation api
+   * @param {*} persona 
+   * @param {*} respondent 
+   * @param {*} action 
+   * @param {*} actionQuality 
+   * @param {*} attitude 
+   * @returns 
+   */
+  async function generateNewResponses(persona, respondent, action, actionQuality, attitude){
+    // A data structure to hold our generated responses
+    var returnResponses = [];
+
+    // Create a chat gpt prompt with the url data
+    var chatGPTInput = "Pretend You are a " + attitude + " " + persona + " responding to a " + respondent + " named [name] who just " + action + " " + actionQuality + ". " +
+        "Repond to them with a " + attitude + " attitude. ";
+
+        ///'/personalityresponse/generate/:persona/:respondent/:action/:actionQuality/:attitude'
+        ////personalityresponse/generate/Game%20Show%20Host/Player/answered%20a%20question/with%20skill/snarky
+
+    // Make a chat gpt api call.
+    var chatGPTReponses = await chatGPT2(chatGPTInput);   // this is an array of new responses.
+    
+    // Run the output through chatgpt's moderation tool
+    var openAPIModerationObject = await chatGPTModeration(chatGPTReponses); // this is an array of moderation objects
+
+    for(r in chatGPTReponses){
+      var newResponse = chatGPTReponses[r];
+
+      // get the moderation object from the api
+      var newModerationObject = openAPIModerationObject[r];
+
+      // create the matching object for the database
+      var contentModerationObject = new ContentModeration();
+
+      //contentModerationObject._id = newModerationObject.id;
+      contentModerationObject.model = "moderation-normal";
+      contentModerationObject.results = newModerationObject;
+      
+
+      var response = {
+        "attitude": attitude,
+        "prompt": chatGPTInput,
+        "text": newResponse,
+        "moderation" : contentModerationObject
+      }
+
+      // add this new response to our data structure.
+      returnResponses.push(response);
+    }
+    return returnResponses;
+  }
+
+
+  /**
+   * Create an action taken that matches what in the db under persona
+   * @param {*} action 
+   * @param {*} actionQuality 
+   * @param {*} respondent 
+   * @param {*} description 
+   * @param {*} newResponse 
+   * @returns 
+   */
+  function generateNewAction(action, actionQuality, respondent, description, newResponses){
+    var actionTaken = new ActionTaken();
+    actionTaken.type = action;
+    actionTaken.quality = actionQuality;
+    actionTaken.respondent = respondent;
+    actionTaken.description = description;
+    actionTaken.responses = newResponses;
+
+    /*var actionTaken = {
+      type: action,                             // The type of action that has been taken, ie correct_answer
+      quality: actionQuality,                          // the quality of the action taken, good, bad, poor, etc.
+      respondent: respondent,                       // The class of repondant that took this action, ie: player
+      description: description,                      // ie "player who just responsed with a correct answer"
+      responses: newResponses
+    };*/
+
+    return actionTaken;
+  }
+
+
+  app.get('/stateresponse/test3', async function(req, res){
+    // Prep the input data for our create New function
+    var propositionForm = "Pretend You are a #attitude# #persona# responding to a #respondent# named [name] who just #action# #actionQuality#. " +
+                         "Repond to them with a #attitude# attitude. ";
+    var requiredStateKeys = ["persona", "attitude", "respondent", "action", "actionQuality"];
+    var requireStateValues = ["Quiz Game Host", "snarky", "player", "answered a question wrongly", "confidently"];
+    var numResponsesDesired = 2;
+
+    //create a filter looking for stateresponses that have the required state keys and values
+    var filterStateResponseBasedOnResponseTypeAndState =
+    {
+      'responseType.requiredState': {
+        '$all': requiredStateKeys
+      }, 
+      'state': {
+        '$all': requireStateValues
+      }
+    }
+
+
+    var stateResponse = await StateResponse.findOne(filterStateResponseBasedOnResponseTypeAndState).exec();
+
+    // If the state response doesn't exist, create it, other wise, use the one we found
+    if(stateResponse == null){
+      console.log("state response doesnt exist, lets create one");
+      // call the create new on our state response object.
+      stateResponse = await StateResponse.createNew(propositionForm, requiredStateKeys, requireStateValues);
+
+    }
+
+    // Get our chat gpt responses.
+    var chatgptResponses = await generateChatGPTResponsesWithModeration(stateResponse.proposition, numResponsesDesired);
+    
+    // Loop throug these responses adding them to our stateResponse responses
+    for(i in chatgptResponses){
+      var thisResponse = chatgptResponses[i];
+      stateResponse.responses.push(thisResponse);
+    }
+
+    // save our new or edited stateResponse to the db..
+    await stateResponse.save();
+
+    /*
+        //filter to find a state Response from the db with a specfic responst type
+        var filterStateResponseBasedOnResponseTypeAndState =
+        {
+          'responseType.requiredState': {
+            '$all': [
+              'persona', 'attitude', 'respondent', 'action', 'actionQuality'
+            ]
+          }, 
+          'state': {
+            '$all': [
+              'Quiz Game Host', 'snarky', 'player', 'answered a question wrong', 'confidently'
+            ]
+          }
+        }
+    */
+  });
+
+
+  /**
+   * Test our state response database, while getting live responses and putting them in db.
+   */
+  app.get('/stateresponse/test2', async function(req, res){
+    // Prep the input data for our create New function
+    var propositionForm = "Pretend You are a #attitude# #persona# responding to a #respondent# named [name] who just #action# #actionQuality#. " +
+                         "Repond to them with a #attitude# attitude. ";
+    var requiredStateKeys = ["persona", "attitude", "respondent", "action", "actionQuality"];
+    var requireStateValues = ["Quiz Game Host", "snarky", "player", "answered a question wrong", "confidently"];
+    var numResponsesDesired = 2;
+
+    // call the create new on our state response object.
+    var stateResponse = await StateResponse.createNew(propositionForm, requiredStateKeys, requireStateValues);
+
+
+    var chatgptResponses = await generateChatGPTResponsesWithModeration(stateResponse.proposition, numResponsesDesired);
+    stateResponse.responses = chatgptResponses;
+
+    
+    await stateResponse.save();
+  });
+
+
+  /**
+   * Test the statereponse db
+   */
+  app.get('/stateresponse/test/', async function(req, res){
+    // Prep the input data for our create New function
+    var propositionForm = "Pretend You are a #attitude# #persona# responding to a #respondent# named [name] who just #action# #actionQuality#. " +
+                         "Repond to them with a #attitude# attitude. ";
+    var requiredStateKeys = ["persona", "attitude", "respondent", "action", "actionQuality"];
+    var requireStateValues = ["Quiz Game Host", "snarky", "player", "answered a question wrong", "confidently"];
+
+    // call the create new on our state response object.
+    var stateResponse = await StateResponse.createNew(propositionForm, requiredStateKeys, requireStateValues, {});
+    await stateResponse.save();
+
+
+
+
+  });
+
+  /**
+   * Returns a reponse to the user, in a certain persona, reponsing to a certain responsend, who just
+   * did a certain action, with a given attitude.
+   * 
+   * Calls chatgpt to generate, and logs the response into the server
+   * /personalityresponse/generate/Game%20Show%20Host/Player/answered%20a%20question/with%20skill/snarky/
+   */
+  app.get('/personalityresponse/generate/:persona/:respondent/:action/:actionQuality/:attitude/', async function(req, res){
+    
+    // Get the data from the url
+    var persona = req.params.persona;//.split(" ")[0]; // game show host, police office 
+    var respondent = req.params.respondent;//.split(" ")[0];
+    var action = req.params.action;//.split(" ")[0]; // should be in past sense, answered, responded, tested
+    var actionQuality = req.params.actionQuality;//.split(" ")[0]; // answered badly, answered well, etc
+    var attitude = req.params.attitude;//.split(" ")[0];
+
+
+
+    var chatGPTResponse = "";
+
+    
+
+    // Query the db for this persona
+    var filter = { type: `${persona}` };
+    
+    ////var filter = {type: {$eq: persona}};
+    var fields = {};
+    var resultPersona = await PersonalityResponse.findOne(filter, fields).exec();
+
+    // Check the db for a persona of this type
+    if(resultPersona && resultPersona != null){
+
+      // A persona of this type has been found, check if we have the desired action under the persona
+      // Loop through the actions of the persona
+      var actionExists = false;
+      var thisAction = null;
+      for(a in resultPersona.actions){
+
+        // Get the action
+        thisAction = resultPersona.actions[a];
+
+        // check if the actions type is
+        if(thisAction.type == action){
+          actionExists = true;
+          break; // break out of the for loop once we find the action we are looking for.
+        }
+
+        // Check if we found an action in the previous for loop that matches the action we are looking for
+        
+      }
+      // after for here
+      if(actionExists){
+
+        // we found an action that matches, not check, does a response that matches our desired attitude exist?
+        var responseWithAttitudeExists = false;
+        var responseWithAttitude = null;
+
+        // Loop through the responses in this action
+        for(r in thisAction._doc.responses){
+
+          responseWithAttitude = thisAction._doc.responses[r];
+          
+
+          // check if the reponse has the desired attitude.
+          if(responseWithAttitude.attitude == attitude){
+            // A reponse with this attitude exists, we can use that, or we can generate a new one and add it
+            
+            // Get a random number 1 to 100;
+            var random = Math.floor(Math.random() * 100);
+
+            // 50/50 chance this will be under 50
+            if(random < 50){
+
+              var responseWithAttitudes = [];
+              //filter reponses, to only have responses with the given attitude
+              for(att in thisAction._doc.responses){
+                if(thisAction._doc.responses[att].attitude == attitude){
+                  responseWithAttitudes.push(thisAction._doc.responses[att])
+                }
+              }
+
+
+              // get a random number to return a response
+              random = Math.floor(Math.random() * responseWithAttitudes.length );
+              
+              // use the response we found in the db, no need to save anything
+              chatGPTResponse = responseWithAttitudes[random];
+
+              // break out of the for loop with this repsonse.
+              break;
+              
+            }else{
+              // create a new response
+              var newResponses = await generateNewResponses(persona, respondent, action, actionQuality, attitude);
+
+              // add this response to this action
+              for(y in newResponses){
+                thisAction._doc.responses.push(newResponses[y]);
+              }
+              
+
+              // save this action back into the same place our persona was saved.
+              resultPersona.actions[a] = thisAction;
+
+              // save our changed persona to the db
+              resultPersona.save();
+
+              // get a random response from newResponses
+              random = Math.floor(Math.random() * newResponses.length );
+
+              // have our response returnable
+              chatGPTResponse = newResponses[random];
+              break;
+            }
+
+          }else{
+            // A response with this attitude for this action does not exist, create one, add it to the action
+              // create a new response
+              var newResponses = await generateNewResponses(persona, respondent, action, actionQuality, attitude);
+
+
+              // add this response to this action
+              for(y in newResponses){
+                thisAction._doc.responses.push(newResponses[y]);
+              }
+              
+
+              // add this action to our actions
+              resultPersona.actions[a] = thisAction;
+
+              // save our changed persona to the db
+              resultPersona.save();
+
+              // get a random response from newResponses
+              random = Math.floor(Math.random() * newResponses.length );
+
+              // have our response returnable
+              chatGPTResponse = newResponses[random];
+              break;
+          }
+        }
+
+
+      }else{
+        // we did not find an action that matches, create an action and add it to the person found
+
+        // create a new response
+        var newResponses = await generateNewResponses(persona, respondent, action, actionQuality, attitude);
+
+        // Create a new action with the response
+        var newAction = generateNewAction(action, actionQuality, respondent, action, newResponses);
+
+        // push this new action to our actions array in our persona we did find
+        resultPersona.actions.push(newAction);
+
+        // save our modified persona
+        resultPersona.save();
+
+        // get a random response from newResponses
+        random = Math.floor(Math.random() * newResponses.length );
+
+        // have our response returnable
+        chatGPTResponse = newResponses[random];
+      }
+
+    }else{
+      // A persona of this type has not been found, create a person, with the desired action, and add it to db
+      
+      // create the new persona from our db models.
+      var newPersona = new PersonalityResponse();
+      newPersona.type = persona;
+      newPersona.description = persona;
+
+      // create action array for new persona
+      //newPersona.actions = [];
+
+      // create a new response
+      var newResponses = await generateNewResponses(persona, respondent, action, actionQuality, attitude);
+
+       // Create a new action with the response
+       var newAction = generateNewAction(action, actionQuality, respondent, action, newResponses);
+
+      
+
+       // push this new action to our actions array in our persona we did find
+       //newPersona.actions.push(newAction);
+       newPersona.actions = [newAction]
+
+       // save our modified persona
+       await newPersona.save();
+
+       // get a random response from newResponses
+       random = Math.floor(Math.random() * newResponses.length );
+
+       // have our response returnable
+       chatGPTResponse = newResponses[random];
+    }
+
+    res.json(chatGPTResponse);
+
   });
 
   app.get('/discord/question', async function(req, res){
@@ -1124,8 +1617,8 @@ async function renderQuizQuestion(req, res){
 async function getDiscordQuestion(req, res){
   
   //first we get a random question from the JQuestions   
-  var filter = {}; // this filter queries the entire jQuestion database, chat gpt will be used to transform questions
-  ////////var filter = {wrongAnswers: {$exists: true}}; // This filter queries questions in the db, where wrong answers exist, this means that chatgpt will not be used
+  /////////var filter = {}; // this filter queries the entire jQuestion database, chat gpt will be used to transform questions
+  var filter = {wrongAnswers: {$exists: true}}; // This filter queries questions in the db, where wrong answers exist, this means that chatgpt will not be used
   var fields = {}; //only pull up the answers
 
   // Get a random entry
@@ -1505,6 +1998,34 @@ async function renderJQuestion(req, res){
     questionId : result._id
   });
 }
+
+
+async function chatGPT2(inputString, responseNumToGenerate = 2){
+  var returnChoices = [];
+
+  try{
+    const completion = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      //model: "text-davinci-003",
+      //max_tokens: 100,
+      n: responseNumToGenerate, // the number of reponses
+      temperature: .8,
+      messages: [{role: "user", content: inputString}]
+    });
+  
+    
+    for (c in completion.data.choices){
+      var choiceMessage = completion.data.choices[c].message.content;
+  
+      returnChoices.push(choiceMessage);
+    }
+  }catch(error){
+    return error;//res.json({"error": error.toString()})
+  }
+  
+  return returnChoices;
+}
+
 
 /** Talk to chat gpt */
 async function chatGPT(inputString){
