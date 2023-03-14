@@ -208,6 +208,48 @@ module.exports = function(app, passport){
   }
 
 
+ /**
+  *  The generates new responses, and adds them to the passed in responses array, and returns the entire 
+   * thing to be assigned back to stateResponse by the caller.
+  * @param {*} returnResponses - the responses passed in that we are adding to
+  * @param {*} proposition     - the proposition we are responding to
+  * @param {*} numResponsesDesired - the number of responses we desire to generate
+  */
+  async function generateResponses(returnResponses, proposition, numResponsesDesired){
+
+    // Make a chat gpt api call.
+    var chatGPTReponses = await chatGPT2(proposition, numResponsesDesired);   // this is an array of new responses.
+
+    // Run the output through chatgpt's moderation tool
+    var openAPIModerationObject = await chatGPTModeration(chatGPTReponses); // this is an array of moderation objects
+
+    // Loop through our chat gpt responses, adding our moderation object to it, and adding each item to our returnResponses
+    for(r in chatGPTReponses){
+      var newResponse = chatGPTReponses[r];
+
+      // get the moderation object from the api
+      var newModerationObject = openAPIModerationObject[r];
+
+      // create the matching object for the database
+      var contentModerationObject = new ContentModeration();
+
+      //contentModerationObject._id = newModerationObject.id;
+      contentModerationObject.model = "moderation-normal";
+      contentModerationObject.results = newModerationObject;
+      
+
+      var response = {
+        "text": newResponse,
+        "moderation" : contentModerationObject
+      }
+
+      // add this new response to our data structure.
+      returnResponses.push(response);
+    }
+
+    return returnResponses;
+
+  }
   
 
   async function generateChatGPTResponsesWithModeration(inputSentence, numResponsesToGenerate){
@@ -330,13 +372,92 @@ module.exports = function(app, passport){
   }
 
 
+  app.get('/stateresponse/test4', async function(req, res){
+    // Prep the input data for our create New function
+    var propositionForm = "Pretend You are a #attitude# #persona# responding to a #respondent# named [name] who just #action# #actionQuality#. " +
+                         "Repond to them with a #attitude# attitude. ";
+    var requiredStateKeys = ["persona", "attitude", "respondent", "action", "actionQuality"];
+    var requireStateValues = ["Quiz Game Host", "snarky", "player", "answered a question wrongly", "confidently"];
+    var numResponsesDesired = 2;
+
+    //create a filter looking for stateresponses that have the required state keys and values
+    var filterStateResponseBasedOnResponseTypeAndState =
+    {
+      'responseType.requiredState': {
+        '$all': requiredStateKeys
+      }, 
+      'state': {
+        '$all': requireStateValues
+      }
+    }
+
+
+    var stateResponse = await StateResponse.findOne(filterStateResponseBasedOnResponseTypeAndState).exec();
+
+    // If we have not found a state response in the db, we'll create one now
+    if(stateResponse == null){
+      console.log("state response doesnt exist, lets create one");
+      // call the create new on our state response object.
+      stateResponse = await StateResponse.createNew(propositionForm, requiredStateKeys, requireStateValues);
+    }
+
+    // How many responses are available in our stateResponse.
+    var numResponses = stateResponse.responses.length;
+
+    // If there are no responses, we will generate them now.
+    if(numResponses <= 0){
+      try{
+        stateResponse.responses = await generateResponses(stateResponse.responses, stateResponse.proposition, numResponsesDesired);
+      }catch(error){
+        console.log(error);
+        res.json(error);
+      }
+    }else{
+
+      // If there are already responses, we will calculate the chance of needing to create more responses, vs just reading a random response from the db
+      // g(x) = 1 - (x/a)^n -.5     Where n=2, and a = 2000, means the chance doesn't go to 0 until x gets to 1414, and there is immediately a 50% chance of create a new one when x is 1
+      var chanceOfMakingNewResponses = (1 - (numResponses / 2000) - .5);
+
+      // Now generate a random number between 0 and 1.
+      var random = Math.random();
+
+      // if our random number is less than our chance of making a new one we will make new responses and add them to our stateResponse db.
+      if(random < chanceOfMakingNewResponses){
+        // Create new response
+        console.log("random: " + random + " is less than chanceOfMakingNewResponse: " + chanceOfMakingNewResponses + " so generating new responses");
+        try{
+          stateResponse.responses = await generateResponses(stateResponse.responses, stateResponse.proposition, numResponsesDesired);
+        }catch(error){
+          console.log(error);
+          res.json(error);
+        }
+      }
+    }
+
+    try{
+      // save our new or edited stateResponse to the db..
+      await stateResponse.save();
+
+      // Now get a random response from our responses and return it to the user.
+      random = Math.floor(Math.random() * stateResponse.responses.length);
+
+      var responseToReturn = stateResponse.responses[random];
+      res.json(responseToReturn);
+    }catch(error){
+      console.log(error);
+      res.json(error);
+    }
+    
+  });
+
+
   app.get('/stateresponse/test3', async function(req, res){
     // Prep the input data for our create New function
     var propositionForm = "Pretend You are a #attitude# #persona# responding to a #respondent# named [name] who just #action# #actionQuality#. " +
                          "Repond to them with a #attitude# attitude. ";
     var requiredStateKeys = ["persona", "attitude", "respondent", "action", "actionQuality"];
     var requireStateValues = ["Quiz Game Host", "snarky", "player", "answered a question wrongly", "confidently"];
-    var numResponsesDesired = 10;
+    var numResponsesDesired = 2;
 
     //create a filter looking for stateresponses that have the required state keys and values
     var filterStateResponseBasedOnResponseTypeAndState =
@@ -357,7 +478,6 @@ module.exports = function(app, passport){
       console.log("state response doesnt exist, lets create one");
       // call the create new on our state response object.
       stateResponse = await StateResponse.createNew(propositionForm, requiredStateKeys, requireStateValues);
-
     }
 
 
