@@ -14,6 +14,7 @@
 var mongoose = require('mongoose');
 var ContentModeration = require('./ContentModeration') ;
 var bcrypt   = require('bcrypt-nodejs');
+const { generate } = require('mongoose/lib/types/objectid');
 
 
 /**
@@ -39,7 +40,7 @@ var responseTypeSchema = mongoose.Schema(
  * @param {} propositionValues 
  */
 //responseTypeSchema.statics.generateProposition = 
-    async function generateProposition(propositionForm, requiredState, propositionValues){
+async function generateProposition(propositionForm, requiredState, propositionValues){
         
         // Get a copy of the proposition form, with #strings# for replacement in it.
         var returnVal = propositionForm;
@@ -150,6 +151,7 @@ stateResponseSchema.statics.createNew =
 
 
 stateResponseSchema.statics.responseObjectSchema = responseObjectSchema;
+stateResponseSchema.statics.generateProposition = generateProposition;
 
 // create the model for users and expose it to our app
 module.exports = mongoose.model('StateResponse', stateResponseSchema);

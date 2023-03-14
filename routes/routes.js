@@ -219,6 +219,11 @@ module.exports = function(app, passport){
 
     // Make a chat gpt api call.
     var chatGPTReponses = await chatGPT2(proposition, numResponsesDesired);   // this is an array of new responses.
+    var error = chatGPTReponses.error;
+
+    if(error != null){
+        return {error: error};
+    }
 
     // Run the output through chatgpt's moderation tool
     var openAPIModerationObject = await chatGPTModeration(chatGPTReponses); // this is an array of moderation objects
@@ -372,12 +377,15 @@ module.exports = function(app, passport){
   }
 
 
-  app.get('/stateresponse/test4', async function(req, res){
+  /**
+   * /stateresponse/type1/snarky/Quiz%20Game%20Host/player/answered%20a%20question%20wrongly/confidently
+   */
+  app.get('/stateresponse/type1/:attitude/:persona/:respondent/:action/:actionQuality/', async function(req, res){
     // Prep the input data for our create New function
-    var propositionForm = "Pretend You are a #attitude# #persona# responding to a #respondent# named [name] who just #action# #actionQuality#. " +
-                         "Repond to them with a #attitude# attitude. ";
+    var propositionForm = "Pretend You are a faux #attitude# #persona# responding to a #respondent# named [name] who just #action# #actionQuality#. " +
+                         "Repond to them with a faux #attitude# attitude. ";
     var requiredStateKeys = ["persona", "attitude", "respondent", "action", "actionQuality"];
-    var requireStateValues = ["Quiz Game Host", "snarky", "player", "answered a question wrongly", "confidently"];
+    var requireStateValues = [req.params.persona, req.params.attitude, req.params.respondent, req.params.action, req.params.actionQuality];
     var numResponsesDesired = 2;
 
     //create a filter looking for stateresponses that have the required state keys and values
@@ -399,7 +407,12 @@ module.exports = function(app, passport){
       console.log("state response doesnt exist, lets create one");
       // call the create new on our state response object.
       stateResponse = await StateResponse.createNew(propositionForm, requiredStateKeys, requireStateValues);
+    }else{
+      // Only regenerate proposition if it existed previously.
+      stateResponse.proposition = await StateResponse.generateProposition(propositionForm, requiredStateKeys, requireStateValues)
     }
+
+    
 
     // How many responses are available in our stateResponse.
     var numResponses = stateResponse.responses.length;
@@ -407,10 +420,16 @@ module.exports = function(app, passport){
     // If there are no responses, we will generate them now.
     if(numResponses <= 0){
       try{
-        stateResponse.responses = await generateResponses(stateResponse.responses, stateResponse.proposition, numResponsesDesired);
+        var generatedResponses = await generateResponses(stateResponse.responses, stateResponse.proposition, numResponsesDesired);
+        if(generatedResponses.error != null){
+          throw new Error(generatedResponses.error.response.data.error.message);
+        }else{
+          stateResponse.responses = generatedResponses;
+        }
+        
       }catch(error){
         console.log(error);
-        res.json(error);
+        res.json({"error":error.message});
       }
     }else{
 
@@ -426,11 +445,19 @@ module.exports = function(app, passport){
         // Create new response
         console.log("random: " + random + " is less than chanceOfMakingNewResponse: " + chanceOfMakingNewResponses + " so generating new responses");
         try{
-          stateResponse.responses = await generateResponses(stateResponse.responses, stateResponse.proposition, numResponsesDesired);
+          var generatedResponses = await generateResponses(stateResponse.responses, stateResponse.proposition, numResponsesDesired);
+          if(generatedResponses.error != null){
+            throw new Error(generatedResponses.error.response.data.error.message);
+          }else{
+            stateResponse.responses = generatedResponses;
+          }
         }catch(error){
           console.log(error);
-          res.json(error);
+          res.json({"error": error.message});
+          return;
         }
+      }else{
+        console.log("random: " + random + " is MORE than chanceOfMakingNewResponse: " + chanceOfMakingNewResponses + " so using cached response");
       }
     }
 
@@ -446,6 +473,7 @@ module.exports = function(app, passport){
     }catch(error){
       console.log(error);
       res.json(error);
+      return;
     }
     
   });
@@ -2148,15 +2176,33 @@ async function chatGPT2(inputString, responseNumToGenerate = 2){
     });
   
     
+    var numFiltered = 0;
+    var numAdded = 0;
+
     for (c in completion.data.choices){
       var choiceMessage = completion.data.choices[c].message.content;
-  
-      returnChoices.push(choiceMessage);
+
+      // if our text contains the words "as an AI language model", or I cannot generate.
+      if(choiceMessage.toLowerCase().includes("ai language model") || 
+         choiceMessage.toLowerCase().includes("i cannot generate") ||
+         choiceMessage.toLowerCase().includes("i cannot fulfill") ||
+         choiceMessage.toLowerCase().includes("i cannot perform") ||
+         choiceMessage.toLowerCase().includes("openai")){
+         
+          numFiltered++;
+          console.log("\nfiltering out response: " + choiceMessage);
+      }else{
+        numAdded++;
+        console.log("\nAdding Response: " + choiceMessage);
+        returnChoices.push(choiceMessage);
+      }
     }
+    console.log("\nfiltered: " + numFiltered + " Added: " + numAdded);
   }catch(error){
-    return error;//res.json({"error": error.toString()})
+    return {error: error};//res.json({"error": error.toString()})
   }
   
+  console.log("\n\n\n\n\n");
   return returnChoices;
 }
 
