@@ -336,7 +336,7 @@ module.exports = function(app, passport){
                          "Repond to them with a #attitude# attitude. ";
     var requiredStateKeys = ["persona", "attitude", "respondent", "action", "actionQuality"];
     var requireStateValues = ["Quiz Game Host", "snarky", "player", "answered a question wrongly", "confidently"];
-    var numResponsesDesired = 2;
+    var numResponsesDesired = 10;
 
     //create a filter looking for stateresponses that have the required state keys and values
     var filterStateResponseBasedOnResponseTypeAndState =
@@ -360,17 +360,31 @@ module.exports = function(app, passport){
 
     }
 
-    // Get our chat gpt responses.
-    var chatgptResponses = await generateChatGPTResponsesWithModeration(stateResponse.proposition, numResponsesDesired);
-    
-    // Loop throug these responses adding them to our stateResponse responses
-    for(i in chatgptResponses){
-      var thisResponse = chatgptResponses[i];
-      stateResponse.responses.push(thisResponse);
+
+    try{
+        // Get our chat gpt responses.
+      var chatgptResponses = await generateChatGPTResponsesWithModeration(stateResponse.proposition, numResponsesDesired);
+      
+
+      var responseToReturn = [];
+
+      // Loop throug these responses adding them to our stateResponse responses
+      for(i in chatgptResponses){
+        var thisResponse = chatgptResponses[i];
+        stateResponse.responses.push(thisResponse);
+        responseToReturn.push(thisResponse);
+      }
+
+      // save our new or edited stateResponse to the db..
+      await stateResponse.save();
+      res.json(responseToReturn);
+    }catch(error){
+      console.log("error probably with chatgpt api: " + error);
+      res.json(error);
     }
 
-    // save our new or edited stateResponse to the db..
-    await stateResponse.save();
+    
+
 
     /*
         //filter to find a state Response from the db with a specfic responst type
