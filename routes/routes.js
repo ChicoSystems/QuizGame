@@ -1807,7 +1807,7 @@ async function getDiscordQuestion(req, res){
 	console.log("random: " + random + " chanceOfMakingNewREsponsese: "  + chanceOfMakingNewResponses);
 
 
-  if(result.wrongAnswers.length == 0 || isGenerateNew){
+  if(result.wrongAnswers.length == 0 && isGenerateNew){
     //if(true){ // REMOVE THIS AND REPLACE WITH ABOVE
     // If we have no generated answers, we have also not cleaned the question.
     // use chatgpt to clean the question
@@ -1859,7 +1859,7 @@ async function getDiscordQuestion(req, res){
         wrongAnswers = temp;
 
         if(wrongAnswers.length != 11){
-          getDiscordQuestion(res, req);
+          await getDiscordQuestion(res, req);
           return;
         }else{
           result.wrongAnswers = wrongAnswers;
