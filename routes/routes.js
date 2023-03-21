@@ -386,7 +386,7 @@ module.exports = function(app, passport){
                          "Repond to them with a faux #attitude# attitude. With only one or two sentences";
     var requiredStateKeys = ["persona", "attitude", "respondent", "action", "actionQuality"];
     var requireStateValues = [req.params.persona, req.params.attitude, req.params.respondent, req.params.action, req.params.actionQuality];
-    var numResponsesDesired = 2;
+    var numResponsesDesired = 10;
 
     //create a filter looking for stateresponses that have the required state keys and values
     var filterStateResponseBasedOnResponseTypeAndState =
@@ -1796,7 +1796,17 @@ async function getDiscordQuestion(req, res){
   // generate wrong answers with chatGPT
   wrongAnswers = [];
 
-  if(result.wrongAnswers.length == 0){
+   // If there are already responses, we will calculate the chance of needing to create more responses, vs just reading a random response from the db
+	//       // g(x) = 1 - (x/a)^n -.5     Where n=2, and a = 2000, means the chance doesn't go to 0 until x gets to 1414, and there is immediately a 50% chance of create a new one when x is 1
+	var chanceOfMakingNewResponses = (1 - (count / 2000) - .5);
+	random = Math.random();
+	
+	var isGenerateNew = (random < chanceOfMakingNewResponses);
+
+	console.log("random: " + random + " chanceOfMakingNewREsponsese: "  + chanceOfMakingNewResponses);
+
+
+  if(result.wrongAnswers.length == 0 || isGenerateNew){
     //if(true){ // REMOVE THIS AND REPLACE WITH ABOVE
     // If we have no generated answers, we have also not cleaned the question.
     // use chatgpt to clean the question
@@ -1812,6 +1822,8 @@ async function getDiscordQuestion(req, res){
     wrongAnswerString = wrongAnswerString.toUpperCase();
 
     //save the newly generated question:
+    
+    result.oldQuestion = result.question;
     result.question = newQuestion;
 
     result.answer = result.answer.toUpperCase();
@@ -2171,7 +2183,7 @@ async function chatGPT2(inputString, responseNumToGenerate = 2){
       //model: "text-davinci-003",
       //max_tokens: 100,
       n: responseNumToGenerate, // the number of reponses
-      temperature: .8,
+      temperature: 1.3,
       messages: [{role: "user", content: inputString}]
     });
   
