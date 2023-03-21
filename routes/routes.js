@@ -1798,7 +1798,8 @@ async function getDiscordQuestion(req, res){
 
    // If there are already responses, we will calculate the chance of needing to create more responses, vs just reading a random response from the db
 	//       // g(x) = 1 - (x/a)^n -.5     Where n=2, and a = 2000, means the chance doesn't go to 0 until x gets to 1414, and there is immediately a 50% chance of create a new one when x is 1
-	var chanceOfMakingNewResponses = (1 - (count / 2000) - .5);
+	var chanceOfMakingNewResponses = (1 - (count / 2000) - .5) + .5;
+  
 	random = Math.random();
 	
 	var isGenerateNew = (random < chanceOfMakingNewResponses);
@@ -1810,7 +1811,7 @@ async function getDiscordQuestion(req, res){
     //if(true){ // REMOVE THIS AND REPLACE WITH ABOVE
     // If we have no generated answers, we have also not cleaned the question.
     // use chatgpt to clean the question
-    newQuestion = await chatGPT("The answer to this jeopardy question is: "+result.answer+". Rewrite this jeopardy question to be a normal question: '" +result.question+ "'. Do not include the anwer.");
+    newQuestion = await chatGPT("The answer to this jeopardy question is: "+result.answer+". Rewrite this jeopardy question to be a normal question: '" +result.question+ "'. Do not include the answer in the question.");
     wrongAnswerString = await chatGPT("The answer to the following question is " + result.answer + ". Come up with 11 wrong answers. The question is: " + result.question + " Seperate Answers with a comma.");
     
     // if the wrong answer string ends witha  ., remove it
