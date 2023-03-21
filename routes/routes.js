@@ -1808,6 +1808,16 @@ async function getDiscordQuestion(req, res){
 
 
   if(result.wrongAnswers.length == 0 && isGenerateNew){
+
+    // Query the DB again, but this time for a new jeopardy question where we have not generated wrong answers yet.
+    random = Math.floor(Math.random() * count)
+    filter = {wrongAnswers: {$exists: false}};
+    // Attempt new query
+     result = await JQuestion.findOne(filter, fields).skip(random);
+
+    console.log("generating wrong answers for : " + result);
+
+
     //if(true){ // REMOVE THIS AND REPLACE WITH ABOVE
     // If we have no generated answers, we have also not cleaned the question.
     // use chatgpt to clean the question
