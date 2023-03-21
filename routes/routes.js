@@ -1807,7 +1807,7 @@ async function getDiscordQuestion(req, res){
 	console.log("random: " + random + " chanceOfMakingNewREsponsese: "  + chanceOfMakingNewResponses);
 
 
-  if(result.wrongAnswers.length == 0 && isGenerateNew){
+  if(isGenerateNew){
 
     // Query the DB again, but this time for a new jeopardy question where we have not generated wrong answers yet.
     random = Math.floor(Math.random() * count)
