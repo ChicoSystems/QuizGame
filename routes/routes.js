@@ -383,7 +383,7 @@ module.exports = function(app, passport){
   app.get('/stateresponse/type1/:attitude/:persona/:respondent/:action/:actionQuality/', async function(req, res){
     // Prep the input data for our create New function
     var propositionForm = "Pretend You are a faux #attitude# #persona# responding to a #respondent# named [name] who just #action# #actionQuality#. " +
-                         "Repond to them with a faux #attitude# attitude. ";
+                         "Repond to them with a faux #attitude# attitude. With only one or two sentences";
     var requiredStateKeys = ["persona", "attitude", "respondent", "action", "actionQuality"];
     var requireStateValues = [req.params.persona, req.params.attitude, req.params.respondent, req.params.action, req.params.actionQuality];
     var numResponsesDesired = 2;
