@@ -1210,16 +1210,31 @@ module.exports = function(app, passport){
     }
   });
 
-  app.get('/removereport/:id', function(req, res){
-    if(req.user && req.user.permissions.admin && req.user.permissions.viewReports){
 
-      ReportProblem.remove({ id: req.params.id }, function(err) {
+  /**
+   * Removes a report from the reported questions list
+   */
+  app.get('/removereport/:id', async function(req, res){
+    if(req.user && req.user.permissions.admin && req.user.permissions.viewReports){
+      var returnVal = await ReportProblem.deleteOne({id: req.params.id}).exec();
+
+      // Did our delete succeed?
+      if(returnVal.deletedCount >= 1){
+        res.send({status: "success", message: "Report " + req.params.id + " removed!"});
+      }else{
+        res.send({status: "error", message: "Err: " + " didn't delete anything"});
+      }
+
+      
+
+      /*ReportProblem.remove({ id: req.params.id }, function(err) {
         if (!err) {
           res.send({status: "success", message: "Report " + req.params.id + " removed!"});
         }else {
           res.send({status: "error", message: "Err: " + err});
         }
       });
+      */
 
     }else{
       res.send({status: "error", message: "User Does Not Have Permissions To Remove Report"});
@@ -1268,7 +1283,34 @@ module.exports = function(app, passport){
   //============================================
   
   //admin page
-  app.get('/admin', function(req, res){
+  app.get('/admin', async function(req, res){
+    // First, check if the user is an admin, if they are not redirect them to login
+    if(req.user && req.user.permissions.admin){
+
+      // The user is an admin, let pull down a list of all report problems, and all users to send to admin page
+      var userList = await Users.find({ }, {}).exec();
+
+      // Get a list of all reported problems.
+      var reportedProblems = await ReportProblem.find({},{}).exec();
+
+      // Send user to the admin page with this data
+      res.render('admin.ejs', {
+        title: "Quiz Game Admin",
+        user: req.user,
+        users: userList,
+        reports: reportedProblems
+      });
+
+    }else{
+
+      // The user is not an admin, redirect them
+      res.redirect('/login');
+    }
+
+
+
+/*
+
     //check if user is an admin
     if(req.user && req.user.permissions.admin){
       ReportProblem.find({}, {}, function(err, results){
@@ -1291,12 +1333,27 @@ module.exports = function(app, passport){
     }else{
       res.redirect('/login');
     }
+    */
   });
 
-  app.get('/edituser/:userID/:admin/:editQuestions/:viewReports/:editUsers', function(req, res){
+
+  /**
+   * Edits the admin permissions for a given user
+   */
+  app.get('/edituser/:userID/:admin/:editQuestions/:viewReports/:editUsers', async function(req, res){
+
     //check if user is an admin, and has editUsers permission
     if(req.user && req.user.permissions.admin && req.user.permissions.editUsers){
-      //user has permissions, update the user given by id
+
+      var returnedUsers = await Users.findOne({_id: new ObjectId(req.params.userID)}).exec();
+      returnedUsers.permissions.admin = req.params.admin;
+      returnedUsers.permissions.editQuestions = req.params.editQuestions;
+      returnedUsers.permissions.viewReports = req.params.viewReports;
+      returnedUsers.permissions.editUsers = req.params.editUsers;
+      await returnedUsers.save();
+      res.send({status: "success", message: "User was edited. "});
+
+      /*//user has permissions, update the user given by id
       Users.findOne({_id: new ObjectId(req.params.userID)}, {}, function(err, results){
         console.log(results);
         results.permissions.admin = req.params.admin;
@@ -1305,84 +1362,146 @@ module.exports = function(app, passport){
         results.permissions.editUsers = req.params.editUsers;
         results.save();
         res.send({status: "success", message: "user was found"});
-      });
+      });*/
+
+
     }else{
       res.send({status: "error", message: "User Does Not Have Permission to Edit Users"});
     }
   });
 
-  //gets a quiz question of given id, sends it to frontend
-  app.get('/quizquestiondisplay/:id', function(req, res){
+  /**
+   * Retrieves a quiz question by id and sends it to the front end.
+   */
+  app.get('/quizquestiondisplay/:id', async function(req, res){
+
+    // Check to make sure that we have the question id in our paramaters
+    if(req.params.id == "" || !ObjectId.isValid(req.params.id)){
+         res.send({status: "error", message: "Question: "+req.params.id+" does not exist!"});
+      return 0;
+    }
+
+    // make the query to the db.
+    var query = { _id: new ObjectId(req.params.id) };
+    var questionReturned = await QuizQuestion.find(query, {});
+
+    // Check if the jquestion was found
+    if(questionReturned.length == 0){
+      
+      // let the user  know an error occured
+      res.send({status: "error", message: "Question: "+req.params.id+" does not exist!"});
+    }else{
+
+      // send the user a success message
+      res.send({status: "success", message: "Success getting question: " + req.params.id, question: questionReturned});
+    }
+  });
+
+
+  /**
+   * Retrieves a jquestion by question id and send it to frontend.
+   */
+  app.get('/jquestiondisplay/:id', async function(req, res){
+    console.log("id: " + req.params.id);
     if(req.params.id == "" || !ObjectId.isValid(req.params.id)){
          res.send({status: "error", message: "Question: "+req.params.id+" does not exist!"});
       return 0;
     }
     var query = { _id: new ObjectId(req.params.id) };
-    QuizQuestion.find(query, function(err, result){
-      if(err){
-        res.send({status: "error", message: err});
-      }else if(result == ""){
-        res.send({status: "error", message: "Question :"+req.params.id+" does not exist!"});
-      }else{
-        //console.log("question: " + result);
-        res.send({status: "success", message: "Success getting question: " + req.params.id, question: result});
-      }
-    });
+
+    var questionReturned = await JQuestion.find(query, {});
+
+    // Check if the jquestion was found
+    if(questionReturned.length == 0){
+      
+      // let the user  know an error occured
+      res.send({status: "error", message: "Question: "+req.params.id+" does not exist!"});
+    }else{
+      res.send({status: "success", message: "Success getting question: " + req.params.id, question: questionReturned});
+    }
+  });
+
+
+  /**
+   * Retrieves a stanford question via id and sends to front end.
+   */
+  app.get('/stanfordquestiondisplay/:id', async function(req, res){
     
-  });
-
-
-  //gets a jquestion of a given id, sends it to frontend
-  app.get('/jquestiondisplay/:id', function(req, res){
-    console.log("id: " + req.params.id);
+    // Check to see that we passed in an id
     if(req.params.id == "" || !ObjectId.isValid(req.params.id)){
          res.send({status: "error", message: "Question: "+req.params.id+" does not exist!"});
       return 0;
     }
-    var query = { _id: new ObjectId(req.params.id) };
-    JQuestion.find(query, function(err, result){
-      if(err){
-         res.send({status: "error", message: err});
-      }else if(result == ""){
-         res.send({status: "error", message: "Question: "+req.params.id+" does not exist!"});
-      }else{ 
-        res.send({status: "success", message: "Success getting question: " + req.params.id, question: result});
-      } 
-    });
-  });
 
-  //gets a stanfordquestion of a given id, sends it to frontend
-  app.get('/stanfordquestiondisplay/:id', function(req, res){
-    console.log("id: " + req.params.id);
-    if(req.params.id == "" || !ObjectId.isValid(req.params.id)){
-         res.send({status: "error", message: "Question: "+req.params.id+" does not exist!"});
-      return 0;
+    // Make the query.
+    // make the query to the db.
+    var query = { _id: new ObjectId(req.params.id) };
+    var questionReturned = await StanfordQuestion.find(query, {});
+
+    // Check if the jquestion was found
+    if(questionReturned.length == 0){
+      
+      // let the user  know an error occured
+      res.send({status: "error", message: "Question: "+req.params.id+" does not exist!"});
+    }else{
+
+      // send the user a success message
+      res.send({status: "success", message: "Success getting question: " + req.params.id, question: questionReturned});
     }
-    var query = { _id: new ObjectId(req.params.id) };
-    StanfordQuestion.find(query, function(err, result){
-      if(err){
-         res.send({status: "error", message: err});
-      }else if(result == ""){
-         res.send({status: "error", message: "Question: "+req.params.id+" does not exist!"});
-      }else{
-        res.send({status: "success", message: "Success getting question: " + req.params.id, question: result});
-      }
-    });
   });
 
 
-  app.post('/quizquestionedit', function(req, res){
+  /**
+   * Edits a quiz game question
+   */
+  app.post('/quizquestionedit', async function(req, res){
+
+    // First Check Permissions, make sure user has rights to edit a question.
     if(req.user && req.user.permissions.admin && req.user.permissions.editQuestions){
+
       //update the db
-      //var query = {id: req.body.id};
       var query = { _id: new ObjectId(req.body.id) };
-      QuizQuestion.findOne(query, function(err, doc){
+      var returnedQuestion = QuizQuestion.findOne(query).exec();
+      returnedQuestion.category = req.body.category;
+      returnedQuestion.raw = req.body.raw;
+      returnedQuestion.label = req.body.label;
+      returnedQuestion.save();
+      res.send({status: "success", message: "Question was Edited"});
+    }else{
+
+      //user does not have permission
+      res.send({status: "error", message: "User does not have permissions to edit questions!"});
+    }
+  });
+
+
+  /**
+   * Allows a authorized user to edit a jquestion.
+   * passes in category, question, and answer.
+   */
+  app.post('/jquestionedit', async function(req, res){
+
+    // Let the console  know we are editing question
+    console.log("editing jQuestion - id: " + req.body.id);
+    if(req.user && req.user.permissions.admin && req.user.permissions.editQuestions){
+
+      //update the db
+      var query = { _id: new ObjectId(req.body.id) };
+      var questionToEdit = await JQuestion.findOne(query, {});
+      questionToEdit.category = req.body.category;
+      questionToEdit.question = req.body.question;
+      questionToEdit.answer = req.body.answer;
+      await questionToEdit.save();
+      res.send({status: "success", message: "Question was Edited"});
+
+      /*JQuestion.findOne(query, function(err, doc){
+      console.log("doc " + doc);
         doc.category = req.body.category;
-        doc.raw = req.body.raw;
-        doc.label = req.body.label;
+        doc.question = req.body.question;
+        doc.answer = req.body.answer;
         doc.save();
         res.send({status: "success", message: "Question was Edited"});
-      });
+      });*/
     }else{
       //user does not have permission
       res.send({status: "error", message: "User does not have permissions to edit questions!"});
@@ -1390,40 +1509,24 @@ module.exports = function(app, passport){
 
   });
 
-  app.post('/jquestionedit', function(req, res){
-    console.log("id: " + req.body.id);
+
+  /**
+   * Edit a stanford question
+   */
+  app.post('/stanfordquestionedit', async function(req, res){
+    
+    // Check if user has permissions to edit questions
     if(req.user && req.user.permissions.admin && req.user.permissions.editQuestions){
+
       //update the db
       var query = { _id: new ObjectId(req.body.id) };
-      JQuestion.findOne(query, function(err, doc){
-      console.log("doc " + doc);
-        doc.category = req.body.category;
-        doc.question = req.body.question;
-        doc.answer = req.body.answer;
-        doc.save();
-        res.send({status: "success", message: "Question was Edited"});
-      });
-    }else{
-      //user does not have permission
-      res.send({status: "error", message: "User does not have permissions to edit questions!"});
-    }
+      var returnedQuestion = await StanfordQuestion.findOne(query).exec();
+      returnedQuestion.category = req.body.category;
+      returnedQuestion.question = req.body.question;
+      returnedQuestion.answer = req.body.answer;
+      returnedQuestion.save();
+      res.send({status: "success", message: "Question was Edited"});
 
-  });
-
-  //front end submits stanfordquestionedit post
-  app.post('/stanfordquestionedit', function(req, res){
-    console.log("id: " + req.body.id);
-    if(req.user && req.user.permissions.admin && req.user.permissions.editQuestions){
-      //update the db
-      var query = { _id: new ObjectId(req.body.id) };
-      StanfordQuestion.findOne(query, function(err, doc){
-      console.log("doc " + doc);
-        doc.category = req.body.category;
-        doc.question = req.body.question;
-        doc.answer = req.body.answer;
-        doc.save();
-        res.send({status: "success", message: "Question was Edited"});
-      });
     }else{
       //user does not have permission
       res.send({status: "error", message: "User does not have permissions to edit questions!"});
