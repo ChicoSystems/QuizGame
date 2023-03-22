@@ -76,51 +76,7 @@ rwcTable.push(rwc3);
 rwcTable.push(rwc4);
 
 module.exports = function(app, passport){
-  //=============================================
-  //Stanford Question Conversions
-  //============================================
-/*  app.get('/convertStanford', function(req, res){
-    s_old_questions.find({}, function(err, result){
-      if(err){
-        res.send({status: "error", message: err});
-      }else if(result == ""){
-        res.send({status: "error", message: "Question :"+req.params.id+" does not exist!"});
-      }else{
-        //console.log("question: " + result);
-        console.log("length: " +result.length);
-        console.log(result[1].title);
-        res.send(result[1]);
-        for(var i = 0; i < result.length; i++){
-          var category = result[i].title;
-          category = category.replace(/_/g, " "); //replace _ with space
-          console.log("category: " + category);
-          for(var j = 0; j < result[i].paragraphs.length; j++){
-             // console.log(result[i].paragraphs[j].qas.length);
-            for(var k = 0; k < result[i].paragraphs[j].qas.length; k++){
-              if(category == null || 
-                 result[i].paragraphs[j].qas[k].question == null || 
-                 result[i].paragraphs[j].qas[k].answers[0] == null){
-                 console.log("something is null");
-                //do nothing for this question, something is null
-              }else{
-                var question = result[i].paragraphs[j].qas[k].question;
-                var answer =   result[i].paragraphs[j].qas[k].answers[0].text;
-                //record this question into new db
-                console.log("Category: " + category + " - Answer: " + answer + " - Question: " + question);            
-                var stanfordQuestion = new StanfordQuestion();
-                stanfordQuestion.category = category;
-                stanfordQuestion.question = question;
-                stanfordQuestion.answer = answer;
-                stanfordQuestion.save();
-              }
-            }
-          }
-        }
-      }
-    });
- 
-  });
-*/
+
 
   //==============================================
   //Game Routes
@@ -149,6 +105,83 @@ module.exports = function(app, passport){
   app.get('/jquestion', function (req, res){
     renderJQuestion(req, res);
   });
+
+
+  /**
+   * Takes a jquestion ID. Returns question with explaination for the answer.
+   * checks if that jquestion id exists
+   * if not, return error
+   * checks if jquestion contains explaination
+   * if so, return explaination
+   * sends question and answer to generative ai, asks for explaination for the answer in short paragraph.
+   * saves explaination to quesiton in db,
+   * returns quesiton with explaination for answer to user
+   */
+  app.get('/explain/jquestion/:question_id', async function (req, res){
+  
+    // Get our question id from our paramaters
+    var question_id = req.params.question_id;
+
+    try{
+      // Setup our db filter, to query the id of our quesiton
+      var filter = { _id: new ObjectId(question_id) };
+
+      // Attempt to get our question from the db
+      var returnedQuestion = await JQuestion.findOne(filter, {}).exec();
+
+      // If the question doesn't exist, throw an error, which will send an error to the front end.
+      if(returnedQuestion == null) throw new Error('Question ID: ' + question_id + " does NOT exist!");
+
+      // Question does exist, does question.explaination
+      if(returnedQuestion.explaination == null){
+
+        // The question does not contain an explaination. Get one for it
+        var explaination = await explainQuestionsAnswer(returnedQuestion);
+
+        // Save this explaination to the question
+        returnedQuestion.explaination = explaination;
+
+        // Save this question with explaination included, back to the db.
+        await returnedQuestion.save();
+      }
+
+      // Now we send back the question, with explaination attached.
+      res.send({status: "success", message: returnedQuestion});
+
+    }catch(error){
+
+      // Send the user an error status, along with the error message.
+      res.send({status: "error", message: error.message});
+    }
+  });
+
+
+  /**
+   * Takes a question object, runs the question and it's answer through GPT to
+   * get an explaination for the answer, and returns the answer alone
+   * @param {*} questionObject 
+   * @returns A string explaination of the answer to the input question.
+   */
+  async function explainQuestionsAnswer(questionObject){
+    
+    // Have a place to store our return value
+    var returnVal;
+
+    // Get the question and answers text
+    var questionText = questionObject.question;
+    var answerText = questionObject.answer;
+
+    // Form a question to ask GPT
+    var gptInput = "The answer for the following question is: '" + answerText + "'. The question is: '" + questionText + "'. In two sentences explain why the answer '" + answerText + "' is correct.";
+    var gptOutput = await chatGPT2(gptInput, 1);
+
+    if(gptOutput.length == 0 ) return null;
+
+    // We only asked for one output, so save that output to return val
+    returnVal  = gptOutput[0].replace(/\\n/g, "");
+
+    return returnVal;
+  }
 
 
   /**
@@ -198,10 +231,6 @@ module.exports = function(app, passport){
       }catch(error){
         console.log("error in moderation " + error);
       }
-
-      
-
-    
 
     // Return our returned http value.
     return returnModerationList;
@@ -375,6 +404,8 @@ module.exports = function(app, passport){
 
     return actionTaken;
   }
+
+  
 
 
   /**
