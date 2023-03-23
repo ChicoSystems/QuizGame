@@ -9,7 +9,7 @@ var jQuestionsSchema = mongoose.Schema({
     id               : String,
     category         : String,   //The category of the question
     question         : String,   //The Question itself
-    answer           : String,   //The answer to the question
+    answer           : String,   //The answer to  the question
     discipline       : String,   //The neural network generated discipline category
     subDiscipline    : String,   //The neural network generated subdiscipline category
     oldQuestion      : String,   // The original question, after it is changed by gpt

@@ -108,6 +108,88 @@ module.exports = function(app, passport){
 
 
   /**
+   * A test route to test the function meaningCloudCategorize(title, text)
+   * function
+   */
+
+  app.get('/categorize/:title/:text', async function(req, res){
+    var title = req.params.title;
+    var text = req.params.text;
+
+    var categorization = await getIPTCCategory(title, text);
+
+    res.send(categorization);
+  });
+
+
+  /**
+   * call the meaning cloud api with the title and text
+   * and returns the ITPC Category
+   * @param {*} title 
+   * @param {*} text 
+   * @returns 
+   */
+  async function getIPTCCategory(title, text){
+
+    // the meaningcloud code for IPTC
+    var model = "IPTC"; 
+
+    // Setup the return val
+    var returnVal;
+
+    // Create the form data.
+    const formdata = new FormData();
+    formdata.append("key", process.env.MEANINGCLOUD_API_KEY);
+    formdata.append("txt", text);
+    formdata.append("title", title);
+    formdata.append("model", model);
+
+    // Create our request options.
+    const requestOptions = {
+      method: 'POST',
+      body: formdata,
+      redirect: 'follow'
+    };
+
+    // Prep a place for our response.
+    var response;
+
+    /*response = await fetch("https://api.meaningcloud.com/class-2.0", requestOptions)
+  .then(response => ({
+    status: response.status, 
+    body: response.json()
+  }))
+  .then(({ status, body }) => console.log(status, body))
+  .catch(error => console.log('error', error));
+
+  */
+
+  //https://api.meaningcloud.com/class-2.0?key=<your_key>&txt=<text>&model=<model>
+
+  var meaningcloud_address = encodeURI("https://api.meaningcloud.com/class-2.0?key="+process.env.MEANINGCLOUD_API_KEY+"&txt="+text+"&model="+model+"&title="+ title);
+    // Do the http request, catch if there is an error.
+    try{
+      const response = await fetch(meaningcloud_address, requestOptions);
+
+      var body = await response.json();
+
+      // check returned status is ok, and send response.
+      if(response.status == 200 && body.status.msg == "OK"){
+        
+        returnVal = {status: "success", message:body};
+      }else{
+        returnVal = {status: "error", message: body};
+      }
+      
+    }catch(error){
+      returnVal = {status: "error", message: error};
+    }
+  
+    return returnVal;
+  }
+
+
+  /**
    * Takes a jquestion ID. Returns question with explaination for the answer.
    * checks if that jquestion id exists
    * if not, return error
