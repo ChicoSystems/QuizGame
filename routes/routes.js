@@ -122,72 +122,6 @@ module.exports = function(app, passport){
   });
 
 
-  /**
-   * call the meaning cloud api with the title and text
-   * and returns the ITPC Category
-   * @param {*} title 
-   * @param {*} text 
-   * @returns 
-   */
-  async function getIPTCCategory(title, text){
-
-    // the meaningcloud code for IPTC
-    var model = "IPTC"; 
-
-    // Setup the return val
-    var returnVal;
-
-    // Create the form data.
-    const formdata = new FormData();
-    formdata.append("key", process.env.MEANINGCLOUD_API_KEY);
-    formdata.append("txt", text);
-    formdata.append("title", title);
-    formdata.append("model", model);
-
-    // Create our request options.
-    const requestOptions = {
-      method: 'POST',
-      body: formdata,
-      redirect: 'follow'
-    };
-
-    // Prep a place for our response.
-    var response;
-
-    /*response = await fetch("https://api.meaningcloud.com/class-2.0", requestOptions)
-  .then(response => ({
-    status: response.status, 
-    body: response.json()
-  }))
-  .then(({ status, body }) => console.log(status, body))
-  .catch(error => console.log('error', error));
-
-  */
-
-  //https://api.meaningcloud.com/class-2.0?key=<your_key>&txt=<text>&model=<model>
-
-  var meaningcloud_address = encodeURI("https://api.meaningcloud.com/class-2.0?key="+process.env.MEANINGCLOUD_API_KEY+"&txt="+text+"&model="+model+"&title="+ title);
-    // Do the http request, catch if there is an error.
-    try{
-      const response = await fetch(meaningcloud_address, requestOptions);
-
-      var body = await response.json();
-
-      // check returned status is ok, and send response.
-      if(response.status == 200 && body.status.msg == "OK"){
-        
-        returnVal = {status: "success", message:body};
-      }else{
-        returnVal = {status: "error", message: body};
-      }
-      
-    }catch(error){
-      returnVal = {status: "error", message: error};
-    }
-  
-    return returnVal;
-  }
-
 
   /**
    * Takes a jquestion ID. Returns question with explaination for the answer.
@@ -919,7 +853,7 @@ module.exports = function(app, passport){
   app.get('/discord/question/auth/', passport.authenticate('discord-bot-login'), async function(req, res){
     //res.send
     var jsonQuestion = await getDiscordQuestion(req, res);
-    console.log("Sending Discord a Question: " + jsonQuestion.question);
+    //console.log("Sending Discord a Question: " + jsonQuestion.question);
     res.json(jsonQuestion);
   });
 
@@ -2007,6 +1941,9 @@ async function getDiscordQuestion(req, res){
 
   // Attempt new query
   var result = await JQuestion.findOne(filter, fields).skip(random);
+
+  
+
   //console.log(result);
 
   // Check if the wrongAnswers field exists in this document, if it doesn't, we're going to
@@ -2032,6 +1969,9 @@ async function getDiscordQuestion(req, res){
     // Attempt new query
      result = await JQuestion.findOne(filter, fields).skip(random);
 
+     
+
+
     //console.log("generating wrong answers for : " + result);
 
 
@@ -2053,6 +1993,8 @@ async function getDiscordQuestion(req, res){
     
     result.oldQuestion = result.question;
     result.question = newQuestion;
+
+    
 
     result.answer = result.answer.toUpperCase();
     
@@ -2135,14 +2077,35 @@ async function getDiscordQuestion(req, res){
 
   var questionType = "jQuestion";
 
-  let copyOfUser = JSON.parse(JSON.stringify(req.user));
-  copyOfUser.questionHistory = null;
+  let copyOfUser = null;
+
+  if(req.user){
+    copyOfUser = JSON.parse(JSON.stringify(req.user));
+    copyOfUser.questionHistory = null;
+  }
+  
+  
+
+  // check if result has ITPC category generated, if it doesn't, then generate it
+  if(result.iptc_category == null){
+    var catArray = await categorizeQuestion(result.category, result.question);
+
+    if(catArray != null && catArray.length == 1){
+      result.iptc_category = catArray[0];
+      result.iptc_subCategory = result.iptc_category + " - General";
+    }else if(catArray != null && catArray.length <= 2){
+      result.iptc_category = catArray[0];
+      result.iptc_subCategory = catArray[1];
+    }
+    await result.save();
+  }
 
 
   discordQuestionToReturn = 
       {
         "id": result._id,
-        "category": result.category,
+        "category": result.iptc_category,
+        "subCategory": result.iptc_subCategory,
         "question": result.question,
         "answer": result.answer,
         "answers": answers,
@@ -2284,7 +2247,7 @@ async function renderJQuestion(req, res){
 
   // Attempt new query
   var result = await JQuestion.findOne(filter, fields).skip(random);
-  console.log(result);
+  //console.log(result);
 
   // Check if the wrongAnswers field exists in this document, if it doesn't, we're going to
   // generate wrong answers with chatGPT
@@ -2389,10 +2352,33 @@ async function renderJQuestion(req, res){
 
   var questionType = "jQuestion";
 
+  // check if result has ITPC category generated, if it doesn't, then generate it
+  if(result.iptc_category == null){
+    var catArray = await categorizeQuestion(result.category, result.question);
+
+    if(catArray != null && catArray.length == 1){
+      result.iptc_category = catArray[0];
+      result.iptc_subCategory = result.iptc_category + " - General";
+    }else if(catArray != null && catArray.length <= 2){
+      result.iptc_category = catArray[0];
+      result.iptc_subCategory = catArray[1];
+    }
+    await result.save();
+  }
+
+  var cat = null;
+
+  if(result.iptc_subCategory != null){
+    cat = result.iptc_subCategory.toUpperCase();
+  }else{
+    cat = result.category;
+  }
+  
+
 
   res.render('index.ejs', {
     title: "Quiz Game",
-    category: result.category,
+    category: cat,
     question: result.question,
     answer  : result.answer,
     answers : answers,
@@ -2475,7 +2461,7 @@ async function chatGPT(inputString){
   returnString = returnString.replace(/\.\s/g, " ");
   //returnString = returnString.replace(/./g, '');
 
-  console.log(returnString);
+  /////console.log(returnString);
   return returnString;
 }
 
@@ -2487,4 +2473,90 @@ function getRandomIntInclusive(min, max) {
   min = Math.ceil(min);
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min + 1)) + min; //The maximum is inclusive and the minimum is inclusive 
+}
+
+/**
+   * call the meaning cloud api with the title and text
+   * and returns the ITPC Category
+   * @param {*} title 
+   * @param {*} text 
+   * @returns 
+   */
+async function getIPTCCategory(title, text){
+
+  // the meaningcloud code for IPTC
+  var model = "IPTC"; 
+
+  // Setup the return val
+  var returnVal;
+
+  // Create the form data.
+  const formdata = new FormData();
+  formdata.append("key", process.env.MEANINGCLOUD_API_KEY);
+  formdata.append("txt", text);
+  formdata.append("title", title);
+  formdata.append("model", model);
+
+  // Create our request options.
+  const requestOptions = {
+    method: 'POST',
+    body: formdata,
+    redirect: 'follow'
+  };
+
+  // Prep a place for our response.
+  var response;
+
+  // Create the url, the form data above doesn't seem to matter.
+  var meaningcloud_address = encodeURI("https://api.meaningcloud.com/class-2.0?key="+process.env.MEANINGCLOUD_API_KEY+"&txt="+text+"&model="+model+"&title="+ title);
+  // Do the http request, catch if there is an error.
+  try{
+    const response = await fetch(meaningcloud_address, requestOptions);
+
+    var body = await response.json();
+
+    // check returned status is ok, and send response.
+    if(response.status == 200 && body.status.msg == "OK"){
+      
+      returnVal = {status: "success", message:body};
+    }else{
+      returnVal = {status: "error", message: body};
+    }
+    
+  }catch(error){
+    returnVal = {status: "error", message: error};
+  }
+
+
+
+  return returnVal;
+}
+
+async function categorizeQuestion(title, text){
+  //clean the title and text of " and '
+  text = text.replace(/["']/g, "");
+  title = title.replace(/["']/g, "");
+
+  var catObject = await getIPTCCategory(title, text);
+  var categorization = null;
+
+  if(catObject.status == "success"){
+    category_list = catObject.message.category_list;
+
+    if(category_list.length >= 1){
+      categorization = category_list[0].label;
+    }else{
+      return null;
+    }
+  }
+
+  // break the categorization string on -, everything before - is category, every after - is subcategory
+  var catArray = categorization.split("-");
+
+  // trim every string in array
+  for(i in catArray){
+    catArray[i] = catArray[i].trim();
+  }
+
+  return catArray;
 }
