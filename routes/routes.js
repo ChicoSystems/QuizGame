@@ -837,6 +837,7 @@ module.exports = function(app, passport){
   app.get('/discord/question/auth/', passport.authenticate('discord-bot-login'), async function(req, res){
     //res.send
     var jsonQuestion = await getDiscordQuestion(req, res);
+    console.log("Sending Discord a Question: " + jsonQuestion.question);
     res.json(jsonQuestion);
   });
 
@@ -1924,7 +1925,7 @@ async function getDiscordQuestion(req, res){
 
   // Attempt new query
   var result = await JQuestion.findOne(filter, fields).skip(random);
-  console.log(result);
+  //console.log(result);
 
   // Check if the wrongAnswers field exists in this document, if it doesn't, we're going to
   // generate wrong answers with chatGPT
@@ -1949,7 +1950,7 @@ async function getDiscordQuestion(req, res){
     // Attempt new query
      result = await JQuestion.findOne(filter, fields).skip(random);
 
-    console.log("generating wrong answers for : " + result);
+    //console.log("generating wrong answers for : " + result);
 
 
     //if(true){ // REMOVE THIS AND REPLACE WITH ABOVE
