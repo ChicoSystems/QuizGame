@@ -2052,6 +2052,9 @@ async function getDiscordQuestion(req, res){
 
   var questionType = "jQuestion";
 
+  let copyOfUser = JSON.parse(JSON.stringify(req.user));
+  copyOfUser.questionHistory = null;
+
 
   discordQuestionToReturn = 
       {
@@ -2061,7 +2064,7 @@ async function getDiscordQuestion(req, res){
         "answer": result.answer,
         "answers": answers,
         "answerIndex": answerIndex,
-        "user": req.user,
+        "user": copyOfUser,   // we want to remove the user history from the user before sending.
         "session": req.session
       }
   
