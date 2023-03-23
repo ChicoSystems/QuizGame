@@ -2351,19 +2351,19 @@ async function chatGPT2(inputString, responseNumToGenerate = 2){
          choiceMessage.toLowerCase().includes("openai")){
          
           numFiltered++;
-          console.log("\nfiltering out response: " + choiceMessage);
+          //console.log("\nfiltering out response: " + choiceMessage);
       }else{
         numAdded++;
-        console.log("\nAdding Response: " + choiceMessage);
+        //console.log("\nAdding Response: " + choiceMessage);
         returnChoices.push(choiceMessage);
       }
     }
-    console.log("\nfiltered: " + numFiltered + " Added: " + numAdded);
+    //console.log("\nfiltered: " + numFiltered + " Added: " + numAdded);
   }catch(error){
     return {error: error};//res.json({"error": error.toString()})
   }
   
-  console.log("\n\n\n\n\n");
+  //console.log("\n\n\n\n\n");
   return returnChoices;
 }
 
