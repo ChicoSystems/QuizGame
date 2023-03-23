@@ -2093,7 +2093,7 @@ async function getDiscordQuestion(req, res){
     if(catArray != null && catArray.length == 1){
       result.iptc_category = catArray[0];
       result.iptc_subCategory = result.iptc_category + " - General";
-    }else if(catArray != null && catArray.length <= 2){
+    }else if(catArray != null && catArray.length >= 2){
       result.iptc_category = catArray[0];
       result.iptc_subCategory = catArray[1];
     }
@@ -2359,7 +2359,7 @@ async function renderJQuestion(req, res){
     if(catArray != null && catArray.length == 1){
       result.iptc_category = catArray[0];
       result.iptc_subCategory = result.iptc_category + " - General";
-    }else if(catArray != null && catArray.length <= 2){
+    }else if(catArray != null && catArray.length >= 2){
       result.iptc_category = catArray[0];
       result.iptc_subCategory = catArray[1];
     }
@@ -2491,16 +2491,16 @@ async function getIPTCCategory(title, text){
   var returnVal;
 
   // Create the form data.
-  const formdata = new FormData();
-  formdata.append("key", process.env.MEANINGCLOUD_API_KEY);
-  formdata.append("txt", text);
-  formdata.append("title", title);
-  formdata.append("model", model);
+  //const formdata = new FormData();
+  //formdata.append("key", process.env.MEANINGCLOUD_API_KEY);
+  //formdata.append("txt", text);
+  //formdata.append("title", title);
+  //formdata.append("model", model);
 
   // Create our request options.
   const requestOptions = {
     method: 'POST',
-    body: formdata,
+    //body: formdata,
     redirect: 'follow'
   };
 
