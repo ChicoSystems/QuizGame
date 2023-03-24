@@ -957,6 +957,8 @@ module.exports = function(app, passport){
       }else{
         user.gameinfo.score--;
       }
+
+      user.categoryTracker = await updateCategoryTracker(user.categoryTracker, question_id, isAnswerCorrect);
       
       await user.save();
 
@@ -989,73 +991,6 @@ module.exports = function(app, passport){
     discordLogAnswer(isAnswerCorrect, req, res);
   });
 
-
-  //user clicked on a wrong answer
-  app.get('/discord/wrongAnswer/:question_id/:user_id/:user_name', async function(req, res, done){
-    var question_id = req.params.question_id;
-    var user_id = req.params.user_id;
-    var user_name = req.params.user_name;
-
-    console.log("user: " + user_name + " got question wrong: " + question_id);
-
-    var user = null;
-    if(req.user){
-      user = req.user;
-    }else{
-      user = await Users.findOne({ 'discord.id' :  user_id }).exec();
-    }
-
-
-    //if there is a user signed in update his history and score
-    if(user && user != null){
-      //var user = req.user;
-
-      //find question in users question history
-      var questionFound = false;
-      var qIndex = null;
-      var qidToFind = question_id;
-      for(var i = 0; i < user.questionHistory.length; i++){
-        //console.log(user.questionHistory[i]);
-        if(user.questionHistory[i].qid == qidToFind &&
-           user.questionHistory[i].type == "jQuestion"){
-          questionFound = true;
-          qIndex = i;
-        }
-      }
-
-      //if question was found in question history, update it, otherwise create a new one
-      if(questionFound){
-        //the question was found at index qIndex, modify correct field
-        user.questionHistory[qIndex].wrongattempts++;
-      }else{
-        //the question was not found, create a new one, and add it to user
-        var newHistory = {
-          type : "jQuestion",
-          qid : question_id,
-          wrongattempts: 1,
-          rightattempts: 0
-        };
-        user.questionHistory.push(newHistory);// = questionHistory;
-      }
-
-      //update score, and save user back to db
-      //////req.session.score = req.session.score - 1;
-      //////user.gameinfo.score = req.session.score;
-      user.gameinfo.score--;
-      user.save();
-
-      //let front end know
-      res.send({
-        message: "ok",
-        score  : user.gameinfo.score
-      });
-    }else{
-      //user is not signed in, send error to client
-      res.send({
-        message: "error"
-      });
-    }
-  });
 
 
   app.get('/discord/scoreboard', async function(req, res, done){
@@ -1103,7 +1038,8 @@ module.exports = function(app, passport){
   });
 
   //user clicked on a wrong answer
-  app.get('/wronganswer/:questionType/:questionId', function(req, res, done){
+  app.get('/wronganswer/:questionType/:questionId', async function(req, res, done){
+    var isAnswerCorrect = false;
     console.log("wronganswer");
     //if there is a user signed in update his history and score
     if(req.user){
@@ -1140,6 +1076,7 @@ module.exports = function(app, passport){
       //update score, and save user back to db
       req.session.score = req.session.score - 1;
       user.gameinfo.score = req.session.score;
+      user.categoryTracker = await updateCategoryTracker(user.categoryTracker, req.params.questionId, isAnswerCorrect);
       user.save();
 
       //let front end know
@@ -1156,7 +1093,8 @@ module.exports = function(app, passport){
   });
 
   //user clicked on a right answer
-  app.get('/rightanswer/:questionType/:questionId', function(req, res, done){
+  app.get('/rightanswer/:questionType/:questionId', async function(req, res, done){
+    var isAnswerCorrect = true;
     //if user is logged in, update score and record question, otherwise send error message
     if(req.user){
       console.log("rightanswer");
@@ -1193,6 +1131,7 @@ module.exports = function(app, passport){
       //update that score to the db
       req.session.score = req.session.score + 5;
       user.gameinfo.score = req.session.score;
+      user.categoryTracker = await updateCategoryTracker(user.categoryTracker, req.params.questionId, isAnswerCorrect);
       user.save();
       
       //let front end know
@@ -2468,7 +2407,6 @@ async function chatGPT(inputString){
 function functionTest(){
   console.log("functionTEST CALLED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 }
-
 function getRandomIntInclusive(min, max) {
   min = Math.ceil(min);
   max = Math.floor(max);
@@ -2559,4 +2497,130 @@ async function categorizeQuestion(title, text){
   }
 
   return catArray;
+}
+
+
+
+/**
+ * Updates a users category tracker object.
+ * Looks up a question via the question id, and gets that questions iptc_category and subcategory
+ * then it updates that specific category and subcategory counts with if the answer is correct or now.
+ * @param {*} categoryTrackerObject The user object categoryTrackerObject, defined in user models
+ * @param {*} question_id The id of the quesition we are updateing the users category tracker for
+ * @param {*} isAnswerCorrect Did the user get this question correct?
+ * @returns 
+ */
+async function updateCategoryTracker(categoryTrackerObject, question_id, isAnswerCorrect){
+
+  // Setup our db filter, to query the id of our quesiton
+  var filter = { _id: new ObjectId(question_id) };
+
+  // Get the question from the DB
+  var questionObject = await JQuestion.findOne(filter, {}).exec();
+
+  // Check if we found the given quesiton if we didn't just return the categoryTrackerObject without mutating it
+  if(questionObject == null){
+    return categoryTrackerObject;
+  }
+
+  // Check to see if the given question has a iptc_category associated with it
+  if(questionObject.iptc_category == null){
+
+    //The iptc category doesn't exist, make it exist
+    var catArray = await categorizeQuestion(questionObject.category, questionObject.question);
+
+    if(catArray != null && catArray.length == 1){
+      questionObject.iptc_category = catArray[0];
+      questionObject.iptc_subCategory = questionObject.iptc_category + " - General";
+    }else if(catArray != null && catArray.length >= 2){
+      questionObject.iptc_category = catArray[0];
+      questionObject.iptc_subCategory = catArray[1];
+    }else if(catArray == null){
+       // we were not successful it getting a categorization for this object return
+       console.log("iptc_category is null, skipping category tracking for this question");
+       return categoryTrackerObject; // just return the object that was input
+    }
+    await questionObject.save();
+  }
+
+  // Now we should know the iptc exists, if it doesn't exist still, just return the categoryTrackerObject so we don't mess up categoryTracker
+  if(questionObject.iptc_category == null){
+    return categoryTrackerObject;
+  }
+
+  // If the category tracker object is null, create one
+  if(categoryTrackerObject == null){
+    categoryTrackerObject = await Users.createNewCategoryTracker();
+  }
+
+ 
+
+   // now that we are sure a categoryTrackerObject exists, we can check if it has the given category available
+  var categoryTrackerSchema = categoryTrackerObject.get(questionObject.iptc_category);
+
+  // If the given category is not available, then construct one.
+  if(categoryTrackerSchema == null){
+    categoryTrackerSchema = await Users.createNewCategoryTrackerSchema();
+  }
+
+  // CAN:T DO BELOW, SUBCATEGORIES IS NULL, WE NEED TO CHECK
+  if(categoryTrackerSchema.subcategories == null){
+    categoryTrackerSchema.subcategories = new Map();
+  }
+
+  // now that we know this categoryTrackerSchema exists, try to get it's subcategory
+  var subcategoryTrackerSchema = categoryTrackerSchema.subcategories.get(questionObject.iptc_subCategory);
+
+  // If the given sub category is not available, then construct one
+  if(subcategoryTrackerSchema == null){
+    subcategoryTrackerSchema = await Users.createNewSubCategoryTrackerSchema();
+  }
+
+  // Now that we know a subcategoryTrackerSchema exists, attempt to get the stats object from it
+  var subcategoryStatsSchema = subcategoryTrackerSchema.stats;
+
+  if(subcategoryStatsSchema == null){
+
+    // create it
+    subcategoryStatsSchema = await Users.createNewCategoryStatsSchema();
+  }
+
+  // do the same thing with the category stats
+  var categoryStatsSchema = categoryTrackerSchema.stats;
+
+  if(categoryStatsSchema == null){
+
+    // create it
+    categoryStatsSchema = await Users.createNewCategoryStatsSchema();
+  }
+
+
+  // update attempts total for both the subcategory and the category
+  categoryStatsSchema.attemptsTotal = categoryStatsSchema.attemptsTotal + 1;
+  subcategoryStatsSchema.attemptsTotal = subcategoryStatsSchema.attemptsTotal + 1;
+
+  // If the answer is correct, increment attemptsCorrect, if not increment attemptsWrong, for both category and subcategory
+  if(isAnswerCorrect){
+    categoryStatsSchema.attemptsCorrect = categoryStatsSchema.attemptsCorrect + 1;
+    subcategoryStatsSchema.attemptsCorrect = subcategoryStatsSchema.attemptsCorrect + 1;
+  }else{
+    categoryStatsSchema.attemptsWrong = categoryStatsSchema.attemptsWrong + 1;
+    subcategoryStatsSchema.attemptsWrong = subcategoryStatsSchema.attemptsWrong + 1;
+  }
+
+  // save the stats schemas back to the tracker schema's
+  subcategoryTrackerSchema.stats = subcategoryStatsSchema;
+  categoryTrackerSchema.stats = subcategoryStatsSchema;
+
+  // Add the subcategoryTracker to the subcategories map
+  categoryTrackerSchema.subcategories.set(questionObject.iptc_subCategory, subcategoryTrackerSchema);
+
+  // add the category tracker schema back to the category tracker object map
+  categoryTrackerObject.set(questionObject.iptc_category, categoryTrackerSchema);
+
+  console.log(questionObject.iptc_category);
+  console.log(questionObject.iptc_subCategory);
+
+  // Then we can return the category tracker object
+  return categoryTrackerObject;
 }
