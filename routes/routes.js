@@ -1028,6 +1028,7 @@ module.exports = function(app, passport){
     var random = rwc(rwcTable[difficulty]);
 
     /////if(random == 0){
+      
       renderJQuestion(req, res);
       /////renderQuizQuestion(req, res);
     /*}else if(random == 1){
@@ -2177,6 +2178,8 @@ async function renderJQuestion(req, res){
   //first we get a random question from the JQuestions   
   ///////var filter = {}; // this filter queries the entire jQuestion database, chat gpt will be used to transform questions
   var filter = {wrongAnswers: {$exists: true}}; // This filter queries questions in the db, where wrong answers exist, this means that chatgpt will not be used
+ ///// 580bf082fcbec2c1d89c3367
+  
   var fields = {}; //only pull up the answers
 
   // Get a random entry
@@ -2512,6 +2515,10 @@ async function categorizeQuestion(title, text){
  */
 async function updateCategoryTracker(categoryTrackerObject, question_id, isAnswerCorrect){
 
+
+  // DEBUG TAKE THIS OUT FOR THE LOVE OF GOD ISAAC
+  question_id = "580bf082fcbec2c1d89c3367";
+
   // Setup our db filter, to query the id of our quesiton
   var filter = { _id: new ObjectId(question_id) };
 
@@ -2560,7 +2567,7 @@ async function updateCategoryTracker(categoryTrackerObject, question_id, isAnswe
 
   // If the given category is not available, then construct one.
   if(categoryTrackerSchema == null){
-    categoryTrackerSchema = await Users.createNewCategoryTrackerSchema();
+    categoryTrackerSchema = await Users.createNewCategoryTrackerSchema(questionObject.iptc_category);
   }
 
   // CAN:T DO BELOW, SUBCATEGORIES IS NULL, WE NEED TO CHECK
@@ -2571,9 +2578,10 @@ async function updateCategoryTracker(categoryTrackerObject, question_id, isAnswe
   // now that we know this categoryTrackerSchema exists, try to get it's subcategory
   var subcategoryTrackerSchema = categoryTrackerSchema.subcategories.get(questionObject.iptc_subCategory);
 
+
   // If the given sub category is not available, then construct one
   if(subcategoryTrackerSchema == null){
-    subcategoryTrackerSchema = await Users.createNewSubCategoryTrackerSchema();
+    subcategoryTrackerSchema = await Users.createNewSubCategoryTrackerSchema(questionObject.iptc_subCategory);
   }
 
   // Now that we know a subcategoryTrackerSchema exists, attempt to get the stats object from it
@@ -2610,7 +2618,8 @@ async function updateCategoryTracker(categoryTrackerObject, question_id, isAnswe
 
   // save the stats schemas back to the tracker schema's
   subcategoryTrackerSchema.stats = subcategoryStatsSchema;
-  categoryTrackerSchema.stats = subcategoryStatsSchema;
+  categoryTrackerSchema.stats = categoryStatsSchema;
+
 
   // Add the subcategoryTracker to the subcategories map
   categoryTrackerSchema.subcategories.set(questionObject.iptc_subCategory, subcategoryTrackerSchema);

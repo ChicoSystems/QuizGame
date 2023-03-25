@@ -90,17 +90,18 @@ userSchema.statics.createNewCategoryTracker =
     }
 
 userSchema.statics.createNewCategoryTrackerSchema = 
-    async function createNewCategoryTrackerSchema(){
+    async function createNewCategoryTrackerSchema(newName){
         var category_tracker = new CategoryTrackerModel();
+        category_tracker.name = newName;
     
         return category_tracker;
     }
 
     
 userSchema.statics.createNewSubCategoryTrackerSchema = 
-    async function createNewSubCategoryTrackerSchema(){
+    async function createNewSubCategoryTrackerSchema(newName){
         var subcategory_tracker = new SubCategoryTrackerModel();
-
+        subcategory_tracker.name = newName;
         return subcategory_tracker;
     }
 
