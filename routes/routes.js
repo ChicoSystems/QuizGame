@@ -108,6 +108,35 @@ module.exports = function(app, passport){
 
 
   /**
+   * Return the category tracker object for a user of a specific id in the message
+   * {status: "status here", message: object/errormessage }
+   */
+  app.get('/getcategorytracker/user/:user_id', async function(req, res){
+
+    // Attempt to get this user from the db
+    var user = await Users.findOne({ 'discord.id' :  req.params.user_id }).exec();
+
+    // perhpas this isn't a discord user id, it might be the user id for another type of user using the generic id 
+    if(user == null){
+      user = await Users.findOne({_id: new ObjectId(req.params.user_id)}).exec();
+    }
+
+    // if the user hasn't been found with their either of these, they don't exist
+    if(user == null){
+      res.send({status: "error", message: "User Has Not Been Found In DB: " + req.params.user_id})
+    }
+
+    // Now we know the user has been found. Do they have a categoryTracker object that is not null
+    if(user.categoryTracker == null){
+      res.send({status: "error", message: "User Does Not Have Any Category Statistics"});
+    }
+
+    // now we know the category statistics have been found. Send them to the user
+    res.send({status: "success", message: user.categoryTracker});
+  });
+
+
+  /**
    * A test route to test the function meaningCloudCategorize(title, text)
    * function
    */
