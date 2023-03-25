@@ -2516,8 +2516,8 @@ async function categorizeQuestion(title, text){
 async function updateCategoryTracker(categoryTrackerObject, question_id, isAnswerCorrect){
 
 
-  // DEBUG TAKE THIS OUT FOR THE LOVE OF GOD ISAAC
-  question_id = "580bf082fcbec2c1d89c3367";
+  // DEBUG TAKE THIS OUT FOR THE LOVE OF GOD ISAAC - lol i did forget
+  ///////question_id = "580bf082fcbec2c1d89c3367";
 
   // Setup our db filter, to query the id of our quesiton
   var filter = { _id: new ObjectId(question_id) };
