@@ -2630,7 +2630,8 @@ async function updateCategoryTracker(categoryTrackerObject, question_id, isAnswe
  
 
    // now that we are sure a categoryTrackerObject exists, we can check if it has the given category available
-  var categoryTrackerSchema = categoryTrackerObject.get(questionObject.iptc_category);
+  //var categoryTrackerSchema = categoryTrackerObject.get(questionObject.iptc_category);
+  var categoryTrackerSchema = categoryTrackerObject[questionObject.iptc_category];
 
   // If the given category is not available, then construct one.
   if(categoryTrackerSchema == null){
@@ -2643,7 +2644,8 @@ async function updateCategoryTracker(categoryTrackerObject, question_id, isAnswe
   }
 
   // now that we know this categoryTrackerSchema exists, try to get it's subcategory
-  var subcategoryTrackerSchema = categoryTrackerSchema.subcategories.get(questionObject.iptc_subCategory);
+  //var subcategoryTrackerSchema = categoryTrackerSchema.subcategories.get(questionObject.iptc_subCategory);
+  subcategoryTrackerSchema = categoryTrackerSchema.subcategories[questionObject.iptc_subCategory];
 
 
   // If the given sub category is not available, then construct one
@@ -2689,10 +2691,12 @@ async function updateCategoryTracker(categoryTrackerObject, question_id, isAnswe
 
 
   // Add the subcategoryTracker to the subcategories map
-  categoryTrackerSchema.subcategories.set(questionObject.iptc_subCategory, subcategoryTrackerSchema);
+  //categoryTrackerSchema.subcategories.set(questionObject.iptc_subCategory, subcategoryTrackerSchema);
+  categoryTrackerSchema.subcategories[questionObject.iptc_subCategory] = subcategoryTrackerSchema
 
   // add the category tracker schema back to the category tracker object map
-  categoryTrackerObject.set(questionObject.iptc_category, categoryTrackerSchema);
+  //categoryTrackerObject.set(questionObject.iptc_category, categoryTrackerSchema);
+  categoryTrackerObject[questionObject.iptc_category] = categoryTrackerSchema;
 
   console.log(questionObject.iptc_category);
   console.log(questionObject.iptc_subCategory);
