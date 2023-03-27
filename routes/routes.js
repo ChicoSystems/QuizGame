@@ -19,6 +19,8 @@ var StateResponse = require('../models/StateResponse') ;
 var ObjectId                = require('mongoose').Types.ObjectId;
 var util = require('util');
 var fetch = require('node-fetch');
+var cron = require('node-cron');
+
 
 const { Configuration, OpenAIApi } = require("openai");
 require('dotenv').config();
@@ -74,6 +76,17 @@ rwcTable.push(rwc1);
 rwcTable.push(rwc2);
 rwcTable.push(rwc3);
 rwcTable.push(rwc4);
+
+// Schedule a question to be generated every minute the script is running.
+cron.schedule('* * * * *', async () => {
+  console.log("About To Generate A  few question...");
+
+  for(i = 0; i < 5; i++){
+    var discordQuestion = await getDiscordQuestion(null, null);
+    console.log('Generating A Question: ' + discordQuestion.question);
+  }
+  
+});
 
 module.exports = function(app, passport){
 
@@ -1911,7 +1924,7 @@ async function getDiscordQuestion(req, res){
   var random = Math.floor(Math.random() * count)
 
   // Attempt new query
-  var result = await JQuestion.findOne(filter, fields).skip(random);
+  let result = await JQuestion.findOne(filter, fields).skip(random);
 
   
 
@@ -1949,8 +1962,8 @@ async function getDiscordQuestion(req, res){
     //if(true){ // REMOVE THIS AND REPLACE WITH ABOVE
     // If we have no generated answers, we have also not cleaned the question.
     // use chatgpt to clean the question
-    newQuestion = await chatGPT("The answer to this jeopardy question is: "+result.answer+". Rewrite this jeopardy question to be a normal question: '" +result.question+ "'. Do not include the answer in the question.");
-    wrongAnswerString = await chatGPT("The answer to the following question is " + result.answer + ". Come up with 11 wrong answers. The question is: " + result.question + " Seperate Answers with a comma.");
+    let newQuestion = await chatGPT("The answer to this jeopardy question is: "+result.answer+". Rewrite this jeopardy question to be a normal question: '" +result.question+ "'. Do not include the answer in the question.");
+    let wrongAnswerString = await chatGPT("The answer to the following question is " + result.answer + ". Come up with 11 wrong answers. The question is: " + result.question + " Seperate Answers with a comma.");
     
     // if the wrong answer string ends witha  ., remove it
     if(wrongAnswerString.charAt(wrongAnswerString.length - 1) == '.'){
@@ -2003,18 +2016,21 @@ async function getDiscordQuestion(req, res){
           return;
         }else{
           result.wrongAnswers = wrongAnswers;
-          result.save();
+          await result.save();
+         // console.log("saving new question1 : " + result.question);
         }
 
         
       }else{
         result.wrongAnswers = wrongAnswers;
-        result.save();
+        await result.save();
+       // console.log("saving new question2 : " + result.question);
       }
       
     }else{
       result.wrongAnswers = wrongAnswers;
-      result.save();
+      await result.save();
+      //console.log("saving new question3 : " + result.question);
     }
 
     
@@ -2032,7 +2048,7 @@ async function getDiscordQuestion(req, res){
 
 
   //if signed in, save score into session
-  if(req.user) req.session.score = req.user.gameinfo.score;
+  if(req != null && req.user) req.session.score = req.user.gameinfo.score;
 
   // Mix the correct answer up with the wrong answers
   var answerIndex = Math.floor(Math.random() * 12);
@@ -2050,7 +2066,7 @@ async function getDiscordQuestion(req, res){
 
   let copyOfUser = null;
 
-  if(req.user){
+  if(req && req.user){
     copyOfUser = JSON.parse(JSON.stringify(req.user));
     copyOfUser.questionHistory = null;
   }
@@ -2069,7 +2085,11 @@ async function getDiscordQuestion(req, res){
       result.iptc_subCategory = catArray[1];
     }
     await result.save();
+    console.log("saving new question4 : " + result.iptc_subCategory);
   }
+
+  var returnSession = null;
+  if(req && req.session) returnSession = req.session;
 
 
   discordQuestionToReturn = 
@@ -2082,7 +2102,7 @@ async function getDiscordQuestion(req, res){
         "answers": answers,
         "answerIndex": answerIndex,
         "user": copyOfUser,   // we want to remove the user history from the user before sending.
-        "session": req.session
+        "session": returnSession
       }
   
 
