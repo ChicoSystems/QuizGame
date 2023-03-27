@@ -77,6 +77,33 @@ rwcTable.push(rwc2);
 rwcTable.push(rwc3);
 rwcTable.push(rwc4);
 
+ /**
+   * Takes a question object, runs the question and it's answer through GPT to
+   * get an explaination for the answer, and returns the answer alone
+   * @param {*} questionObject 
+   * @returns A string explaination of the answer to the input question.
+   */
+ async function explainQuestionsAnswer(questionObject){
+    
+  // Have a place to store our return value
+  var returnVal;
+
+  // Get the question and answers text
+  var questionText = questionObject.question;
+  var answerText = questionObject.answer;
+
+  // Form a question to ask GPT
+  var gptInput = "The answer for the following question is: '" + answerText + "'. The question is: '" + questionText + "'. In two sentences explain why the answer '" + answerText + "' is correct.";
+  var gptOutput = await chatGPT2(gptInput, 1);
+
+  if(gptOutput.length == 0 ) return null;
+
+  // We only asked for one output, so save that output to return val
+  returnVal  = gptOutput[0].replace(/\\n/g, "");
+
+  return returnVal;
+}
+
 // Schedule a question to be generated every minute the script is running.
 cron.schedule('* * * * *', async () => {
   console.log("About To Generate A  few question...");
@@ -216,32 +243,7 @@ module.exports = function(app, passport){
   });
 
 
-  /**
-   * Takes a question object, runs the question and it's answer through GPT to
-   * get an explaination for the answer, and returns the answer alone
-   * @param {*} questionObject 
-   * @returns A string explaination of the answer to the input question.
-   */
-  async function explainQuestionsAnswer(questionObject){
-    
-    // Have a place to store our return value
-    var returnVal;
-
-    // Get the question and answers text
-    var questionText = questionObject.question;
-    var answerText = questionObject.answer;
-
-    // Form a question to ask GPT
-    var gptInput = "The answer for the following question is: '" + answerText + "'. The question is: '" + questionText + "'. In two sentences explain why the answer '" + answerText + "' is correct.";
-    var gptOutput = await chatGPT2(gptInput, 1);
-
-    if(gptOutput.length == 0 ) return null;
-
-    // We only asked for one output, so save that output to return val
-    returnVal  = gptOutput[0].replace(/\\n/g, "");
-
-    return returnVal;
-  }
+ 
 
 
   /**
@@ -2086,6 +2088,20 @@ async function getDiscordQuestion(req, res){
     }
     await result.save();
     console.log("saving new question4 : " + result.iptc_subCategory);
+  }
+
+
+  // Question does exist, does question.explaination
+  if(result.explaination == null){
+
+    // The question does not contain an explaination. Get one for it
+    var explaination = await explainQuestionsAnswer(result);
+
+    // Save this explaination to the question
+    result.explaination = explaination;
+
+    // Save this question with explaination included, back to the db.
+    await result.save();
   }
 
   var returnSession = null;
