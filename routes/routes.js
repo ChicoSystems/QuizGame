@@ -114,21 +114,23 @@ module.exports = function(app, passport){
   app.get('/getcategorytracker/user/:user_id', async function(req, res){
 
     // Attempt to get this user from the db
-    var user = await Users.findOne({ 'discord.id' :  req.params.user_id }).exec();
+    var user = await Users.findOne({ 'discord.id' :  req.params.user_id }).populate().exec();
 
     // perhpas this isn't a discord user id, it might be the user id for another type of user using the generic id 
     if(user == null){
-      user = await Users.findOne({_id: new ObjectId(req.params.user_id)}).exec();
+      user = await Users.findOne({_id: new ObjectId(req.params.user_id)}).populate().exec();
     }
 
     // if the user hasn't been found with their either of these, they don't exist
     if(user == null){
       res.send({status: "error", message: "User Has Not Been Found In DB: " + req.params.user_id})
+      return;
     }
 
     // Now we know the user has been found. Do they have a categoryTracker object that is not null
     if(user.categoryTracker == null){
       res.send({status: "error", message: "User Does Not Have Any Category Statistics"});
+      return;
     }
 
     // now we know the category statistics have been found. Send them to the user

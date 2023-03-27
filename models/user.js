@@ -31,7 +31,7 @@ const SubCategoryTrackerModel = mongoose.model("SubCategoryTrackerSchema", subca
 var categoryTrackerSchema = mongoose.Schema({
     name            : String,
     stats           : categoryStatsSchema,
-    subcategories   : {type: Map, of: subcategoryTrackerSchema}
+    subcategories   : mongoose.Schema.Types.Mixed//{type: Map, of: subcategoryTrackerSchema, ref: "SubCategoryTrackerSchema"}
 });
 const CategoryTrackerModel = mongoose.model("CategoryTrackerSchema", categoryTrackerSchema);
 
@@ -80,7 +80,7 @@ var userSchema = mongoose.Schema({
     },
     questionHistory : [historySchema],
     difficulty      : {type: Number, default: 2},
-    categoryTracker : {type: Map, of: categoryTrackerSchema } 
+    categoryTracker : mongoose.Schema.Types.Mixed//{type: Map, of: categoryTrackerSchema } 
 
 });
 
