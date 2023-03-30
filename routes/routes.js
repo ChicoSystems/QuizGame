@@ -1917,7 +1917,8 @@ async function getDiscordQuestion(req, res){
   
   //first we get a random question from the JQuestions   
   /////////var filter = {}; // this filter queries the entire jQuestion database, chat gpt will be used to transform questions
-  var filter = {wrongAnswers: {$exists: true}}; // This filter queries questions in the db, where wrong answers exist, this means that chatgpt will not be used
+var filter = {wrongAnswers: {$exists: true}, iptc_category: {$exists: true}};
+	//  var filter = {wrongAnswers: {$exists: true}}; // This filter queries questions in the db, where wrong answers exist, this means that chatgpt will not be used
   var fields = {}; //only pull up the answers
 
   // Get a random entry
@@ -1938,7 +1939,9 @@ async function getDiscordQuestion(req, res){
 
    // If there are already responses, we will calculate the chance of needing to create more responses, vs just reading a random response from the db
 	//       // g(x) = 1 - (x/a)^n -.5     Where n=2, and a = 2000, means the chance doesn't go to 0 until x gets to 1414, and there is immediately a 50% chance of create a new one when x is 1
-	var chanceOfMakingNewResponses = (1 - (count / 2000) - .5) + .5;
+	//var chanceOfMakingNewResponses = (1 - (count / 2000) - .2) + .8;
+	////////var chanceOfMakingNewResponses = Math.pow(.9999, count); // f(x) = ab^x where a is 1
+	var chanceOfMakingNewResponses = 0;
   
 	random = Math.random();
 	
