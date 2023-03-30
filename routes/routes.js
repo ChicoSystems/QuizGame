@@ -105,6 +105,7 @@ rwcTable.push(rwc4);
 }
 
 // Schedule a question to be generated every minute the script is running.
+/*
 cron.schedule('* * * * *', async () => {
   console.log("About To Generate A  few question...");
 
@@ -114,6 +115,7 @@ cron.schedule('* * * * *', async () => {
   }
   
 });
+*/
 
 module.exports = function(app, passport){
 
