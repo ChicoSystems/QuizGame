@@ -249,7 +249,7 @@ function editJQuestionClicked(){
   var wrongAnswer7 = $("#jQuestionWrongAnswers7").val();
   var wrongAnswer8 = $("#jQuestionWrongAnswers8").val();
   var wrongAnswer9 = $("#jQuestionWrongAnswers9").val();
-  var wrongAnswer10 = $("#jQuestionWrongAnswers0").val();
+  var wrongAnswer10 = $("#jQuestionWrongAnswers10").val();
   
 
   
