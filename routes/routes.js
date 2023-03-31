@@ -1556,6 +1556,34 @@ module.exports = function(app, passport){
       questionToEdit.category = req.body.category;
       questionToEdit.question = req.body.question;
       questionToEdit.answer = req.body.answer;
+
+      if(req.body.explaination){
+        questionToEdit.explaination = req.body.explaination;
+      }
+      
+
+      var wrongAnswers = [];
+      // save wrongAnswers if it exists and is not empty
+      if(req.body.wrongAnswer0 && req.body.wrongAnswer1 && req.body.wrongAnswer2 &&
+         req.body.wrongAnswer3 && req.body.wrongAnswer4 && req.body.wrongAnswer5 &&
+         req.body.wrongAnswer6 && req.body.wrongAnswer7 && req.body.wrongAnswer8 &&
+         req.body.wrongAnswer9 && req.body.wrongAnswer10){
+          wrongAnswers.push(req.body.wrongAnswer0);
+          wrongAnswers.push(req.body.wrongAnswer1);
+          wrongAnswers.push(req.body.wrongAnswer2);
+          wrongAnswers.push(req.body.wrongAnswer3);
+          wrongAnswers.push(req.body.wrongAnswer4);
+          wrongAnswers.push(req.body.wrongAnswer5);
+          wrongAnswers.push(req.body.wrongAnswer6);
+          wrongAnswers.push(req.body.wrongAnswer7);
+          wrongAnswers.push(req.body.wrongAnswer8);
+          wrongAnswers.push(req.body.wrongAnswer9);
+          wrongAnswers.push(req.body.wrongAnswer10);
+          questionToEdit.wrongAnswers = wrongAnswers;
+      }
+
+      
+
       await questionToEdit.save();
       res.send({status: "success", message: "Question was Edited"});
 

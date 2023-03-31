@@ -132,9 +132,29 @@ function displayJQuestionClicked(){
       $("#jQuestionMessage").addClass("alert-success");
 
       $("#jQuestionQuestion").val(data.question[0].question);
-      $("#jQuestionCategory").val(data.question[0].category);
+      if(data.question[0].iptc_category){
+        $("#jQuestionCategory").val(data.question[0].iptc_category);
+      }else{
+        $("#jQuestionCategory").val(data.question[0].category);
+      }
+      
       $("#jQuestionAnswer").val(data.question[0].answer);
       jIdToEdit = data.question[0]._id;
+
+      if(data.question[0].explaination){
+        $("#jQuestionExplaination").val(data.question[0].explaination);
+      }
+
+      // check if wrongAnswers exist.
+      if(data.question[0].wrongAnswers){
+
+        // wrong answers exists, lets loop through it, adding it to the correct textbox
+        for(index in data.question[0].wrongAnswers){
+          var wrongAnswer = data.question[0].wrongAnswers[index];
+          $("#jQuestionWrongAnswers" + index).val(wrongAnswer);
+
+        }
+      }
 
       resizeTextArea($("#jQuestionQuestion"));
       //alert("question: " + data.question[0].raw);
@@ -216,6 +236,23 @@ function editJQuestionClicked(){
   var category = $("#jQuestionCategory").val();
   var question = $("#jQuestionQuestion").val();
   var answer = $("#jQuestionAnswer").val();
+  var answer = $("#jQuestionExplaination").val();
+
+  // Get Wrong Answers from web interface
+  var wrongAnswer0 = $("#jQuestionWrongAnswers0").val();
+  var wrongAnswer1 = $("#jQuestionWrongAnswers1").val();
+  var wrongAnswer2 = $("#jQuestionWrongAnswers2").val();
+  var wrongAnswer3 = $("#jQuestionWrongAnswers3").val();
+  var wrongAnswer4 = $("#jQuestionWrongAnswers4").val();
+  var wrongAnswer5 = $("#jQuestionWrongAnswers5").val();
+  var wrongAnswer6 = $("#jQuestionWrongAnswers6").val();
+  var wrongAnswer7 = $("#jQuestionWrongAnswers7").val();
+  var wrongAnswer8 = $("#jQuestionWrongAnswers8").val();
+  var wrongAnswer9 = $("#jQuestionWrongAnswers9").val();
+  var wrongAnswer10 = $("#jQuestionWrongAnswers0").val();
+  
+
+  
   $.ajax({
         type: "POST",
         url: "/jquestionedit",
@@ -223,7 +260,19 @@ function editJQuestionClicked(){
           id: jIdToEdit,
           category: category,
           question: question,
-          answer: answer
+          answer: answer,
+          explaination: explaination,
+          wrongAnswer0: wrongAnswer0,
+          wrongAnswer1: wrongAnswer1,
+          wrongAnswer2: wrongAnswer2,
+          wrongAnswer3: wrongAnswer3,
+          wrongAnswer4: wrongAnswer4,
+          wrongAnswer5: wrongAnswer5,
+          wrongAnswer6: wrongAnswer6,
+          wrongAnswer7: wrongAnswer7,
+          wrongAnswer8: wrongAnswer8,
+          wrongAnswer9: wrongAnswer9,
+          wrongAnswer10: wrongAnswer10,
         },
         success: function(data){
             if(data.status == "error"){

@@ -121,6 +121,8 @@
                 username = users[i].google.name;
               }else if(users[i].local.email != null){
                 username = users[i].local.email;
+              }else if(users[i].discord.tag != null){
+                username = users[i].discord.tag;
               }
             %>
               <tr>
@@ -218,6 +220,26 @@
             <input class="form-control col-sm-4" id="jQuestionAnswer" type="text"></input>
             <label class="mr-sm-2" for="jQuestionQuestion">Question</label>
             <textarea class="form-control col-lg-12" id="jQuestionQuestion" type="text" value=""></textarea>
+            <label class="mr-sm-2" for="jQuestionExplaination">Explaination</label>
+            <textarea class="form-control col-lg-12" id="jQuestionExplaination" type="text" value=""></textarea>
+            <label class="mr-sm-2" for="jQuestionWrongAnswers1">Wrong Answers</label>
+            <div class="row">
+              <textarea class="form-control col-sm-3" id="jQuestionWrongAnswers0" type="text" value=""></textarea>
+              <textarea class="form-control col-sm-3" id="jQuestionWrongAnswers1" type="text" value=""></textarea>
+              <textarea class="form-control col-sm-3" id="jQuestionWrongAnswers2" type="text" value=""></textarea>
+              <textarea class="form-control col-sm-3" id="jQuestionWrongAnswers3" type="text" value=""></textarea>
+            </div>
+            <div class="row">
+              <textarea class="form-control col-sm-3" id="jQuestionWrongAnswers4" type="text" value=""></textarea>
+              <textarea class="form-control col-sm-3" id="jQuestionWrongAnswers5" type="text" value=""></textarea>
+              <textarea class="form-control col-sm-3" id="jQuestionWrongAnswers6" type="text" value=""></textarea>
+              <textarea class="form-control col-sm-3" id="jQuestionWrongAnswers7" type="text" value=""></textarea>
+            </div>
+            <div class="row">
+              <textarea class="form-control col-sm-3" id="jQuestionWrongAnswers8" type="text" value=""></textarea>
+              <textarea class="form-control col-sm-3" id="jQuestionWrongAnswers9" type="text" value=""></textarea>
+              <textarea class="form-control col-sm-3" id="jQuestionWrongAnswers10" type="text" value=""></textarea>
+            </div>
             <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#editJQuestionModal">
               Submit Edit
             </button>
