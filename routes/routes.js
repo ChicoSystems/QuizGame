@@ -957,7 +957,10 @@ module.exports = function(app, passport){
     }
     
 
-    questionXPValue = questionXPValue.replace(/\$/g, '').replace(/,/g, '');
+    if(questionXPValue && questionXPValue.replace){
+      questionXPValue = questionXPValue.replace(/\$/g, '').replace(/,/g, '');
+    }
+    
     questionXPValue = Number(questionXPValue);
     questionXPValue = questionXPValue / 100;
 
@@ -1971,12 +1974,72 @@ async function renderQuizQuestion(req, res){
 
 }
 
+
+/**
+ * Gets One of the users worse subcategories
+ * @param {} user 
+ */
+async function getPoorCategory(user){
+  let returnVal = null;
+
+  var lowestValue = 1;
+  var lowestKey = null;
+
+  for(const [key, value] of Object.entries(user.categoryTracker)){
+    for(const [sub_key, sub_value] of Object.entries(value.subcategories)){
+      var attemptsCorrect = sub_value.stats.attemptsCorrect;
+      var attemptsTotal = sub_value.stats.attemptsTotal;
+      var result;
+
+      if(attemptsTotal == 0){
+        result = 0;
+      }else{
+        result = attemptsCorrect / attemptsTotal;
+      }
+
+      if(result <= lowestValue){
+        lowestValue = result;
+        lowestKey = sub_key;
+      }
+    }
+  }
+
+  returnVal = lowestKey;
+
+
+  return returnVal;
+}
+
 //getDiscordQuestion()
 async function getDiscordQuestion(req, res){
-  
-  //first we get a random question from the JQuestions   
-  /////////var filter = {}; // this filter queries the entire jQuestion database, chat gpt will be used to transform questions
-var filter = {wrongAnswers: {$exists: true}, iptc_category: {$exists: true}, explaination: {$exists: true}};
+
+  var filter = {};
+  // If the user exists, get a iptc_category that they are not good at. and put it in the filter
+
+
+  // half the time we want to get a category we are very poor at
+  if(req.user){
+    var desiredSubCatgory = null;
+
+    if (Math.random() < 0.5) {
+      // Do something randomly 1/2 of the time
+      desiredSubCatgory = await getPoorCategory(req.user); // Looks at the user's categoryTracker null if none
+    }
+    
+
+    if(desiredSubCatgory){
+      /////////var filter = {}; // this filter queries the entire jQuestion database, chat gpt will be used to transform questions
+      filter = {wrongAnswers: {$exists: true}, iptc_category: {$exists: true}, iptc_subCategory: desiredSubCatgory ,explaination: {$exists: true}};
+    }else{
+      /////////var filter = {}; // this filter queries the entire jQuestion database, chat gpt will be used to transform questions
+      filter = {wrongAnswers: {$exists: true}, iptc_category: {$exists: true}, explaination: {$exists: true}};
+    }
+    
+  }else{
+    filter = {wrongAnswers: {$exists: true}, iptc_category: {$exists: true}, explaination: {$exists: true}};
+  }
+    
+
 	//  var filter = {wrongAnswers: {$exists: true}}; // This filter queries questions in the db, where wrong answers exist, this means that chatgpt will not be used
   var fields = {}; //only pull up the answers
 
