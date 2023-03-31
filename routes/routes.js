@@ -1024,11 +1024,13 @@ module.exports = function(app, passport){
 
         // add the full xp value if the user got the question correct.
         user.gameinfo.xp += questionXPValue;
+        user.gameinfo.xp = user.gameinfo.xp.toFixed(2);
       }else{
         user.gameinfo.score--;
 
         // add 1/10th of the xp value if the user got the question wrong.
         user.gameinfo.xp += (questionXPValue / 10);
+        user.gameinfo.xp = user.gameinfo.xp.toFixed(2);
       }
 
       user.categoryTracker = await updateCategoryTracker(user.categoryTracker, question_id, isAnswerCorrect);
