@@ -236,7 +236,7 @@ function editJQuestionClicked(){
   var category = $("#jQuestionCategory").val();
   var question = $("#jQuestionQuestion").val();
   var answer = $("#jQuestionAnswer").val();
-  var answer = $("#jQuestionExplaination").val();
+  var explaination = $("#jQuestionExplaination").val();
 
   // Get Wrong Answers from web interface
   var wrongAnswer0 = $("#jQuestionWrongAnswers0").val();
