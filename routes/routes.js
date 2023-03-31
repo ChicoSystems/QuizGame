@@ -99,7 +99,10 @@ rwcTable.push(rwc4);
   if(gptOutput.length == 0 ) return null;
 
   // We only asked for one output, so save that output to return val
-  returnVal  = gptOutput[0].replace(/\\n/g, "");
+  if(gptOutput.length > 0){
+    returnVal  = gptOutput[0].replace(/\\n/g, "");
+  }
+  
 
   return returnVal;
 }
@@ -530,7 +533,8 @@ module.exports = function(app, passport){
 
       // If there are already responses, we will calculate the chance of needing to create more responses, vs just reading a random response from the db
       // g(x) = 1 - (x/a)^n -.5     Where n=2, and a = 2000, means the chance doesn't go to 0 until x gets to 1414, and there is immediately a 50% chance of create a new one when x is 1
-      var chanceOfMakingNewResponses = (1 - (numResponses / 2000) - .5);
+      /////////var chanceOfMakingNewResponses = (1 - (numResponses / 2000) - .5);
+      var chanceOfMakingNewResponses = 0;
 
       // Now generate a random number between 0 and 1.
       var random = Math.random();
@@ -937,12 +941,19 @@ module.exports = function(app, passport){
 
     console.log("user: " + user_id + " got question wrong: " + question_id);
 
+    /*
     var user = null;
     if(req.user){
       user = req.user;
     }else{
       user = await Users.findOne({ 'discord.id' :  user_id }).exec();
     }
+    *//// Instead of using the user object sent back in the request, lets look this user up again.
+
+    // The 
+    user = await Users.findOne({ 'discord.id' :  user_id }).exec();
+
+   
 
 
     //if there is a user signed in update his history and score
@@ -1007,7 +1018,7 @@ module.exports = function(app, passport){
       }
 
       user.categoryTracker = await updateCategoryTracker(user.categoryTracker, question_id, isAnswerCorrect);
-      
+      user.markModified('categoryTracker');
       await user.save();
 
       //let front end know
@@ -1126,6 +1137,7 @@ module.exports = function(app, passport){
       req.session.score = req.session.score - 1;
       user.gameinfo.score = req.session.score;
       user.categoryTracker = await updateCategoryTracker(user.categoryTracker, req.params.questionId, isAnswerCorrect);
+      user.markModified('categoryTracker');
       user.save();
 
       //let front end know
@@ -1181,6 +1193,7 @@ module.exports = function(app, passport){
       req.session.score = req.session.score + 5;
       user.gameinfo.score = req.session.score;
       user.categoryTracker = await updateCategoryTracker(user.categoryTracker, req.params.questionId, isAnswerCorrect);
+      user.markModified('categoryTracker');
       user.save();
       
       //let front end know
@@ -1919,7 +1932,7 @@ async function getDiscordQuestion(req, res){
   
   //first we get a random question from the JQuestions   
   /////////var filter = {}; // this filter queries the entire jQuestion database, chat gpt will be used to transform questions
-var filter = {wrongAnswers: {$exists: true}, iptc_category: {$exists: true}};
+var filter = {wrongAnswers: {$exists: true}, iptc_category: {$exists: true}, explaination: {$exists: true}};
 	//  var filter = {wrongAnswers: {$exists: true}}; // This filter queries questions in the db, where wrong answers exist, this means that chatgpt will not be used
   var fields = {}; //only pull up the answers
 
@@ -2645,7 +2658,7 @@ async function updateCategoryTracker(categoryTrackerObject, question_id, isAnswe
 
   // CAN:T DO BELOW, SUBCATEGORIES IS NULL, WE NEED TO CHECK
   if(categoryTrackerSchema.subcategories == null){
-    categoryTrackerSchema.subcategories = new Map();
+    categoryTrackerSchema.subcategories = await Users.createNewSubCategoryTrackerSchema(questionObject.iptc_subCategory);
   }
 
   // now that we know this categoryTrackerSchema exists, try to get it's subcategory
@@ -2703,8 +2716,8 @@ async function updateCategoryTracker(categoryTrackerObject, question_id, isAnswe
   //categoryTrackerObject.set(questionObject.iptc_category, categoryTrackerSchema);
   categoryTrackerObject[questionObject.iptc_category] = categoryTrackerSchema;
 
-  console.log(questionObject.iptc_category);
-  console.log(questionObject.iptc_subCategory);
+  console.log("Updated Category: " + questionObject.iptc_category);
+  console.log("Updated SUBCategory: " + questionObject.iptc_subCategory);
 
   // Then we can return the category tracker object
   return categoryTrackerObject;

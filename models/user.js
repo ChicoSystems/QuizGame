@@ -84,43 +84,59 @@ var userSchema = mongoose.Schema({
 
 });
 
-userSchema.statics.createNewCategoryTracker = 
-    async function createNewCategoryTracker(){
-        return new Map();
-    }
-
-userSchema.statics.createNewCategoryTrackerSchema = 
-    async function createNewCategoryTrackerSchema(newName){
-        var category_tracker = new CategoryTrackerModel();
-        category_tracker.name = newName;
-    
-        return category_tracker;
-    }
-
-    
-userSchema.statics.createNewSubCategoryTrackerSchema = 
-    async function createNewSubCategoryTrackerSchema(newName){
-        var subcategory_tracker = new SubCategoryTrackerModel();
-        subcategory_tracker.name = newName;
-        return subcategory_tracker;
-    }
-
     /**
      * 
      * @returns Constructs a new category stats model
      */
-userSchema.statics.createNewCategoryStatsSchema = 
-    async function createNewCategoryStatsSchema(){
-        var catStats = new CategoryStatsModel();
+async function createNewCategoryStatsSchema(){
+    var catStats = new CategoryStatsModel();
 
-        // set all the cat stats to 0
-        catStats.attemptsCorrect = 0;
-        catStats.attemptsTotal = 0;
-        catStats.attemptsWrong = 0;
+    // set all the cat stats to 0
+    catStats.attemptsCorrect = 0;
+    catStats.attemptsTotal = 0;
+    catStats.attemptsWrong = 0;
 
-        return catStats;
+    return catStats;
 
-    }
+}
+
+async function createNewCategoryTracker(){
+   // return new mongoose.Schema({ any: mongoose.Mixed });
+   return new Object();
+}
+
+async function createNewSubCategoryTrackerSchema(newName){
+    var subcategory_tracker = new SubCategoryTrackerModel();
+    subcategory_tracker.name = newName;
+    subcategory_tracker.stats = await createNewCategoryStatsSchema();
+    return subcategory_tracker;
+}
+
+async function createNewCategoryTrackerSchema(newName){
+    var category_tracker = new CategoryTrackerModel();
+    category_tracker.name = newName;
+    ////category_tracker.subcategories = new mongoose.Schema({ any: mongoose.Mixed });
+    category_tracker.subcategories = new Object();
+    category_tracker.stats = await createNewCategoryStatsSchema();
+
+    return category_tracker;
+}
+
+userSchema.statics.createNewCategoryTracker = createNewCategoryTracker;
+    
+
+userSchema.statics.createNewSubCategoryTrackerSchema = createNewSubCategoryTrackerSchema;
+    
+
+userSchema.statics.createNewCategoryTrackerSchema = createNewCategoryTrackerSchema;
+
+userSchema.statics.createNewCategoryStatsSchema = createNewCategoryStatsSchema;
+    
+
+    
+
+
+
 
     
 
