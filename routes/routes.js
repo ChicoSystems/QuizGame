@@ -941,17 +941,25 @@ module.exports = function(app, passport){
 
     console.log("user: " + user_id + " got question wrong: " + question_id);
 
-    /*
-    var user = null;
-    if(req.user){
-      user = req.user;
-    }else{
-      user = await Users.findOne({ 'discord.id' :  user_id }).exec();
-    }
-    *//// Instead of using the user object sent back in the request, lets look this user up again.
-
-    // The 
+    // Get the discord user
     user = await Users.findOne({ 'discord.id' :  user_id }).exec();
+
+    // Setup our db filter, to query the id of our quesiton
+    var filter = { _id: new ObjectId(question_id) };
+
+    // Get the question from the DB
+    var questionObject = await JQuestion.findOne(filter, {}).exec();
+
+    var questionXPValue = 50;
+
+    if(questionObject.value){
+      questionXPValue = questionObject.value;
+    }
+    
+
+    questionXPValue = questionXPValue.replace(/\$/g, '').replace(/,/g, '');
+    questionXPValue = Number(questionXPValue);
+    questionXPValue = questionXPValue / 100;
 
    
 
@@ -1013,8 +1021,14 @@ module.exports = function(app, passport){
       // update the users game info.
       if(isAnswerCorrect){
         user.gameinfo.score++;
+
+        // add the full xp value if the user got the question correct.
+        user.gameinfo.xp += questionXPValue;
       }else{
         user.gameinfo.score--;
+
+        // add 1/10th of the xp value if the user got the question wrong.
+        user.gameinfo.xp += (questionXPValue / 10);
       }
 
       user.categoryTracker = await updateCategoryTracker(user.categoryTracker, question_id, isAnswerCorrect);
@@ -1056,7 +1070,7 @@ module.exports = function(app, passport){
     var fields = {"discord": 1, "gameinfo" : 1}; // query for the discord object, and the game info object
     var filter = {discord: {$exists: true}};     // filter for only discord users
 
-    var results = await Users.find(filter, fields).sort('-gameinfo.score').exec();//function(err, results){
+    var results = await Users.find(filter, fields).sort('-gameinfo.xp').exec();//function(err, results){
       //if(err) throw err;
 
       res.json(results)
@@ -2135,6 +2149,7 @@ var filter = {wrongAnswers: {$exists: true}, iptc_category: {$exists: true}, exp
         "answer": result.answer,
         "answers": answers,
         "answerIndex": answerIndex,
+        "value" :result.value,
         "user": copyOfUser,   // we want to remove the user history from the user before sending.
         "session": returnSession
       }

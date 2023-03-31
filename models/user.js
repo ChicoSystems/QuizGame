@@ -70,7 +70,8 @@ var userSchema = mongoose.Schema({
         photo       : String
     },
     gameinfo        : {
-      score         : {type: Number, default: 0}
+      score         : {type: Number, default: 0},
+      xp         : {type: Number, default: 0}
     },
     permissions     : {
       admin         : {type: Boolean, default: false},
